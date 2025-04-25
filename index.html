@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GuardianAgent</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <!-- <script src="js/preventAutoRefresh.js"></script> -->
+</head>
+
+<body>
+  <header>
+    <img src="img/agent图标.png" alt="GuardianAgent Logo" class="logo">
+    <h1>GuardianAgent: A Real-time Processing System for Anomalous Videos</h1>
+  </header>
+
+  <div class="container">
+    <!-- 左侧聊天区域 -->
+    <div class="chat-section">
+      <div class="chat-container">
+        <div class="messages" id="messages">
+          <!-- 消息将在这里动态添加 -->
+        </div>
+        <div class="input-area">
+          <input type="text" id="userInput" placeholder="Please enter your message...">
+          <button id="sendButton">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中间区域 -->
+    <div class="middle-section">
+      <div id="map" class="map-container"></div>
+      <div class="load-presentation">
+        <h2>Resource Usage</h2>
+        <div class="chart-container">
+          <canvas id="resourceChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧区域 -->
+    <div class="right-section">
+      <div class="camera-status">
+        <div class="camera-controls">
+          <div class="camera-indicator">
+            <span>Camera1</span>
+            <div class="status-light" id="pos1-status"></div>
+          </div>
+          <div class="camera-indicator">
+            <span>Camera2</span>
+            <div class="status-light" id="pos2-status"></div>
+          </div>
+          <div class="camera-indicator">
+            <span>Camera3</span>
+            <div class="status-light" id="pos3-status"></div>
+          </div>
+        </div>
+        <div class="camera-feed" id="cameraFeed">
+          <!-- 摄像头画面将在这里显示 -->
+        </div>
+      </div>
+      <div class="alert-messages">
+        <h2>Alert Messages</h2>
+        <div class="alerts" id="alertList">
+          <!-- 警报消息将在这里显示 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <script src="js/dag.js"></script>
+  <script src="js/curves.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/loadMonitor.js"></script>
+</body>
+
+</html>
