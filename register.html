@@ -10,7 +10,7 @@
 
 <body>
   <header>
-    <img src="img/agent图标.png" alt="IOA Logo" class="logo">
+    <img src="img/image.png" alt="IOA Logo" class="logo">
     <h1>IOA: Internet of Agent</h1>
     <p class="subtitle">Register New Agent</p>
   </header>
@@ -50,6 +50,35 @@
               <option value="edge">Edge Layer (边缘层)</option>
               <option value="cloud">Cloud Layer (云层)</option>
             </select>
+            <small class="form-hint">Logical layer only; the physical node is selected below.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="agentNodeId">Registered Node (node_id) *</label>
+            <select id="agentNodeId" required>
+              <option value="">Select Node</option>
+              <!-- Terminal Layer Nodes -->
+              <option value="terminal-pc-joe" data-layer="terminal">terminal-pc-joe</option>
+              <option value="terminal-drone-07" data-layer="terminal">terminal-drone-07</option>
+              <option value="terminal-camera-01" data-layer="terminal">terminal-camera-01</option>
+              <option value="terminal-sensor-02" data-layer="terminal">terminal-sensor-02</option>
+              <!-- Edge Layer Nodes -->
+              <option value="edge-bj-01" data-layer="edge">edge-bj-01</option>
+              <option value="edge-bj-02" data-layer="edge">edge-bj-02</option>
+              <option value="edge-sh-01" data-layer="edge">edge-sh-01</option>
+              <option value="edge-gz-01" data-layer="edge">edge-gz-01</option>
+              <!-- Cloud Layer Nodes -->
+              <option value="cloud-hz-03" data-layer="cloud">cloud-hz-03</option>
+              <option value="cloud-bj-01" data-layer="cloud">cloud-bj-01</option>
+              <option value="cloud-sh-01" data-layer="cloud">cloud-sh-01</option>
+            </select>
+            <small class="form-hint">node_id tells the system where this agent is physically attached.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="agentEndpoint">Agent Endpoint *</label>
+            <input type="text" id="agentEndpoint" placeholder="http://10.200.1.77:8000/a2a" required>
+            <small class="form-hint">endpoint tells the system how to reach the agent on the network.</small>
           </div>
 
           <div class="form-group">
@@ -80,12 +109,7 @@
         </div>
 
         <div class="form-section">
-          <h3>Additional Settings</h3>
-
-          <div class="form-group">
-            <label for="agentEndpoint">API Endpoint (optional)</label>
-            <input type="text" id="agentEndpoint" placeholder="http://localhost:8001">
-          </div>
+          <h3>Startup</h3>
 
           <div class="form-group checkbox">
             <input type="checkbox" id="agentAutoStart" checked>
@@ -119,6 +143,15 @@
       <div class="info-card">
         <h3>Resource Allocation</h3>
         <p>Set the percentage of CPU and memory this agent can use. The system will manage resource allocation dynamically.</p>
+      </div>
+
+      <div class="info-card">
+        <h3>Node &amp; Endpoint</h3>
+        <ul>
+          <li><strong>node_id:</strong> Physical node identity, tells the system where the agent hangs.</li>
+          <li><strong>endpoint:</strong> Access address, tells the system how to connect.</li>
+          <li><strong>Node source:</strong> Use a Node Registry (recommended) or fill manually if no registry.</li>
+        </ul>
       </div>
     </div>
   </div>

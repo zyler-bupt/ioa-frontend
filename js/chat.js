@@ -3,16 +3,177 @@ const messagesContainer = document.getElementById('messages');
 const userInput = document.getElementById('userInput');
 const sendButton = document.getElementById('sendButton');
 
+// WebSocket 连接
+let ws = null;
+let requestIdCounter = 0;
+
+// 初始化 WebSocket 连接
+function initWebSocket() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  // 后端在 ngrok
+  const wsUrl = `ws://10.200.1.35:8001/ws`;
+  
+  ws = new WebSocket(wsUrl);
+  
+  ws.onopen = () => {
+    console.log('WebSocket connected');
+  };
+  
+  ws.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+    handleWebSocketMessage(msg);
+  };
+  
+  ws.onerror = (error) => {
+    console.error('WebSocket error:', error);
+    addMessage(true, '连接错误，请检查后端服务是否运行');
+  };
+  
+  ws.onclose = () => {
+    console.log('WebSocket disconnected');
+  };
+}
+
+// 处理 WebSocket 消息
+function handleWebSocketMessage(msg) {
+  const { type, request_id, data } = msg;
+  
+  switch (type) {
+    case 'ack':
+      console.log('ACK received:', data);
+      break;
+      
+    case 'routing':
+      // 显示路由信息
+      const routing = data.routing || [];
+      const selectedAgent = data.selected_agent || {};
+      updateDiscoveryList(routing, selectedAgent);
+      break;
+      
+    case 'thought':
+      // 显示思考过程
+      addMessage(true, `<div class="thought-content">${data.replace(/\n/g, '<br>')}</div>`);
+      break;
+      
+    case 'rewrite':
+      // 显示重写的提示词
+      console.log('Rewritten prompt:', data.final_prompt);
+      break;
+      
+    case 'status':
+      // 显示状态更新
+      addMessage(true, `<div class="status-message">状态: ${data}</div>`);
+      break;
+      
+    case 'final':
+      // 显示最终结果
+      handleFinalResult(data);
+      break;
+      
+    case 'error':
+      // 显示错误信息
+      addMessage(true, `<div class="error-message">错误: ${data.message}</div>`);
+      break;
+      
+    default:
+      console.warn('Unknown message type:', type);
+  }
+}
+
+// 处理最终结果
+function handleFinalResult(data) {
+  const { status, answer_text, answer, execution_time } = data;
+  
+  if (status === 'no_route') {
+    addMessage(true, answer_text);
+    return;
+  }
+  
+  if (status === 'ok') {
+    // 构建响应内容
+    const answerInfo = answer || {};
+    const accidentType = answerInfo.accident_type || '未知';
+    const observation = answerInfo.observation || '(未提取到)';
+    const keyframe = answerInfo.keyframe || {};
+    const keyframePath = keyframe.path || '(未提取到)';
+    const keyframeUrl = keyframe.url || '';
+    
+    let responseHtml = `
+      <div class="final-result">
+        <div class="result-item">
+          <strong>事故类型:</strong> ${accidentType}
+        </div>
+        <div class="result-item">
+          <strong>描述:</strong> ${observation}
+        </div>
+        <div class="result-item">
+          <strong>关键帧:</strong> ${keyframePath}
+    `;
+    
+    if (keyframeUrl) {
+      responseHtml += `<br><img src="${keyframeUrl}" alt="keyframe" style="max-width: 200px; margin-top: 10px;">`;
+    }
+    
+    responseHtml += `
+        </div>
+        <div class="result-item">
+          <strong>执行时间:</strong> ${(execution_time || 0).toFixed(2)}s
+        </div>
+      </div>
+    `;
+    
+    addMessage(true, responseHtml);
+  }
+}
+
+// 更新 Discovery 列表
+function updateDiscoveryList(candidates, selectedAgent) {
+  const discoveryList = document.getElementById('discoveryList');
+  if (!discoveryList) return;
+  
+  discoveryList.innerHTML = '';
+  
+  candidates.forEach((candidate, index) => {
+    const div = document.createElement('div');
+    div.className = 'discovery-item';
+    if (candidate.agent_name === selectedAgent.agent_name) {
+      div.classList.add('selected');
+    }
+    div.innerHTML = `
+      <div class="item-name">${candidate.agent_name}</div>
+      <div class="item-detail">
+        <span>匹配度: ${(candidate.match_pct || 0).toFixed(2)}%</span>
+        <span>能力: ${candidate.capability}</span>
+      </div>
+    `;
+    discoveryList.appendChild(div);
+  });
+  
+  // 更新 Selected Agents
+  const selectedList = document.getElementById('selectedList');
+  if (selectedList) {
+    selectedList.innerHTML = `
+      <div class="selected-agent-item">
+        <div class="agent-name">${selectedAgent.agent_name || 'N/A'}</div>
+        <div class="agent-detail">
+          <div>匹配度: ${(selectedAgent.match_pct || 0).toFixed(2)}%</div>
+        </div>
+      </div>
+    `;
+  }
+}
+
 // 添加消息到聊天界面
 function addMessage(isAgent, content) {
   const messageDiv = document.createElement('div');
   messageDiv.className = 'message';
-
+  
   if (isAgent) {
+    messageDiv.classList.add('assistant');
     // Agent消息
     messageDiv.innerHTML = `
             <div class="header">
-                <img src="img/agent图标.png" alt="Agent">
+                <img src="img/image.png" alt="Agent">
                 <span>CORE Muti-Agent System</span>
             </div>
             <div class="content">
@@ -20,12 +181,13 @@ function addMessage(isAgent, content) {
             </div>
         `;
   } else {
-    // 用户消息
-    messageDiv.innerHTML = `
-            <div class="content">
-                ${content}
-            </div>
-        `;
+    messageDiv.classList.add('user');
+    // 用户消息 - 支持 HTML 内容
+    if (typeof content === 'string' && content.includes('<')) {
+      messageDiv.innerHTML = `<div class="content">${content}</div>`;
+    } else {
+      messageDiv.textContent = content;
+    }
   }
 
   messagesContainer.appendChild(messageDiv);
@@ -88,33 +250,40 @@ function formatAgentResponse(response) {
 async function sendMessage() {
   const message = userInput.value.trim();
   if (!message) return;
+  
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    addMessage(true, '错误: WebSocket 未连接，请刷新页面重新连接');
+    return;
+  }
 
   // 添加用户消息
   addMessage(false, message);
   userInput.value = '';
+  
+  // 禁用发送按钮
+  sendButton.disabled = true;
 
   try {
-    // 这里应该是向后端发送请求
-    // 目前使用模拟响应
-    const response = {
-      outerloop: '分析视频内容并拦截关键帧',
-      innerloop: '正在分析视频...\n正在拦截关键帧...\n正在进行特征分析...',
-      actions: 'analyzing the video\nintercepting the key frames\nprocessing features\nanalyzing results',
-      dag: {
-        matrix: [
-          [0, 1, 0],
-          [0, 0, 1],
-          [0, 0, 0]
-        ]
-      }
+    // 生成请求ID
+    requestIdCounter++;
+    const requestId = `req_${Date.now()}_${requestIdCounter}`;
+    
+    // 构建请求消息
+    const wsMsg = {
+      type: 'run',
+      request_id: requestId,
+      user_input: message,
+      top_k: 5
     };
-
-    // 添加Agent响应
-    setTimeout(() => {
-      addMessage(true, response);
-    }, 1000);
+    
+    // 发送到 WebSocket
+    ws.send(JSON.stringify(wsMsg));
   } catch (error) {
     console.error('Error sending message:', error);
+    addMessage(true, `错误: ${error.message}`);
+  } finally {
+    // 重新启用发送按钮
+    sendButton.disabled = false;
   }
 }
 
@@ -139,6 +308,7 @@ function initializeChat() {
 
 // 事件监听
 document.addEventListener('DOMContentLoaded', () => {
+  initWebSocket(); // 初始化 WebSocket 连接
   initializeChat(); // 添加初始化对话
   sendButton.addEventListener('click', sendMessage);
 

@@ -110,6 +110,12 @@ header h1 {
   font-size: 0.95em;
 }
 
+.form-hint {
+  color: #6b7280;
+  font-size: 0.85em;
+  line-height: 1.4;
+}
+
 .form-group input[type="text"],
 .form-group input[type="number"],
 .form-group input[type="email"],

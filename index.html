@@ -11,9 +11,8 @@
 
 <body>
   <header>
-    <img src="img/agent图标.png" alt="IOA Logo" class="logo">
-    <h1>IOA: Internet of Agent</h1>
-    <p class="subtitle">Real-Time Agent Network & Dispatch Platform</p>
+    <!-- <img src="img/image.png" alt="ACRG Logo" class="logo"> -->
+    <h1>ACRG — A Platform for Aggregating Agent Capabilities and Computing Resources Globally</h1>
   </header>
 
   <!-- 顶部概览统计 -->
@@ -37,6 +36,10 @@
     <div class="stat-item">
       <span class="stat-label">Computing Power</span>
       <span class="stat-value compute-color" id="computeCount">0</span>
+    </div>
+    <div class="stat-item system-time-item">
+      <span class="stat-label">System Time</span>
+      <span class="stat-value system-time" id="systemTime"></span>
     </div>
   </div>
 
@@ -63,7 +66,6 @@
     <div class="middle-section">
       <div class="network-section">
         <h2>Network Topology</h2>
-        <p class="section-description">(Dynamic Flashing)</p>
         <div id="networkGraph" class="network-container"></div>
       </div>
 
