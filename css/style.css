@@ -40,16 +40,27 @@ header h1 {
   margin: 0;
 }
 
-/* 顶部概览统计 */
+/* 概览统计 */
 .overview-bar {
   background-color: #fff;
-  padding: 15px 20px;
-  display: flex;
-  justify-content: flex-start;
-  gap: 40px;
-  border-bottom: 1px solid #e0e0e0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  align-items: center;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.overview-bar--side {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.overview-bar--side .stat-item {
+  align-items: flex-start;
+}
+
+.discovery-panel .overview-bar {
+  margin: 12px 0 8px;
 }
 
 .stat-item {
@@ -57,10 +68,6 @@ header h1 {
   flex-direction: column;
   align-items: center;
   gap: 5px;
-}
-
-.stat-item.system-time-item {
-  margin-left: auto;
 }
 
 .stat-label {
@@ -91,13 +98,6 @@ header h1 {
   color: #4285f4;
 }
 
-.stat-value.system-time {
-  font-size: 1em;
-  font-family: 'Courier New', monospace;
-  color: #999;
-  font-weight: normal;
-}
-
 /* 容器布局 */
 .container {
   display: flex;
@@ -110,10 +110,11 @@ header h1 {
 
 /* ===== 左侧：人机交互区域 ===== */
 .left-section {
-  width: 25%;
+  flex: 1.4;
   height: 100%;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .interaction-panel {
@@ -149,6 +150,8 @@ header h1 {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   overflow: hidden;
+  width: calc(100% - 18px);
+  align-self: flex-start;
 }
 
 .messages {
@@ -328,13 +331,14 @@ header h1 {
   transform: scale(0.98);
 }
 
-/* ===== 中间：网络拓扑图和资源视图 ===== */
+/* ===== 中间：网络拓扑图 ===== */
 .middle-section {
-  width: 50%;
+  flex: 1.6;
   height: 100%;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-height: 0;
 }
 
 .network-section {
@@ -451,32 +455,52 @@ header h1 {
   border-color: rgba(123, 31, 162, 0.25);
 }
 
-.resource-section {
-  flex: 0.8;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  padding: 20px;
-  border: 1px solid #e0e0e0;
+.layer-tag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.72em;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+  text-align: right;
 }
 
-.resource-section h2 {
-  font-size: 1.3em;
-  color: #1a73e8;
-  margin-bottom: 15px;
+.layer-tag span {
+  display: block;
+  line-height: 1.15;
 }
 
-.chart-container {
-  flex: 1;
-  min-height: 0;
+.layer-tag-title {
+  font-size: 0.95em;
 }
 
-#resourceChart {
-  width: 100%;
-  height: 100%;
+.layer-tag-sub {
+  font-size: 0.74em;
+  font-weight: 600;
+  text-transform: none;
+  opacity: 0.9;
+}
+
+.layer-tag--cloud {
+  background: linear-gradient(135deg, rgba(26, 115, 232, 0.95) 0%, rgba(21, 87, 176, 0.95) 100%);
+}
+
+.layer-tag--edge {
+  background: linear-gradient(135deg, rgba(245, 124, 0, 0.95) 0%, rgba(230, 81, 0, 0.95) 100%);
+}
+
+.layer-tag--terminal {
+  background: linear-gradient(135deg, rgba(123, 31, 162, 0.95) 0%, rgba(90, 0, 128, 0.95) 100%);
 }
 
 /* ===== Request Input Section ===== */
@@ -755,10 +779,12 @@ header h1 {
 
 /* ===== 右侧：Discovery过程 ===== */
 .right-section {
-  width: 25%;
+  flex: 1;
   height: 100%;
   display: flex;
   flex-direction: column;
+  gap: 20px;
+  min-height: 0;
 }
 
 .discovery-panel {
@@ -767,9 +793,10 @@ header h1 {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
   padding: 20px;
   border: 1px solid #e0e0e0;
+  min-height: 0;
 }
 
 .discovery-panel h2 {
@@ -925,50 +952,6 @@ header h1 {
     width: 14px;
     height: 14px;
   }
-}
-
-/* 三层架构3D层级效果 */
-.layer-label {
-  position: absolute;
-  font-size: 0.9em;
-  font-weight: 600;
-  padding: 8px 12px;
-  border-radius: 6px;
-  color: white;
-  z-index: 5;
-  pointer-events: none;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  letter-spacing: 0.5px;
-}
-
-.cloud-label {
-  top: 20px;
-  right: 20px;
-  background: linear-gradient(135deg, rgba(26, 115, 232, 0.95) 0%, rgba(21, 87, 176, 0.95) 100%);
-  border: 2px solid rgba(26, 115, 232, 0.9);
-}
-
-.edge-label {
-  top: 50%;
-  right: 20px;
-  transform: translateY(-50%);
-  background: linear-gradient(135deg, rgba(245, 124, 0, 0.95) 0%, rgba(230, 81, 0, 0.95) 100%);
-  border: 2px solid rgba(245, 124, 0, 0.9);
-}
-
-.terminal-label {
-  bottom: 20px;
-  right: 20px;
-  background: linear-gradient(135deg, rgba(123, 31, 162, 0.95) 0%, rgba(90, 0, 128, 0.95) 100%);
-  border: 2px solid rgba(123, 31, 162, 0.9);
-}
-
-.layer-label small {
-  display: block;
-  font-size: 0.8em;
-  opacity: 0.9;
-  margin-top: 2px;
 }
 
 /* ===== WebSocket 消息样式 ===== */

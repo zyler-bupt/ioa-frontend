@@ -15,34 +15,6 @@
     <h1>ACRG — A Platform for Aggregating Agent Capabilities and Computing Resources Globally</h1>
   </header>
 
-  <!-- 顶部概览统计 -->
-  <div class="overview-bar">
-    <div class="stat-item">
-      <span class="stat-label">Registered Nodes</span>
-      <span class="stat-value" id="totalNodes">0</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-label">Agents</span>
-      <span class="stat-value agent-color" id="agentCount">0</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-label">LLMs</span>
-      <span class="stat-value llm-color" id="llmCount">0</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-label">Tools</span>
-      <span class="stat-value tool-color" id="toolCount">0</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-label">Computing Power</span>
-      <span class="stat-value compute-color" id="computeCount">0</span>
-    </div>
-    <div class="stat-item system-time-item">
-      <span class="stat-label">System Time</span>
-      <span class="stat-value system-time" id="systemTime"></span>
-    </div>
-  </div>
-
   <div class="container">
     <!-- 左侧：人机交互区域 -->
     <div class="left-section">
@@ -62,16 +34,11 @@
       </div>
     </div>
 
-    <!-- 中间：网络拓扑图和资源视图 -->
+    <!-- 中间：网络拓扑图 -->
     <div class="middle-section">
       <div class="network-section">
         <h2>Network Topology</h2>
         <div id="networkGraph" class="network-container"></div>
-      </div>
-
-      <div class="resource-section">
-        <h2>Resource View</h2>
-        <div id="resourceChart" class="chart-container"></div>
       </div>
     </div>
 
@@ -80,6 +47,25 @@
       <div class="discovery-panel">
         <h2>Discovery Process</h2>
         <p class="panel-description">Agent discovery based on your chat with the system below.</p>
+
+        <div class="overview-bar overview-bar--side">
+          <div class="stat-item">
+            <span class="stat-label">Registered Nodes</span>
+            <span class="stat-value" id="totalNodes">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Agents</span>
+            <span class="stat-value agent-color" id="agentCount">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Tools</span>
+            <span class="stat-value tool-color" id="toolCount">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Computing Power</span>
+            <span class="stat-value compute-color" id="computeCount">0</span>
+          </div>
+        </div>
         
         <!-- Discovery结果列表 -->
         <div class="discovery-list" id="discoveryList"></div>
@@ -94,7 +80,6 @@
 
   <!-- 脚本 -->
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
   <script src="js/ioa.js"></script>
 </body>
 

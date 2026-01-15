@@ -105,50 +105,34 @@ document.addEventListener("DOMContentLoaded", function () {
   // 初始化各个模块
   initializeStats();
   initializeNetworkGraph();
-  initializeResourceChart();
   initializeDiscoveryProcess();
   initializeChatSystem();
 
   // 检查是否有新注册的Agent
   loadNewAgents();
 
-  // 初始化实时时间显示
-  updateSystemTime();
-  setInterval(updateSystemTime, 1000);
-
   console.log("IOA Application Ready!");
 });
-
-/**
- * 更新系统实时时间
- */
-function updateSystemTime() {
-  const now = new Date();
-  const timeString = now.toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-  document.getElementById("systemTime").textContent = timeString;
-}
 
 /**
  * 初始化顶部统计数据
  */
 function initializeStats() {
   const agents = agentDatabase.filter((a) => a.type === "agent");
-  const cloudAgents = agents.filter((a) => a.layer === "cloud");
   const edgeAgents = agents.filter((a) => a.layer === "edge");
   const terminalAgents = agents.filter((a) => a.layer === "terminal");
 
-  document.getElementById("totalNodes").textContent = agentDatabase.length;
-  document.getElementById("agentCount").textContent = agents.length;
-  document.getElementById("llmCount").textContent = cloudAgents.length;
-  document.getElementById("toolCount").textContent = edgeAgents.length;
-  document.getElementById("computeCount").textContent = terminalAgents.length;
+  const setStat = (id, value) => {
+    const target = document.getElementById(id);
+    if (target) {
+      target.textContent = value;
+    }
+  };
+
+  setStat("totalNodes", agentDatabase.length);
+  setStat("agentCount", agents.length);
+  setStat("toolCount", edgeAgents.length);
+  setStat("computeCount", terminalAgents.length);
 }
 
 /**
@@ -252,7 +236,7 @@ function initializeNetworkGraph() {
       const layer = agent.layer || "edge";
 
       // 基础颜色 - 所有Agent都是绿色
-      const baseColor = "#34a853";
+      const baseColor = "#1d3f8f";
 
       // 根据资源大小（CPU + Memory）调整节点大小
       const resourceLevel = (agent.cpu + agent.memory) / 2;
@@ -306,7 +290,7 @@ function initializeNetworkGraph() {
           background: baseColor,
           border: borderColor,
           highlight: {
-            background: "#66bb6a",
+            background: "#3a5fb7",
             border: "#000",
           },
         },
@@ -488,89 +472,6 @@ function initializeNetworkGraph() {
       applyTopologyLayout(container, window.networkGraph.nodes);
       window.networkInstance.fit({ animation: false });
     }, 120);
-  });
-}
-
-/**
- * 初始化资源视图图表
- */
-function initializeResourceChart() {
-  const chartContainer = document.getElementById("resourceChart");
-  const chart = echarts.init(chartContainer);
-
-  // 准备数据
-  const names = agentDatabase.map((a) => a.name);
-  const cpuData = agentDatabase.map((a) => a.cpu);
-  const memoryData = agentDatabase.map((a) => a.memory);
-
-  const option = {
-    tooltip: {
-      trigger: "axis",
-      backgroundColor: "rgba(0, 0, 0, 0.8)",
-      borderColor: "#333",
-      textStyle: { color: "#fff" },
-    },
-    legend: {
-      data: ["CPU Usage (%)", "Memory Usage (%)"],
-      bottom: 10,
-    },
-    grid: {
-      left: "3%",
-      right: "3%",
-      top: "5%",
-      bottom: "15%",
-      containLabel: true,
-    },
-    xAxis: {
-      type: "category",
-      data: names,
-      axisLabel: {
-        rotate: 45,
-        fontSize: 11,
-      },
-    },
-    yAxis: {
-      type: "value",
-      max: 100,
-      axisLabel: {
-        formatter: "{value}%",
-      },
-    },
-    series: [
-      {
-        name: "CPU Usage (%)",
-        type: "line",
-        data: cpuData,
-        smooth: true,
-        itemStyle: { color: "#ea4335" },
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: "rgba(234, 67, 53, 0.3)" },
-            { offset: 1, color: "rgba(234, 67, 53, 0)" },
-          ]),
-        },
-      },
-      {
-        name: "Memory Usage (%)",
-        type: "line",
-        data: memoryData,
-        smooth: true,
-        itemStyle: { color: "#4285f4" },
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: "rgba(66, 133, 244, 0.3)" },
-            { offset: 1, color: "rgba(66, 133, 244, 0)" },
-          ]),
-        },
-      },
-    ],
-  };
-
-  chart.setOption(option);
-
-  // 响应式重绘
-  window.addEventListener("resize", () => {
-    chart.resize();
   });
 }
 
@@ -1317,9 +1218,6 @@ function initializeChatSystem() {
 
       const finalText = answerText || fallback || "（无可展示输出）";
 
-      appendStreamBlock(answerDiv, "📌 结果:", finalText, STREAM_SPEED.fast);
-      hasAnswer = true;
-
       if (finalText) {
         appendStreamBlock(answerDiv, "📌 结果:", finalText, STREAM_SPEED.fast);
         hasAnswer = true;
@@ -1552,56 +1450,31 @@ function addNetworkLegend() {
     const layers = document.createElement("div");
     layers.className = "topology-layers";
 
+    const layerMeta = {
+      cloud: { icon: "☁️", title: "CLOUD LAYER", sub: "高性能计算" },
+      edge: { icon: "🌐", title: "EDGE LAYER", sub: "中等处理" },
+      terminal: { icon: "📱", title: "TERMINAL LAYER", sub: "本地处理" },
+    };
+
     ["cloud", "edge", "terminal"].forEach((layerName) => {
       const band = document.createElement("div");
       band.className = `topology-band topology-band--${layerName}`;
+
+      const meta = layerMeta[layerName];
+      const label = document.createElement("div");
+      label.className = `layer-tag layer-tag--${layerName}`;
+      label.innerHTML = `
+        <span class="layer-tag-title">${meta.icon} ${meta.title}</span>
+        <span class="layer-tag-sub">${meta.sub}</span>
+      `;
+      band.appendChild(label);
+
       layers.appendChild(band);
     });
 
     container.appendChild(layers);
   }
 
-  if (!container.querySelector(".network-legend")) {
-    const legend = document.createElement("div");
-    legend.className = "network-legend";
-    legend.innerHTML = `
-      <div class="legend-header">📊 三层架构拓扑</div>
-      <div class="legend-item">
-        <div class="legend-color" style="background-color: #34a853; border: 3px solid #1a73e8; box-shadow: 0 0 8px rgba(26, 115, 232, 0.3);"></div>
-        <span>☁️ Cloud (高算力)</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" style="background-color: #34a853; border: 2.5px solid #f57c00; box-shadow: 0 0 8px rgba(245, 124, 0, 0.2);"></div>
-        <span>🌐 Edge (中等算力)</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" style="background-color: #34a853; border: 2px solid #7b1fa2; box-shadow: 0 0 8px rgba(123, 31, 162, 0.2);"></div>
-        <span>📱 Terminal (低算力)</span>
-      </div>
-    `;
-    container.appendChild(legend);
-  }
-
-  // 添加三层架构标签（左侧）
-  if (!container.querySelector(".layer-label")) {
-    const cloudLabel = document.createElement("div");
-    cloudLabel.className = "layer-label cloud-label";
-    cloudLabel.innerHTML =
-      "☁️ <strong>CLOUD LAYER</strong><br><small>高性能计算</small>";
-    container.appendChild(cloudLabel);
-
-    const edgeLabel = document.createElement("div");
-    edgeLabel.className = "layer-label edge-label";
-    edgeLabel.innerHTML =
-      "🌐 <strong>EDGE LAYER</strong><br><small>中等处理</small>";
-    container.appendChild(edgeLabel);
-
-    const terminalLabel = document.createElement("div");
-    terminalLabel.className = "layer-label terminal-label";
-    terminalLabel.innerHTML =
-      "📱 <strong>TERMINAL LAYER</strong><br><small>本地处理</small>";
-    container.appendChild(terminalLabel);
-  }
 }
 
 /**
@@ -1680,10 +1553,10 @@ function highlightNodeInNetwork(nodeId) {
       id: nodeId,
       size: size,
       color: {
-        background: "#34a853",
+        background: "#1d3f8f",
         border: borderColor,
         highlight: {
-          background: "#66bb6a",
+          background: "#3a5fb7",
           border: "#000",
         },
       },
@@ -1774,10 +1647,10 @@ function addAgentToNetwork(agent) {
     id: agent.id,
     label: label,
     color: {
-      background: "#34a853",
+      background: "#1d3f8f",
       border: borderColor,
       highlight: {
-        background: "#66bb6a",
+        background: "#3a5fb7",
         border: "#000",
       },
     },
