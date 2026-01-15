@@ -1031,8 +1031,14 @@ function initializeChatSystem() {
   let wsReadyPromise = null;
 
   function getWSUrl() {
-    // ngrok https => 必须 wss
-    return "ws://10.200.1.35:8001/ws";
+    // 页面是 https 就必须 wss
+    const proto = location.protocol === "https:" ? "wss" : "ws";
+  
+    // ✅ 推荐：优先用当前域名（同源部署时最省心）
+    // return `${proto}://${location.host}/ws`;
+  
+    // ✅ 你现在后端在 10.200.1.35:8001，就用这个：
+    return `${proto}://10.200.1.35:8001/ws`;
   }
 
   function ensureWSConnection() {
@@ -1293,18 +1299,26 @@ function initializeChatSystem() {
       header.appendChild(headerStrong);
       answerDiv.appendChild(header);
 
-      const rawResult =
-        data.answer.raw_result ||
-        data.raw_result ||
-        data.answer.rawResult ||
-        null;
-      const parsedRawResult = parseRawResult(rawResult);
-      const parsedText = extractResultText(parsedRawResult);
+      // ✅ 1) 优先用后端已清洗好的 answer_text
+      const answerText =
+      (typeof data.answer_text === "string" && data.answer_text.trim())
+        ? data.answer_text.trim()
+        : (typeof data.answer?.text === "string" && data.answer.text.trim())
+          ? data.answer.text.trim()
+          : "";
 
-      const answerText = data.answer.text || data.answer_text;
-      const parsedAnswerText = parseRawResult(answerText);
-      const fallbackParsedText = extractResultText(parsedAnswerText);
-      const finalText = parsedText || fallbackParsedText || answerText;
+      // ✅ 2) 如果 answer_text 为空，再兜底从 raw_result 里提取（但只当兜底）
+      let fallback = "";
+      if (!answerText) {
+      const rawResult = data.answer?.raw_result || data.raw_result || "";
+      const parsed = parseRawResult(rawResult);
+      fallback = extractResultText(parsed) || "";
+      }
+
+      const finalText = answerText || fallback || "（无可展示输出）";
+
+      appendStreamBlock(answerDiv, "📌 结果:", finalText, STREAM_SPEED.fast);
+      hasAnswer = true;
 
       if (finalText) {
         appendStreamBlock(answerDiv, "📌 结果:", finalText, STREAM_SPEED.fast);
