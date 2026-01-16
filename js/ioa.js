@@ -10,7 +10,7 @@ const agentDatabase = [
     name: "VideoAgent",
     type: "agent",
     status: "active",
-    layer: "terminal",
+    layer: "cloud",
     cpu: 65,
     memory: 72,
     capabilities: [
@@ -19,8 +19,7 @@ const agentDatabase = [
       "frame extraction",
       "real-time streaming",
     ],
-    description:
-      "Terminal-layer agent for video processing and analysis at the edge",
+    description: "Cloud-layer agent for video processing and analysis",
     relevance: 0,
   },
   {
@@ -73,7 +72,7 @@ const agentDatabase = [
     name: "ReportAgent",
     type: "agent",
     status: "active",
-    layer: "cloud",
+    layer: "terminal",
     cpu: 72,
     memory: 80,
     capabilities: [
@@ -83,10 +82,46 @@ const agentDatabase = [
       "export formatting",
     ],
     description:
-      "Cloud-layer agent for generating comprehensive reports from processed data",
+      "Terminal-layer agent for generating comprehensive reports from processed data",
     relevance: 0,
   },
 ];
+
+const LAYER_IMAGES = {
+  cloud: { width: 882, height: 271 },
+  edge: { width: 881, height: 218 },
+  terminal: { width: 883, height: 225 },
+};
+const LAYER_ANCHORS = {
+  cloud: [
+    { x: 219.0, y: 138.0 },
+    { x: 313.0, y: 170.5 },
+    { x: 344.5, y: 67.0 },
+    { x: 480.0, y: 180.0 },
+    { x: 532.5, y: 67.0 },
+    { x: 652.5, y: 119.0 },
+  ],
+  edge: [
+    { x: 137.5, y: 168.5 },
+    { x: 219.5, y: 37.5 },
+    { x: 649.0, y: 167.5 },
+    { x: 730.0, y: 34.0 },
+  ],
+  terminal: [
+    { x: 180.5, y: 146.5 },
+    { x: 188.5, y: 91.0 },
+    { x: 391.5, y: 63.5 },
+    { x: 436.0, y: 178.5 },
+    { x: 439.0, y: 47.5 },
+    { x: 628.5, y: 56.5 },
+    { x: 675.5, y: 105.5 },
+  ],
+};
+const LINK_COLORS = {
+  primary: "#ff6d2d",
+  secondary: "#ffb48f",
+  highlight: "#ff3d00",
+};
 
 // 应用状态
 let appState = {
@@ -157,6 +192,109 @@ function getLayoutMetrics(container) {
   };
 }
 
+function getLayerBandMetrics(container, layer) {
+  const layers = container.querySelector(".topology-layers");
+  if (!layers) return null;
+  const band = layers.querySelector(`.topology-band--${layer}`);
+  if (!band) return null;
+  const containerRect = container.getBoundingClientRect();
+  const bandRect = band.getBoundingClientRect();
+
+  return {
+    width: bandRect.width,
+    height: bandRect.height,
+    left: bandRect.left - containerRect.left,
+    top: bandRect.top - containerRect.top,
+  };
+}
+
+function getAnchorIndex(anchorCount, indexInLayer, totalAgents) {
+  if (!anchorCount) return null;
+  if (totalAgents <= anchorCount) {
+    const projected =
+      Math.round(((indexInLayer + 1) * (anchorCount + 1)) / (totalAgents + 1)) - 1;
+    return Math.max(0, Math.min(anchorCount - 1, projected));
+  }
+  if (indexInLayer < anchorCount) {
+    return indexInLayer;
+  }
+  return null;
+}
+
+function getLayerAnchorDomPosition(container, layer, indexInLayer, totalAgents) {
+  const anchors = LAYER_ANCHORS[layer];
+  const image = LAYER_IMAGES[layer];
+  if (!anchors || !anchors.length || !image) return null;
+
+  const bandMetrics = getLayerBandMetrics(container, layer);
+  if (!bandMetrics) return null;
+
+  const anchorIndex = getAnchorIndex(anchors.length, indexInLayer, totalAgents);
+  if (anchorIndex === null) return null;
+  const anchor = anchors[anchorIndex];
+  const scale = Math.min(
+    bandMetrics.width / image.width,
+    bandMetrics.height / image.height
+  );
+  const renderWidth = image.width * scale;
+  const renderHeight = image.height * scale;
+  const offsetX = (bandMetrics.width - renderWidth) / 2;
+  const offsetY = (bandMetrics.height - renderHeight) / 2;
+
+  return {
+    x: bandMetrics.left + offsetX + anchor.x * scale,
+    y: bandMetrics.top + offsetY + anchor.y * scale,
+  };
+}
+
+function alignNetworkView(network) {
+  if (!network) return;
+  network.moveTo({
+    position: { x: 0, y: 0 },
+    scale: 1,
+    animation: false,
+  });
+}
+
+function getLayerDomPosition(layer, indexInLayer, totalAgents, metrics) {
+  const position = getLayerPosition(layer, indexInLayer, totalAgents, metrics);
+  return {
+    x: position.x + metrics.width / 2,
+    y: position.y + metrics.height / 2,
+  };
+}
+
+function resolveAgentPosition(container, network, agent, indexInLayer, totalAgents) {
+  const metrics = getLayoutMetrics(container);
+  const layer = agent.layer || "edge";
+  const domPosition =
+    getLayerAnchorDomPosition(container, layer, indexInLayer, totalAgents) ??
+    getLayerDomPosition(layer, indexInLayer, totalAgents, metrics);
+
+  if (network && typeof network.DOMtoCanvas === "function") {
+    return network.DOMtoCanvas(domPosition);
+  }
+
+  return {
+    x: domPosition.x - metrics.width / 2,
+    y: domPosition.y - metrics.height / 2,
+  };
+}
+
+function syncTopologyLayout(container, network) {
+  if (!window.networkGraph) return;
+  alignNetworkView(network);
+  applyTopologyLayout(container, window.networkGraph.nodes, network);
+}
+
+function observeTopologyLayout(container, network) {
+  if (!("ResizeObserver" in window)) return;
+  const observer = new ResizeObserver(() => {
+    syncTopologyLayout(container, network);
+  });
+  observer.observe(container);
+}
+
 function getLayerPosition(layer, indexInLayer, totalAgents, metrics) {
   const layerY = {
     cloud: -metrics.verticalGap,
@@ -182,8 +320,7 @@ function getLayerPosition(layer, indexInLayer, totalAgents, metrics) {
   return { x: startX + indexInLayer * spacing, y };
 }
 
-function applyTopologyLayout(container, nodes) {
-  const metrics = getLayoutMetrics(container);
+function applyTopologyLayout(container, nodes, network) {
   const layerGroups = { cloud: [], edge: [], terminal: [] };
 
   agentDatabase.forEach((agent) => {
@@ -195,8 +332,18 @@ function applyTopologyLayout(container, nodes) {
   Object.entries(layerGroups).forEach(([layer, agents]) => {
     const total = agents.length;
     agents.forEach((agent, index) => {
-      const position = getLayerPosition(layer, index, total, metrics);
-      updates.push({ id: agent.id, x: position.x, y: position.y });
+      const position = resolveAgentPosition(
+        container,
+        network,
+        agent,
+        index,
+        total
+      );
+      updates.push({
+        id: agent.id,
+        x: position.x,
+        y: position.y,
+      });
     });
   });
 
@@ -332,8 +479,8 @@ function initializeNetworkGraph() {
         from: agent.id,
         to: edgeAgent.id,
         color: {
-          color: isPrimary ? "#8e7cc3" : "#b9a9e0",
-          highlight: "#5e35b1",
+          color: isPrimary ? LINK_COLORS.primary : LINK_COLORS.secondary,
+          highlight: LINK_COLORS.highlight,
         },
         width: isPrimary ? 2.6 : 2.1,
         dashes: isPrimary ? false : [6, 5],
@@ -351,8 +498,8 @@ function initializeNetworkGraph() {
         from: agent.id,
         to: cloudAgent.id,
         color: {
-          color: isPrimary ? "#5aa9f0" : "#b7d0f2",
-          highlight: "#1a73e8",
+          color: isPrimary ? LINK_COLORS.primary : LINK_COLORS.secondary,
+          highlight: LINK_COLORS.highlight,
         },
         width: isPrimary ? 3.4 : 2.2,
         dashes: isPrimary ? false : [6, 5],
@@ -374,8 +521,9 @@ function initializeNetworkGraph() {
     interaction: {
       navigationButtons: false,
       keyboard: true,
-      zoomView: true,
-      dragView: true,
+      zoomView: false,
+      dragView: false,
+      dragNodes: true,
       hover: true,
       tooltipDelay: 200,
     },
@@ -395,8 +543,11 @@ function initializeNetworkGraph() {
 
   const network = new vis.Network(container, data, options);
   window.networkInstance = network;
-  applyTopologyLayout(container, nodes);
-  network.fit({ animation: false });
+  addNetworkLegend();
+  alignNetworkView(network);
+  applyTopologyLayout(container, nodes, network);
+  observeTopologyLayout(container, network);
+  requestAnimationFrame(() => syncTopologyLayout(container, network));
 
   // 事件监听：节点点击时高亮
   network.on("click", function (params) {
@@ -454,15 +605,13 @@ function initializeNetworkGraph() {
   }, 3000);
 
   // 添加图例说明
-  // addNetworkLegend();
 
   let resizeTimer = null;
   window.addEventListener("resize", () => {
     if (!window.networkGraph || !window.networkInstance) return;
     window.clearTimeout(resizeTimer);
     resizeTimer = window.setTimeout(() => {
-      applyTopologyLayout(container, window.networkGraph.nodes);
-      window.networkInstance.fit({ animation: false });
+      syncTopologyLayout(container, window.networkInstance);
     }, 120);
   });
 }
@@ -1570,11 +1719,12 @@ function addAgentToNetwork(agent) {
   const indexInLayer = layerAgents.findIndex((a) => a.id === agent.id);
   const totalAgents = layerAgents.length;
   const container = document.getElementById("networkGraph");
-  const position = getLayerPosition(
-    layer,
+  const position = resolveAgentPosition(
+    container,
+    window.networkInstance,
+    agent,
     indexInLayer,
-    totalAgents,
-    getLayoutMetrics(container)
+    totalAgents
   );
 
   const label = agent.name;
@@ -1630,8 +1780,8 @@ function addAgentToNetwork(agent) {
         from: agent.id,
         to: edgeAgent.id,
         color: {
-          color: isPrimary ? "#8e7cc3" : "#b9a9e0",
-          highlight: "#5e35b1",
+          color: isPrimary ? LINK_COLORS.primary : LINK_COLORS.secondary,
+          highlight: LINK_COLORS.highlight,
         },
         width: isPrimary ? 2.6 : 2.1,
         dashes: isPrimary ? false : [6, 5],
@@ -1651,8 +1801,8 @@ function addAgentToNetwork(agent) {
         from: terminalAgent.id,
         to: agent.id,
         color: {
-          color: isPrimary ? "#8e7cc3" : "#b9a9e0",
-          highlight: "#5e35b1",
+          color: isPrimary ? LINK_COLORS.primary : LINK_COLORS.secondary,
+          highlight: LINK_COLORS.highlight,
         },
         width: isPrimary ? 2.6 : 2.1,
         dashes: isPrimary ? false : [6, 5],
@@ -1667,8 +1817,8 @@ function addAgentToNetwork(agent) {
         from: agent.id,
         to: cloudAgent.id,
         color: {
-          color: isPrimary ? "#5aa9f0" : "#b7d0f2",
-          highlight: "#1a73e8",
+          color: isPrimary ? LINK_COLORS.primary : LINK_COLORS.secondary,
+          highlight: LINK_COLORS.highlight,
         },
         width: isPrimary ? 3.4 : 2.2,
         dashes: isPrimary ? false : [6, 5],
@@ -1686,8 +1836,8 @@ function addAgentToNetwork(agent) {
         from: edgeAgent.id,
         to: agent.id,
         color: {
-          color: isPrimary ? "#5aa9f0" : "#b7d0f2",
-          highlight: "#1a73e8",
+          color: isPrimary ? LINK_COLORS.primary : LINK_COLORS.secondary,
+          highlight: LINK_COLORS.highlight,
         },
         width: isPrimary ? 3.4 : 2.2,
         dashes: isPrimary ? false : [6, 5],
@@ -1697,8 +1847,7 @@ function addAgentToNetwork(agent) {
     });
   }
 
-  applyTopologyLayout(container, window.networkGraph.nodes);
-  window.networkInstance.fit({ animation: false });
+  syncTopologyLayout(container, window.networkInstance);
 
   console.log("Added agent to network:", agent.name);
 }

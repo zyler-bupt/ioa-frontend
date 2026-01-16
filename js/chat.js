@@ -173,7 +173,7 @@ function addMessage(isAgent, content) {
     // Agent消息
     messageDiv.innerHTML = `
             <div class="header">
-                <img src="img/image.png" alt="Agent">
+                <img src="../img/image.png" alt="Agent">
                 <span>CORE Muti-Agent System</span>
             </div>
             <div class="content">
