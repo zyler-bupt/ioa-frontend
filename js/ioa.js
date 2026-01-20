@@ -1605,11 +1605,7 @@ function initializeChatSystem() {
             loadingDiv.innerHTML = "🧭 正在路由最匹配的 Agent...";
           }
 
-          const payload = msg.data || {};
-          const candidates = payload.routing || [];
-          if (Array.isArray(candidates)) {
-            updateDiscoveryListFromBackend(candidates);
-          }
+          const payload = msg.data
 
           const selected = payload.selected_agent;
           if (selected?.agent_name) {
@@ -1730,13 +1726,23 @@ function initializeChatSystem() {
       (typeof data.answer_text === "string" && data.answer_text.trim()) ||
       "";
 
-    if (typeof data.answer === "object" && data.answer !== null) {
-      const images = Array.isArray(data.answer.images)
-        ? data.answer.images
-        : [];
-      const keyframe = data.answer.keyframe ? [data.answer.keyframe] : [];
-      const allImages = [...images, ...keyframe];
-
+      if (typeof data.answer === "object" && data.answer !== null) {
+        // answer.images: [{url|data_uri|path}, ...]
+        const images = Array.isArray(data.answer.images) ? data.answer.images : [];
+      
+        // answer.keyframe: {url|data_uri|path} 或 string
+        const keyframe = data.answer.keyframe
+          ? [data.answer.keyframe]
+          : [];
+      
+        // ✅ structured.images: [{path: "..."}]
+        const structuredImages = Array.isArray(data.structured?.images)
+          ? data.structured.images
+          : [];
+      
+        // ✅ 合并所有图片来源
+        const allImages = [...images, ...keyframe, ...structuredImages].filter(Boolean);
+      
       if (answerText || allImages.length) {
         answerDiv = createAssistantMessage();
         const header = document.createElement("div");
@@ -1797,113 +1803,120 @@ function initializeChatSystem() {
     }
 
     // 3. 更新右侧Discovery列表 - 兼容多个字段名
-    const candidates = data.candidates || data.routing;
-    if (candidates && Array.isArray(candidates)) {
-      updateDiscoveryListFromBackend(candidates);
+    // 3. 更新右侧Discovery列表 - ✅兼容 routing:{candidates:[]}, routing:[], candidates:[]
+    const candidates =
+    (Array.isArray(data.candidates) && data.candidates) ||
+    (Array.isArray(data.routing) && data.routing) ||
+    (Array.isArray(data.routing?.candidates) && data.routing.candidates) ||
+    [];
+
+    if (candidates.length) {
+    updateDiscoveryListFromBackend(candidates);
     }
 
-    // 4. 高亮拓扑图中被选中的Agent - 兼容多个字段名
-    const selectedAgent = data.best_match || data.selected_agent;
-    if (selectedAgent && selectedAgent.agent_name) {
-      highlightSelectedAgent(selectedAgent.agent_name);
+    // 4. 高亮拓扑图中被选中的Agent - ✅兼容 agent.selected / best_match / selected_agent
+    const selectedAgentName =
+    data.best_match?.agent_name ||
+    data.selected_agent?.agent_name ||
+    data.agent?.selected ||          // 你后端示例里是 agent.selected
+    data.agent_name ||
+    "";
+
+    if (selectedAgentName) {
+    highlightSelectedAgent(selectedAgentName);
     }
+
 
     messages.scrollTop = messages.scrollHeight;
   }
 
   // 根据后端数据更新Discovery列表（兼容routing和candidates格式）
-  function updateDiscoveryListFromBackend(candidates) {
-    const discoveryList = document.getElementById("discoveryList");
-    discoveryList.innerHTML = "";
+  // 根据后端数据更新Discovery列表（兼容routing和candidates格式）
+function updateDiscoveryListFromBackend(candidates) {
+  const discoveryList = document.getElementById("discoveryList");
+  discoveryList.innerHTML = "";
 
-    if (!Array.isArray(candidates)) {
-      console.warn("candidates is not an array:", candidates);
-      return;
+  if (!Array.isArray(candidates)) {
+    console.warn("candidates is not an array:", candidates);
+    return;
+  }
+
+  candidates.forEach((item) => {
+    const card = document.createElement("div");
+    card.className = "agent-card";
+
+    // 1) 统一：优先使用后端给的 match_pct（约定它永远是 0-100 的“百分比”）
+    let matchPercent = NaN;
+
+    if (item.match_pct !== undefined && item.match_pct !== null) {
+      const s = String(item.match_pct).trim();
+      matchPercent = s.includes("%") ? Number(s.replace("%", "")) : Number(s);
+    } else if (item.match !== undefined && item.match !== null) {
+      const m = Number(item.match);
+      matchPercent = Number.isFinite(m) ? m * 100 : NaN;
+    } else if (item.confidence !== undefined && item.confidence !== null) {
+      const confStr = String(item.confidence).trim();
+      if (confStr.includes("%")) {
+        matchPercent = Number(confStr.replace("%", ""));
+      } else {
+        matchPercent = Number(confStr);
+      }
     }
 
-    candidates.forEach((item) => {
-      const card = document.createElement("div");
-      card.className = "agent-card";
+    if (!Number.isFinite(matchPercent)) matchPercent = 0;
+    matchPercent = Math.max(0, Math.min(100, matchPercent));
 
-      // 从confidence或match_pct或match字段解析百分比（新格式中match_pct已是百分比）
-      let matchPercent = 0;
-      if (item.match_pct !== undefined && item.match_pct !== null) {
-        // 新格式：match_pct 已经是百分比数字如 27.450494730368025
-        const num = parseFloat(item.match_pct);
-        // 如果数字大于1，说明已经是百分比
-        matchPercent = num > 1 ? Math.round(num) : Math.round(num * 100);
-      } else if (item.match !== undefined && item.match !== null) {
-        // match 是小数形式 0.2745
-        const num = parseFloat(item.match);
-        matchPercent = num > 1 ? Math.round(num) : Math.round(num * 100);
-      } else if (item.confidence !== undefined && item.confidence !== null) {
-        // confidence 可能是字符串 "27.45%" 或数字 27.45 或 0.2745
-        const confStr = String(item.confidence).trim();
+    // 2) clamp 但不 round（保持与后端一致）
+    matchPercent = Math.max(0, Math.min(100, matchPercent));
 
-        if (confStr.includes("%")) {
-          matchPercent = parseFloat(confStr.replace("%", ""));
-        } else {
-          const num = parseFloat(confStr);
-          matchPercent = num > 1 ? num : Math.round(num * 100);
-        }
-      }
+    // 3) 展示格式（只影响文本，不影响后端匹配）
+    const matchLabel = matchPercent.toFixed(2).replace(/\.00$/, ""); // 23.90 / 24 / 19.65
 
-      // 确保百分比在 0-100 之间
-      matchPercent = Math.min(100, Math.max(0, Math.round(matchPercent)));
+    const capability = item.capability || "未知功能";
 
-      // 获取capability（描述中的功能名）
-      const capability = item.capability || "未知功能";
+    let shortDesc = "";
+    if (item.description) {
+      const descParts = item.description.split("|");
+      shortDesc = descParts.length > 2 ? descParts[2].trim() : item.description.substring(0, 50);
+    }
 
-      // 从description字段提取描述（可能分隔符为 | 或其他）
-      let shortDesc = "";
-      if (item.description) {
-        const descParts = item.description.split("|");
-        shortDesc =
-          descParts.length > 2
-            ? descParts[2].trim()
-            : item.description.substring(0, 50);
-      }
-
-      card.innerHTML = `
-        <input type="checkbox" class="agent-card-checkbox" data-agent-id="${item.agent_name}" data-agent-name="${item.agent_name}">
-        <div class="agent-card-info">
-          <div class="agent-card-name">${item.agent_name}</div>
-          <div style="margin-bottom: 4px;">
-            <span class="agent-card-type agent">${capability}</span>
-          </div>
-          <div class="agent-card-capabilities">${shortDesc}</div>
+    card.innerHTML = `
+      <input type="checkbox" class="agent-card-checkbox" data-agent-id="${item.agent_name}" data-agent-name="${item.agent_name}">
+      <div class="agent-card-info">
+        <div class="agent-card-name">${item.agent_name}</div>
+        <div style="margin-bottom: 4px;">
+          <span class="agent-card-type agent">${capability}</span>
         </div>
-        <div class="agent-card-score">
-          <div class="agent-score">
-            <span class="agent-score-label">匹配度</span>
-            <span class="agent-score-value">${matchPercent}%</span>
-            <div class="relevance-bar">
-              <div class="relevance-fill" style="width: ${matchPercent}%"></div>
-            </div>
+        <div class="agent-card-capabilities">${shortDesc}</div>
+      </div>
+      <div class="agent-card-score">
+        <div class="agent-score">
+          <span class="agent-score-label">匹配度</span>
+          <span class="agent-score-value">${matchLabel}%</span>
+          <div class="relevance-bar">
+            <div class="relevance-fill" style="width: ${matchPercent}%"></div>
           </div>
         </div>
-      `;
+      </div>
+    `;
 
-      // 处理checkbox事件
-      const checkbox = card.querySelector('input[type="checkbox"]');
-      checkbox.addEventListener("change", (e) => {
-        if (e.target.checked) {
-          const agentName = e.target.dataset.agentName;
-          // 根据agent name找到对应的Agent ID并高亮
-          const agent = agentDatabase.find((a) => a.name === agentName);
-          if (agent) {
-            highlightNodeInNetwork(agent.id);
-          }
-        }
-      });
-
-      discoveryList.appendChild(card);
+    const checkbox = card.querySelector('input[type="checkbox"]');
+    checkbox.addEventListener("change", (e) => {
+      if (e.target.checked) {
+        const agentName = e.target.dataset.agentName;
+        const agent = agentDatabase.find((a) => a.name === agentName || a.id === agentName);
+        if (agent) highlightNodeInNetwork(agent.id);
+      }
     });
-  }
+
+    discoveryList.appendChild(card);
+  });
+}
+
 
   // 高亮被选中的Agent
   function highlightSelectedAgent(agentName) {
-    const agent = agentDatabase.find((a) => a.name === agentName);
+    const agent = agentDatabase.find((a) => a.name === agentName || a.id === agentName);
     if (agent) {
       // 高亮拓扑图中的节点
       highlightNodeInNetwork(agent.id);
