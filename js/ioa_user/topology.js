@@ -185,8 +185,57 @@
       if (network && typeof network.DOMtoCanvas === "function") {
         return network.DOMtoCanvas(domPosition);
       }
-  
+
       return { x: domPosition.x - metrics.width / 2, y: domPosition.y - metrics.height / 2 };
+    }
+
+    function getNodeKey(agent) {
+      return agent.node_id || agent.nodeId || agent.nodeLabel || "";
+    }
+
+    function sortExtensionAgents(agents) {
+      return [...agents].sort((a, b) => {
+        const aTime = typeof a.createdAt === "number" ? a.createdAt : 0;
+        const bTime = typeof b.createdAt === "number" ? b.createdAt : 0;
+        if (aTime !== bTime) return aTime - bTime;
+        return String(a.id).localeCompare(String(b.id));
+      });
+    }
+
+    function findAnchorNodeId(nodeKey, nodes) {
+      if (!nodeKey || !nodes) return null;
+      const matches = nodes.get({
+        filter: (node) =>
+          !String(node.id).startsWith("infra-") && (node.id === nodeKey || node.label === nodeKey),
+      });
+      return matches.length ? matches[0].id : null;
+    }
+
+    function getExtensionTreeOffset(index, total) {
+      if (total <= 0) return { x: 0, y: -40 };
+      const row = Math.floor(index / 2);
+      const isRight = index % 2 === 0;
+      const baseSpacing = 240;
+      const rowSpacing = 48;
+      const levelGap = 140;
+      const spread = baseSpacing + row * rowSpacing;
+      const x = (isRight ? 1 : -1) * spread;
+      const y = -(row + 1) * levelGap;
+      return { x, y };
+    }
+
+    function toggleExtensionGroup(nodes, edges, anchorId, forceVisible) {
+      if (!nodes || !edges || !anchorId) return false;
+      const extensions = nodes.get({ filter: (node) => node.extensionFor === anchorId });
+      if (!extensions.length) return false;
+      const shouldShow =
+        typeof forceVisible === "boolean" ? forceVisible : extensions.some((node) => node.hidden);
+      nodes.update(extensions.map((node) => ({ id: node.id, hidden: !shouldShow })));
+      const edgeUpdates = edges
+        .get({ filter: (edge) => edge.extensionFor === anchorId })
+        .map((edge) => ({ id: edge.id, hidden: !shouldShow }));
+      if (edgeUpdates.length) edges.update(edgeUpdates);
+      return true;
     }
   
     function getInfraNodesLayout(metrics) {
@@ -310,11 +359,12 @@
     function applyTopologyLayout(container, nodes, network) {
       const layerGroups = { cloud: [], edge: [], terminal: [] };
       const metrics = getLayoutMetrics(container);
-      window.agentDatabase.forEach((agent) => {
+      const baseAgents = window.agentDatabase.filter((agent) => !agent.isExtension);
+      baseAgents.forEach((agent) => {
         const layer = layerGroups[agent.layer] ? agent.layer : "edge";
         layerGroups[layer].push(agent);
       });
-  
+
       const updates = [];
       Object.entries(layerGroups).forEach(([layer, agents]) => {
         const total = agents.length;
@@ -335,11 +385,44 @@
           }
         });
       });
-  
+
       nodes.update(updates);
-  
+
       const infraUpdates = getInfraNodesLayout(metrics).map((layout) => ({ id: layout.id, x: layout.x, y: layout.y }));
       nodes.update(infraUpdates);
+
+      const extensionAgents = window.agentDatabase.filter((agent) => agent.isExtension);
+      if (extensionAgents.length) {
+        const extensionGroups = new Map();
+        extensionAgents.forEach((agent) => {
+          const nodeKey = getNodeKey(agent);
+          if (!nodeKey) return;
+          if (!extensionGroups.has(nodeKey)) extensionGroups.set(nodeKey, []);
+          extensionGroups.get(nodeKey).push(agent);
+        });
+
+        const extensionUpdates = [];
+        extensionGroups.forEach((agents, nodeKey) => {
+          const anchorId = findAnchorNodeId(nodeKey, nodes);
+          if (!anchorId) return;
+          const anchorPos = nodes.getPositions([anchorId])[anchorId];
+          if (!anchorPos) return;
+          const ordered = sortExtensionAgents(agents);
+          ordered.forEach((agent, index) => {
+            const offset = getExtensionTreeOffset(index, ordered.length);
+            extensionUpdates.push({
+              id: agent.id,
+              x: anchorPos.x + offset.x,
+              y: anchorPos.y + offset.y,
+              size: 14,
+              shape: "image",
+              image: window.TOPOLOGY_ICONS.agent01 || window.TOPOLOGY_ICONS.agent,
+              font: { size: 9, vadjust: 8, color: "#1d3f8f" },
+            });
+          });
+        });
+        if (extensionUpdates.length) nodes.update(extensionUpdates);
+      }
     }
   
     function syncTopologyLayout(container, network) {
@@ -359,12 +442,15 @@
       return { type: index % 2 === 0 ? "curvedCW" : "curvedCCW", roundness };
     }
   
-    function buildTopologyEdges(edgeSet) {
+    function buildTopologyEdges(edgeSet, nodes) {
       edgeSet.clear();
-  
-      const terminalAgents = window.agentDatabase.filter((a) => a.layer === "terminal");
-      const edgeAgents = window.agentDatabase.filter((a) => a.layer === "edge");
-      const cloudAgents = window.agentDatabase.filter((a) => a.layer === "cloud");
+
+      const baseAgents = window.agentDatabase.filter((agent) => !agent.isExtension);
+      const edgeAgents = baseAgents.filter((a) => a.layer === "edge");
+      const cloudAgents = baseAgents.filter((a) => a.layer === "cloud");
+      const EDGE_COLOR = "#2e4f93";
+      const CLOUD_COLOR = "#3b82f6";
+      const TERMINAL_COLOR = "#22c55e";
   
       const addEdge = (from, to, options) => {
         edgeSet.add({
@@ -385,42 +471,28 @@
           [topLeft, bottomLeft],
           [topRight, bottomRight],
         ].forEach(([from, to], index) => {
-          addEdge(from.id, to.id, { color: window.IN_LAYER_COLOR, width: 2.4, dashes: [6, 6], smooth: false });
+          addEdge(from.id, to.id, { color: EDGE_COLOR, width: 2.4, dashes: [6, 6], smooth: false });
         });
         [
           [topLeft, bottomRight],
           [bottomLeft, topRight],
-        ].forEach(([from, to], index) => {
-          addEdge(from.id, to.id, { color: window.IN_LAYER_COLOR, width: 2.2, dashes: [6, 6], smooth: getSmoothStyle(index, 0.12) });
+        ].forEach(([from, to]) => {
+          addEdge(from.id, to.id, { color: EDGE_COLOR, width: 2.2, dashes: [6, 6], smooth: false });
         });
       } else if (edgeAgents.length > 1) {
         edgeAgents.slice(0, -1).forEach((agent, index) => {
-          addEdge(agent.id, edgeAgents[index + 1].id, { color: window.IN_LAYER_COLOR, width: 2.2, dashes: [6, 6], smooth: false });
+          addEdge(agent.id, edgeAgents[index + 1].id, { color: EDGE_COLOR, width: 2.2, dashes: [6, 6], smooth: false });
         });
       }
+
+      // Terminal-to-edge links intentionally omitted for the register view.
   
-      if (terminalAgents.length && edgeAgents.length) {
-        terminalAgents.forEach((agent, index) => {
-          const target = edgeAgents[index % edgeAgents.length];
-          addEdge(agent.id, target.id, { color: window.LINK_COLORS.primary, width: 2.2, dashes: [6, 8], smooth: getSmoothStyle(index, 0.18) });
-        });
-      }
-  
-      if (cloudAgents.length && edgeAgents.length) {
-        const targets =
-          cloudAgents.length === 3 && edgeAgents.length >= 3 ? [1, 2, 3] : cloudAgents.map((_, index) => index % edgeAgents.length);
-  
-        cloudAgents.forEach((agent, index) => {
-          const edgeIndex = targets[index % targets.length] % edgeAgents.length;
-          const target = edgeAgents[edgeIndex];
-          addEdge(agent.id, target.id, { color: window.LINK_COLORS.primary, width: 3.2, dashes: false, smooth: getSmoothStyle(index, 0.24) });
-        });
-      }
+      // Cloud-to-edge direct links intentionally omitted for the register view.
   
       const infraLinks = [
-        { from: "infra-cloud-bot-left", to: "agent-video", color: window.IN_LAYER_COLOR },
-        { from: "infra-cloud-bot-mid", to: "agent-registry", color: window.IN_LAYER_COLOR },
-        { from: "infra-cloud-server", to: "agent-discovery", color: window.IN_LAYER_COLOR },
+        { from: "infra-cloud-bot-left", to: "agent-video", color: CLOUD_COLOR },
+        { from: "infra-cloud-bot-mid", to: "agent-registry", color: CLOUD_COLOR },
+        { from: "infra-cloud-server", to: "agent-discovery", color: CLOUD_COLOR },
       ];
   
       infraLinks.forEach((link, index) => {
@@ -436,7 +508,7 @@
           ["infra-edge-gateway-right", bottomRight],
         ].forEach(([gatewayId, agent], index) => {
           addEdge(gatewayId, agent.id, {
-            color: window.IN_LAYER_COLOR,
+            color: EDGE_COLOR,
             width: 2,
             dashes: [6, 6],
             smooth: getSmoothStyle(index, 0.14),
@@ -450,7 +522,7 @@
           ["infra-edge-gateway-right", last],
         ].forEach(([gatewayId, agent], index) => {
           addEdge(gatewayId, agent.id, {
-            color: window.IN_LAYER_COLOR,
+            color: EDGE_COLOR,
             width: 2,
             dashes: [6, 6],
             smooth: getSmoothStyle(index, 0.14),
@@ -458,10 +530,25 @@
         });
       }
 
+      if (cloudAgents.length) {
+        const gateways = ["infra-edge-gateway-left", "infra-edge-gateway-right"];
+        const gatewayTargets = gateways.filter((id) => nodes && nodes.get(id));
+        const targets = gatewayTargets.length ? gatewayTargets : gateways;
+        cloudAgents.forEach((agent, index) => {
+          const gatewayId = targets[index % targets.length];
+          addEdge(agent.id, gatewayId, {
+            color: CLOUD_COLOR,
+            width: 2.4,
+            dashes: [6, 6],
+            smooth: getSmoothStyle(index, 0.2),
+          });
+        });
+      }
+
       const edgeAgentExtensions = Object.entries(EDGE_AGENT01_MAP).map(([agentId, extensionId]) => ({
         from: agentId,
         to: extensionId,
-        color: window.IN_LAYER_COLOR,
+        color: EDGE_COLOR,
       }));
 
       edgeAgentExtensions.forEach((link, index) => {
@@ -474,15 +561,75 @@
         "infra-terminal-desktop-left",
         "infra-terminal-desktop-right",
         "infra-terminal-phone-right",
-        "infra-terminal-user-left",
       ];
-  
-      if (edgeAgents.length) {
-        terminalDevices.forEach((id, index) => {
-          const target = edgeAgents[index % edgeAgents.length];
-          addEdge(id, target.id, { color: window.LINK_COLORS.primary, width: 2, dashes: [6, 8], smooth: getSmoothStyle(index, 0.18) });
+
+      const terminalUser = "infra-terminal-user-left";
+      terminalDevices.forEach((deviceId, index) => {
+        addEdge(terminalUser, deviceId, {
+          color: TERMINAL_COLOR,
+          width: 2,
+          dashes: [6, 6],
+          smooth: getSmoothStyle(index, 0.14),
         });
+      });
+
+      const gateways = ["infra-edge-gateway-left", "infra-edge-gateway-right"];
+      const gatewayTargets = gateways.filter((id) => nodes && nodes.get(id));
+      const deviceGateways = gatewayTargets.length ? gatewayTargets : gateways;
+      terminalDevices.forEach((deviceId, index) => {
+        addEdge(deviceId, deviceGateways[index % deviceGateways.length], {
+          color: TERMINAL_COLOR,
+          width: 2,
+          dashes: [6, 6],
+          smooth: getSmoothStyle(index, 0.12),
+        });
+      });
+
+      if (nodes) {
+        appendExtensionEdges(edgeSet, nodes);
       }
+    }
+
+    function appendExtensionEdges(edgeSet, nodes) {
+      const extensionAgents = window.agentDatabase.filter((agent) => agent.isExtension);
+      if (!extensionAgents.length) return;
+
+      const grouped = new Map();
+      extensionAgents.forEach((agent) => {
+        const nodeKey = getNodeKey(agent);
+        if (!nodeKey) return;
+        if (!grouped.has(nodeKey)) grouped.set(nodeKey, []);
+        grouped.get(nodeKey).push(agent);
+      });
+
+      grouped.forEach((agents, nodeKey) => {
+        const anchorId = findAnchorNodeId(nodeKey, nodes);
+        if (!anchorId) return;
+        const ordered = sortExtensionAgents(agents);
+        ordered.forEach((agent, index) => {
+          const parentId = index === 0 ? anchorId : ordered[Math.floor((index - 1) / 2)].id;
+          const edgeId = `extension-${anchorId}-${agent.id}`;
+          const node = nodes.get(agent.id);
+          const parentNode = nodes.get(parentId);
+          const hidden = (node && node.hidden) || (parentNode && parentNode.hidden) || false;
+          const payload = {
+            id: edgeId,
+            from: parentId,
+            to: agent.id,
+            color: { color: window.IN_LAYER_COLOR, highlight: window.LINK_COLORS.highlight },
+            width: 1.6,
+            dashes: [4, 6],
+            smooth: { type: "curvedCW", roundness: 0.2 },
+            hidden,
+            extensionFor: anchorId,
+          };
+          if (edgeSet.get(edgeId)) {
+            edgeSet.update(payload);
+          } else {
+            edgeSet.add(payload);
+          }
+        });
+      });
     }
   
     function getNodeStyleForLayer(layer) {
@@ -553,7 +700,9 @@
         edgeAgentVisibility[id] = false;
       });
   
-      const nodeItems = window.agentDatabase.map((agent) => {
+      const baseAgents = window.agentDatabase.filter((agent) => !agent.isExtension);
+
+      const nodeItems = baseAgents.map((agent) => {
         const layer = agent.layer || "edge";
         const style = getNodeStyleForLayer(layer);
         const baseColor = "#1d3f8f";
@@ -564,7 +713,7 @@
               ? window.TOPOLOGY_ICONS.server01
               : window.TOPOLOGY_ICONS.agent;
   
-        const layerAgents = window.agentDatabase.filter((a) => a.layer === layer);
+        const layerAgents = baseAgents.filter((a) => a.layer === layer);
         const indexInLayer = layerAgents.findIndex((a) => a.id === agent.id);
         const totalAgents = layerAgents.length;
   
@@ -601,12 +750,12 @@
         };
       });
   
-      const edgeAgentExtensions = window.agentDatabase
+      const edgeAgentExtensions = baseAgents
         .filter((agent) => (agent.layer || "edge") === "edge")
         .map((agent) => {
           const extensionId = EDGE_AGENT01_MAP[agent.id];
           if (!extensionId) return null;
-          const layerAgents = window.agentDatabase.filter((a) => a.layer === "edge");
+          const layerAgents = baseAgents.filter((a) => a.layer === "edge");
           const indexInLayer = layerAgents.findIndex((a) => a.id === agent.id);
           const totalAgents = layerAgents.length;
           const position = getLayerPosition("edge", indexInLayer, totalAgents, layoutMetrics);
@@ -644,8 +793,8 @@
   
       const nodes = new vis.DataSet(nodeItems);
       const edgeSet = new vis.DataSet();
-      buildTopologyEdges(edgeSet);
-  
+      buildTopologyEdges(edgeSet, nodes);
+
       window.networkGraph = { nodes, edges: edgeSet };
 
       const toggleInfraCloudNode = (infraId) => {
@@ -666,7 +815,7 @@
         physics: { enabled: false },
         interaction: {
           navigationButtons: false,
-          keyboard: true,
+          keyboard: false,
           zoomView: false,
           dragView: false,
           dragNodes: true,
@@ -689,19 +838,25 @@
       network.on("click", function (params) {
         if (params.nodes.length > 0) {
           const selectedNodeId = params.nodes[0];
+          let handled = false;
           const infraId = CLOUD_INFRA_MAP[selectedNodeId];
           if (infraId) {
             toggleInfraCloudNode(infraId);
-            return;
+            handled = true;
           }
           const isEdgeAgent = window.agentDatabase.some(
             (agent) => agent.id === selectedNodeId && (agent.layer || "edge") === "edge"
           );
           if (isEdgeAgent) {
             toggleEdgeAgentExtension(selectedNodeId);
-            return;
+            handled = true;
           }
-          highlightNodeInNetwork(selectedNodeId);
+          if (toggleExtensionGroup(nodes, edgeSet, selectedNodeId)) {
+            handled = true;
+          }
+          if (!handled) {
+            highlightNodeInNetwork(selectedNodeId);
+          }
         }
       });
   
@@ -802,7 +957,67 @@
         console.error("Network graph not initialized");
         return;
       }
-  
+
+      const nodes = window.networkGraph.nodes;
+      const edges = window.networkGraph.edges;
+      const container = document.getElementById("networkGraph");
+      const nodeKey = getNodeKey(agent);
+      const anchorId = findAnchorNodeId(nodeKey, nodes);
+
+      if (anchorId) {
+        agent.isExtension = true;
+        const existingExtensions = nodes.get({ filter: (node) => node.extensionFor === anchorId });
+        const shouldShow = existingExtensions.some((node) => !node.hidden);
+        const extensionAgents = sortExtensionAgents(
+          window.agentDatabase.filter((item) => item.isExtension && getNodeKey(item) === nodeKey)
+        );
+        const extensionIndex = Math.max(0, extensionAgents.findIndex((item) => item.id === agent.id));
+        const offset = getExtensionTreeOffset(extensionIndex, extensionAgents.length);
+        const anchorPos = window.networkInstance.getPositions([anchorId])[anchorId];
+        const position = anchorPos
+          ? { x: anchorPos.x + offset.x, y: anchorPos.y + offset.y }
+          : { x: 0, y: 0 };
+
+        const extensionPayload = {
+          id: agent.id,
+          label: agent.name,
+          shape: "image",
+          image: window.TOPOLOGY_ICONS.agent01 || window.TOPOLOGY_ICONS.agent,
+          x: position.x,
+          y: position.y,
+          size: 14,
+          fixed: true,
+          physics: false,
+          selectable: false,
+          hover: false,
+          hidden: !shouldShow,
+          extensionFor: anchorId,
+          font: {
+            size: 9,
+            color: "#1d3f8f",
+            align: "center",
+            vadjust: 8,
+            strokeWidth: 3,
+            strokeColor: "rgba(247, 249, 252, 0.9)",
+          },
+        };
+
+        if (nodes.get(agent.id)) {
+          nodes.update(extensionPayload);
+        } else {
+          nodes.add(extensionPayload);
+        }
+
+        buildTopologyEdges(edges, nodes);
+        syncTopologyLayout(container, window.networkInstance);
+        if (shouldShow) {
+          toggleExtensionGroup(nodes, edges, anchorId, true);
+        }
+        console.log("Added agent to network:", agent.name);
+        return;
+      }
+
+      agent.isExtension = false;
       const layer = agent.layer || "edge";
       const style = getNodeStyleForLayer(layer);
       const baseColor = "#1d3f8f";
@@ -812,15 +1027,14 @@
           : layer === "edge"
             ? window.TOPOLOGY_ICONS.server01
             : window.TOPOLOGY_ICONS.agent;
-  
-      const layerAgents = window.agentDatabase.filter((a) => a.layer === layer);
+
+      const layerAgents = window.agentDatabase.filter((a) => a.layer === layer && !a.isExtension);
       const indexInLayer = layerAgents.findIndex((a) => a.id === agent.id);
       const totalAgents = layerAgents.length;
-  
-      const container = document.getElementById("networkGraph");
+
       const position = resolveAgentPosition(container, window.networkInstance, agent, indexInLayer, totalAgents);
-  
-      window.networkGraph.nodes.add({
+
+      nodes.add({
         id: agent.id,
         label: agent.nodeLabel || agent.name,
         shape: "image",
@@ -847,8 +1061,8 @@
         title: `<b>${agent.name}</b><br>Layer: ${layer.toUpperCase()}<br>CPU: ${agent.cpu}%<br>Memory: ${agent.memory}%<br>Resources: ${(((agent.cpu + agent.memory) / 2)).toFixed(0)}%`,
         layer,
       });
-  
-      buildTopologyEdges(window.networkGraph.edges);
+
+      buildTopologyEdges(edges, nodes);
       syncTopologyLayout(container, window.networkInstance);
       console.log("Added agent to network:", agent.name);
     }

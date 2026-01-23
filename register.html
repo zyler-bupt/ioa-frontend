@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register New Agent - IOA</title>
   <link rel="stylesheet" href="css/register-style.css">
+  <link rel="stylesheet" href="https://unpkg.com/vis-network/standalone/umd/vis-network.min.css">
 </head>
 
 <body>
@@ -16,7 +17,21 @@
   </header>
 
   <div class="register-container">
-    <div class="register-card">
+    <section class="agent-list-panel layout-list">
+      <div class="agent-list-card">
+        <div class="agent-list-header">
+          <h3>Registered Agents</h3>
+          <div class="agent-list-controls">
+            <button type="button" class="agent-list-action agent-bulk-toggle" id="agentBulkToggle">Remove</button>
+            <button type="button" class="agent-list-action agent-bulk-delete" id="agentBulkDelete" disabled>Delete</button>
+            <span class="agent-count" id="agentCountLabel">0</span>
+          </div>
+        </div>
+        <div id="agentList" class="agent-list"></div>
+      </div>
+    </section>
+
+    <section class="register-card layout-form">
       <div class="register-header">
         <h2>Register New Agent</h2>
         <p>Add a new agent to the IOA network</p>
@@ -32,36 +47,9 @@
           </div>
 
           <div class="form-group">
-            <label for="agentType">Agent Type *</label>
-            <select id="agentType" required>
-              <option value="">Select Type</option>
-              <option value="agent">Agent</option>
-              <option value="llm">LLM</option>
-              <option value="tool">Tool</option>
-              <option value="compute">Computing Power</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="agentLayer">Architecture Layer *</label>
-            <select id="agentLayer" required>
-              <option value="">Select Layer</option>
-              <option value="terminal">Terminal Layer (终端层)</option>
-              <option value="edge">Edge Layer (边缘层)</option>
-              <option value="cloud">Cloud Layer (云层)</option>
-            </select>
-            <small class="form-hint">Logical layer only; the physical node is selected below.</small>
-          </div>
-
-          <div class="form-group">
             <label for="agentNodeId">Registered Node (node_id) *</label>
             <select id="agentNodeId" required>
               <option value="">Select Node</option>
-              <!-- Terminal Layer Nodes -->
-              <option value="terminal-pc-joe" data-layer="terminal">terminal-pc-joe</option>
-              <option value="terminal-drone-07" data-layer="terminal">terminal-drone-07</option>
-              <option value="terminal-camera-01" data-layer="terminal">terminal-camera-01</option>
-              <option value="terminal-sensor-02" data-layer="terminal">terminal-sensor-02</option>
               <!-- Edge Layer Nodes -->
               <option value="edge-bj-01" data-layer="edge">edge-bj-01</option>
               <option value="edge-bj-02" data-layer="edge">edge-bj-02</option>
@@ -72,13 +60,19 @@
               <option value="cloud-bj-01" data-layer="cloud">cloud-bj-01</option>
               <option value="cloud-sh-01" data-layer="cloud">cloud-sh-01</option>
             </select>
-            <small class="form-hint">node_id tells the system where this agent is physically attached.</small>
+            <small class="form-hint">Select the node to register; the layer will be inferred automatically.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="agentDns">Agent DNS *</label>
+            <input type="text" id="agentDns" placeholder="acrg://org/category/name@serverId" required>
+            <small class="form-hint">Format: acrg://org/{category}/{name}@{serverId} (category: perception, planning, execution, service)</small>
           </div>
 
           <div class="form-group">
             <label for="agentEndpoint">Agent Endpoint *</label>
-            <input type="text" id="agentEndpoint" placeholder="http://10.200.1.77:8000/a2a" required>
-            <small class="form-hint">endpoint tells the system how to reach the agent on the network.</small>
+            <input type="text" id="agentEndpoint" placeholder="10.200.1.77" required>
+            <small class="form-hint">Enter the service IP address provided by the vendor.</small>
           </div>
 
           <div class="form-group">
@@ -89,22 +83,6 @@
           <div class="form-group">
             <label for="agentCapabilities">Key Capabilities *</label>
             <input type="text" id="agentCapabilities" placeholder="e.g., video analysis, image processing, reporting (comma separated)" required>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <h3>Resource Allocation</h3>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="agentCpu">CPU Allocation (%)</label>
-              <input type="number" id="agentCpu" min="0" max="100" value="50" placeholder="50">
-            </div>
-
-            <div class="form-group">
-              <label for="agentMemory">Memory Allocation (%)</label>
-              <input type="number" id="agentMemory" min="0" max="100" value="50" placeholder="50">
-            </div>
           </div>
         </div>
 
@@ -122,40 +100,20 @@
           <button type="submit" class="btn-primary">Register Agent</button>
         </div>
       </form>
-    </div>
+    </section>
 
-    <div class="info-panel">
-      <div class="info-card">
-        <h3>What is an Agent?</h3>
-        <p>An agent is an autonomous entity in the IOA network that can perform specific tasks. It can be a specialized service, an LLM instance, a tool, or a computing resource.</p>
+    <section class="topology-panel layout-topology">
+      <div class="network-section">
+        <h2>Network Topology</h2>
+        <p class="section-description">Live map of the IOA network and registered agents.</p>
+        <div id="networkGraph" class="network-container" data-fit="true"></div>
       </div>
-
-      <div class="info-card">
-        <h3>Agent Types</h3>
-        <ul>
-          <li><strong>Agent:</strong> Task-performing service</li>
-          <li><strong>LLM:</strong> Language model instance</li>
-          <li><strong>Tool:</strong> Utility service</li>
-          <li><strong>Computing:</strong> Computing resource</li>
-        </ul>
-      </div>
-
-      <div class="info-card">
-        <h3>Resource Allocation</h3>
-        <p>Set the percentage of CPU and memory this agent can use. The system will manage resource allocation dynamically.</p>
-      </div>
-
-      <div class="info-card">
-        <h3>Node &amp; Endpoint</h3>
-        <ul>
-          <li><strong>node_id:</strong> Physical node identity, tells the system where the agent hangs.</li>
-          <li><strong>endpoint:</strong> Access address, tells the system how to connect.</li>
-          <li><strong>Node source:</strong> Use a Node Registry (recommended) or fill manually if no registry.</li>
-        </ul>
-      </div>
-    </div>
+    </section>
   </div>
 
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <script src="js/ioa_user/core.js"></script>
+  <script src="js/ioa_user/topology.js"></script>
   <script src="js/register.js"></script>
 </body>
 
