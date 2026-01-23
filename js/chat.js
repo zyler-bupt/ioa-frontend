@@ -307,14 +307,23 @@ function initializeChat() {
 }
 
 // 事件监听
-document.addEventListener('DOMContentLoaded', () => {
-  initWebSocket(); // 初始化 WebSocket 连接
-  initializeChat(); // 添加初始化对话
-  sendButton.addEventListener('click', sendMessage);
+function bootIOA() {
+  console.log("IOA Application Initializing...");
 
-  userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      sendMessage();
-    }
-  });
-}); 
+  // ✅ 先启动聊天（欢迎语必出）
+  initializeChatSystem();
+
+  // ✅ 其他模块不影响 chat
+  try { window.initializeStats?.(); } catch (e) { console.error(e); }
+  try { window.initializeNetworkGraph?.(); } catch (e) { console.error(e); }
+  try { window.initializeDiscoveryProcess?.(); } catch (e) { console.error(e); }
+  try { window.loadNewAgents?.(); } catch (e) { console.error(e); }
+
+  console.log("IOA Application Ready!");
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootIOA, { once: true });
+} else {
+  bootIOA();
+}

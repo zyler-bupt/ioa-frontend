@@ -420,61 +420,122 @@ header {
   z-index: 1;
   pointer-events: none;
 }
-
 .topology-band {
-  border-radius: 18px;
+  --band-top: #ebf2ff;
+  --band-bottom: #d2deff;
+  --band-edge: rgba(90, 130, 220, 0.25);
+  --band-side: #8fa3d4;
+  --band-right: #7a90c6;
+  --band-depth-x: 26px;
+  --band-depth-y: 22px;
+  
+  /* 主要调整部分 */
+  border-radius: 8px;
   position: relative;
-  overflow: hidden;
-  border: 1px solid transparent;
-  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+  overflow: visible;
+  border: none;
+  box-shadow: none;
+  
+  /* 旋转角度调整：X、Y、Z轴 */
   transform: none;
+  
+  isolation: isolate;
+}
+
+.topology-band-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  border: 1px solid var(--band-edge);
+  background-image: linear-gradient(120deg, var(--band-top), var(--band-bottom));
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
+  clip-path: polygon(12% 0, 100% 0, 88% 100%, 0% 100%);
+  z-index: 0;
 }
 
-.topology-band::after {
+.topology-band-face::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(70% 120% at 12% 20%, rgba(255, 255, 255, 0.4), transparent 65%);
-  opacity: 0.7;
+  transform: translate(var(--band-depth-x), var(--band-depth-y));
+  border-radius: 8px;
+  background-color: var(--band-side);
+  clip-path: polygon(
+    0% calc(100% - var(--band-depth-y)),
+    88% calc(100% - var(--band-depth-y)),
+    88% 100%,
+    0% 100%
+  );
+  box-shadow: 0 20px 24px rgba(15, 23, 42, 0.26);
+  z-index: -2;
+}
+
+.topology-band-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translate(var(--band-depth-x), var(--band-depth-y));
+  border-radius: 8px;
+  background-color: var(--band-right);
+  clip-path: polygon(
+    calc(100% - var(--band-depth-x)) 0%,
+    100% 0%,
+    88% 100%,
+    calc(88% - var(--band-depth-x)) 100%
+  );
+  box-shadow: 0 14px 20px rgba(15, 23, 42, 0.24);
+  opacity: 1;
+  z-index: -1;
 }
 
 .topology-band--cloud {
-  background-image: linear-gradient(120deg, rgba(225, 235, 255, 0.95), rgba(199, 217, 255, 0.9));
-  border-color: rgba(90, 130, 220, 0.25);
+  --band-top: #e4eeff;
+  --band-bottom: #c6d9ff;
+  --band-edge: rgba(90, 130, 220, 0.3);
+  --band-side: #8fa3d4;
+  --band-right: #7a90c6;
 }
 
 .topology-band--edge {
-  background-image: linear-gradient(120deg, rgba(255, 237, 214, 0.95), rgba(255, 214, 170, 0.9));
-  border-color: rgba(236, 140, 60, 0.25);
+  --band-top: #ffeed6;
+  --band-bottom: #ffd6aa;
+  --band-edge: rgba(236, 140, 60, 0.3);
+  --band-side: #cc985f;
+  --band-right: #b8854e;
 }
 
 .topology-band--terminal {
-  background-image: linear-gradient(120deg, rgba(231, 248, 216, 0.95), rgba(205, 234, 178, 0.9));
-  border-color: rgba(105, 160, 70, 0.25);
+  --band-top: #e7f8d8;
+  --band-bottom: #cdeab2;
+  --band-edge: rgba(105, 160, 70, 0.3);
+  --band-side: #97b874;
+  --band-right: #7ea65f;
 }
 
 .layer-tag {
   position: absolute;
-  top: 12px;
-  left: 18px;
+  top: 10px;
+  left: 27px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  padding: 0;
+  padding: 6px 10px;
   border-radius: 8px;
   color: inherit;
   font-weight: 700;
   font-size: 0.78em;
   letter-spacing: 0.3px;
   text-transform: uppercase;
-  box-shadow: none;
+  background-color: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
   pointer-events: none;
   text-align: left;
   transform: none;
+  z-index: 3;
 }
 
 .layer-tag span {
@@ -711,10 +772,6 @@ header {
   color: #34a853;
 }
 
-.agent-card-status::before {
-  content: "● ";
-  margin-right: 4px;
-}
 
 .agent-card-capabilities {
   font-size: 0.75em;
@@ -761,7 +818,7 @@ header {
   font-weight: 800;
   white-space: nowrap;
 }
-
+/* 
 .relevance-bar {
   width: 80px;
   height: 5px;
@@ -770,7 +827,7 @@ header {
   margin-top: 6px;
   overflow: hidden;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-}
+} */
 
 .relevance-fill {
   height: 100%;
@@ -1140,3 +1197,18 @@ header {
   font-size: 0.85em;
   opacity: 0.95;
 }
+
+/* 网络拥塞灯 */
+.net-lamp{
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-left: 8px;
+  vertical-align: middle;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.15);
+}
+
+.net-green { background: #22c55e; }   /* 低拥塞 */
+.net-yellow{ background: #f59e0b; }   /* 中拥塞 */
+.net-red   { background: #ef4444; }   /* 高拥塞 */
