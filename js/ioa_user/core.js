@@ -208,7 +208,7 @@
     };
   
     const LINK_COLORS = { primary: "#ff6d2d", secondary: "#ffb48f", highlight: "#ff3d00" };
-    const IN_LAYER_COLOR = "#2e4f93";
+    const IN_LAYER_COLOR = "#f2a14b";
   
     // 应用状态
     let appState = {

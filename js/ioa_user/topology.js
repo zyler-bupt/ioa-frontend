@@ -211,16 +211,18 @@
       return matches.length ? matches[0].id : null;
     }
 
-    function getExtensionTreeOffset(index, total) {
-      if (total <= 0) return { x: 0, y: -40 };
+    function getExtensionTreeOffset(index, total, metrics) {
+      if (total <= 0) return { x: 0, y: 0 };
       const row = Math.floor(index / 2);
       const isRight = index % 2 === 0;
-      const baseSpacing = 240;
-      const rowSpacing = 48;
-      const levelGap = 140;
+      const width = metrics?.width || 600;
+      const height = metrics?.height || 400;
+      const baseSpacing = Math.max(36, Math.round(width * 0.06));
+      const rowSpacing = Math.max(12, Math.round(baseSpacing * 0.4));
+      const levelGap = Math.max(28, Math.round(height * 0.06));
       const spread = baseSpacing + row * rowSpacing;
       const x = (isRight ? 1 : -1) * spread;
-      const y = -(row + 1) * levelGap;
+      const y = -row * levelGap;
       return { x, y };
     }
 
@@ -409,7 +411,7 @@
           if (!anchorPos) return;
           const ordered = sortExtensionAgents(agents);
           ordered.forEach((agent, index) => {
-            const offset = getExtensionTreeOffset(index, ordered.length);
+            const offset = getExtensionTreeOffset(index, ordered.length, metrics);
             extensionUpdates.push({
               id: agent.id,
               x: anchorPos.x + offset.x,
@@ -474,7 +476,7 @@
       const baseAgents = window.agentDatabase.filter((agent) => !agent.isExtension);
       const edgeAgents = baseAgents.filter((a) => a.layer === "edge");
       const cloudAgents = baseAgents.filter((a) => a.layer === "cloud");
-      const EDGE_COLOR = "#2e4f93";
+      const EDGE_COLOR = window.IN_LAYER_COLOR || "#ffd6aa";
       const CLOUD_COLOR = "#3b82f6";
       const TERMINAL_COLOR = "#22c55e";
   
@@ -952,7 +954,6 @@
             strokeColor: "rgba(247, 249, 252, 0.9)",
           },
           shadow: { enabled: true, color: style.shadowColor, size: style.shadowSize, x: 0, y: 5 },
-          title: `<b>${agent.name}</b><br>Layer: ${layer.toUpperCase()}<br>CPU: ${agent.cpu}%<br>Memory: ${agent.memory}%<br>Resources: ${(((agent.cpu + agent.memory) / 2)).toFixed(0)}%`,
           layer,
         };
       });
@@ -1181,7 +1182,8 @@
           window.agentDatabase.filter((item) => item.isExtension && getNodeKey(item) === nodeKey)
         );
         const extensionIndex = Math.max(0, extensionAgents.findIndex((item) => item.id === agent.id));
-        const offset = getExtensionTreeOffset(extensionIndex, extensionAgents.length);
+        const metrics = getLayoutMetrics(container);
+        const offset = getExtensionTreeOffset(extensionIndex, extensionAgents.length, metrics);
         const anchorPos = window.networkInstance.getPositions([anchorId])[anchorId];
         const position = anchorPos
           ? { x: anchorPos.x + offset.x, y: anchorPos.y + offset.y }
@@ -1267,7 +1269,6 @@
           strokeColor: "rgba(247, 249, 252, 0.9)",
         },
         shadow: { enabled: true, color: style.shadowColor, size: style.shadowSize, x: 0, y: 4 },
-        title: `<b>${agent.name}</b><br>Layer: ${layer.toUpperCase()}<br>CPU: ${agent.cpu}%<br>Memory: ${agent.memory}%<br>Resources: ${(((agent.cpu + agent.memory) / 2)).toFixed(0)}%`,
         layer,
       });
 
