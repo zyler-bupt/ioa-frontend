@@ -441,6 +441,32 @@
     function getSmoothStyle(index, roundness) {
       return { type: index % 2 === 0 ? "curvedCW" : "curvedCCW", roundness };
     }
+
+    const EDGE_LATENCY_MIN = 8;
+    const EDGE_LATENCY_MAX = 120;
+
+    function getEdgeLatencyKey(from, to) {
+      return from < to ? `${from}|${to}` : `${to}|${from}`;
+    }
+
+    function getEdgeLatency(from, to) {
+      if (!window.edgeLatencyMap) {
+        window.edgeLatencyMap = new Map();
+      }
+      const key = getEdgeLatencyKey(from, to);
+      if (!window.edgeLatencyMap.has(key)) {
+        const value =
+          EDGE_LATENCY_MIN +
+          Math.round(Math.random() * (EDGE_LATENCY_MAX - EDGE_LATENCY_MIN));
+        window.edgeLatencyMap.set(key, value);
+      }
+      return window.edgeLatencyMap.get(key);
+    }
+
+    function getEdgeTitle(from, to) {
+      const latency = getEdgeLatency(from, to);
+      return `延迟: ${latency}ms`;
+    }
   
     function buildTopologyEdges(edgeSet, nodes) {
       edgeSet.clear();
@@ -460,6 +486,7 @@
           width: options.width,
           dashes: options.dashes,
           smooth: options.smooth,
+          title: getEdgeTitle(from, to),
         });
       };
   
@@ -590,6 +617,185 @@
       }
     }
 
+    function startEdgeFlowAnimation(edgeSet) {
+      if (window.edgeFlowTimer) {
+        window.clearInterval(window.edgeFlowTimer);
+      }
+
+      let offset = 0;
+      window.edgeFlowTimer = window.setInterval(() => {
+        offset = (offset + 1) % 1000;
+        const updates = [];
+        edgeSet.forEach((edge) => {
+          if (!edge.dashes) return;
+          let length = 6;
+          let gap = 6;
+          if (Array.isArray(edge.dashes)) {
+            length = Number(edge.dashes[0]) || length;
+            gap = Number(edge.dashes[1]) || gap;
+          } else if (edge.dashes && typeof edge.dashes === "object") {
+            length = Number(edge.dashes.length) || length;
+            gap = Number(edge.dashes.gap) || gap;
+          }
+          updates.push({
+            id: edge.id,
+            dashes: { enabled: true, length, gap, dashOffset: -offset },
+          });
+        });
+        if (updates.length) {
+          edgeSet.update(updates);
+        }
+      }, 40);
+    }
+
+    function startEdgeDotFlow(network, edgeSet, container) {
+      if (window.edgeDotFlow?.raf) {
+        window.cancelAnimationFrame(window.edgeDotFlow.raf);
+      }
+      if (window.edgeDotFlow?.observer) {
+        window.edgeDotFlow.observer.disconnect();
+      }
+
+      if (getComputedStyle(container).position === "static") {
+        container.style.position = "relative";
+      }
+
+      let canvas = container.querySelector(".edge-flow-canvas");
+      if (!canvas) {
+        canvas = document.createElement("canvas");
+        canvas.className = "edge-flow-canvas";
+        canvas.style.zIndex = "5";
+        container.appendChild(canvas);
+      }
+
+      const ctx = canvas.getContext("2d");
+      const state = { t: 0, dashOffset: 0, raf: 0, observer: null };
+      window.edgeDotFlow = state;
+
+      const resize = () => {
+        const dpr = window.devicePixelRatio || 1;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        canvas.width = Math.max(1, Math.floor(width * dpr));
+        canvas.height = Math.max(1, Math.floor(height * dpr));
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      };
+
+      resize();
+
+      if ("ResizeObserver" in window) {
+        const observer = new ResizeObserver(resize);
+        observer.observe(container);
+        state.observer = observer;
+      } else {
+        window.addEventListener("resize", resize);
+      }
+
+      const speed = 0.008;
+      const dashSpeed = 1.2;
+      const dotRadius = 2.6;
+
+      const getDashPattern = (edge) => {
+        if (!edge || !edge.dashes) return null;
+        if (edge.dashes === true) return [6, 6];
+        let length = 6;
+        let gap = 6;
+        let altLength = null;
+        let altGap = null;
+        if (Array.isArray(edge.dashes)) {
+          length = Number(edge.dashes[0]) || length;
+          gap = Number(edge.dashes[1]) || gap;
+          altLength = Number(edge.dashes[2]);
+          altGap = Number(edge.dashes[3]);
+        } else if (typeof edge.dashes === "object") {
+          length = Number(edge.dashes.length) || length;
+          gap = Number(edge.dashes.gap) || gap;
+          altLength = Number(edge.dashes.altLength);
+          altGap = Number(edge.dashes.altGap);
+        }
+        const pattern = [length, gap];
+        if (Number.isFinite(altLength) && Number.isFinite(altGap)) {
+          pattern.push(altLength, altGap);
+        }
+        return pattern;
+      };
+
+      const drawEdgePath = (start, end, smooth) => {
+        if (!smooth || smooth === false) {
+          ctx.beginPath();
+          ctx.moveTo(start.x, start.y);
+          ctx.lineTo(end.x, end.y);
+          ctx.stroke();
+          return;
+        }
+
+        const roundness = typeof smooth.roundness === "number" ? smooth.roundness : 0.2;
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const distance = Math.hypot(dx, dy) || 1;
+        const nx = -dy / distance;
+        const ny = dx / distance;
+        const direction = smooth.type === "curvedCCW" ? 1 : -1;
+        const offset = distance * roundness * direction;
+        const cx = (start.x + end.x) / 2 + nx * offset;
+        const cy = (start.y + end.y) / 2 + ny * offset;
+
+        ctx.beginPath();
+        ctx.moveTo(start.x, start.y);
+        ctx.quadraticCurveTo(cx, cy, end.x, end.y);
+        ctx.stroke();
+      };
+
+      const render = () => {
+        state.t = (state.t + speed) % 1;
+        state.dashOffset = (state.dashOffset + dashSpeed) % 1000;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const positions = network.getPositions();
+        edgeSet.forEach((edge, index) => {
+          if (edge.hidden) return;
+          const from = positions[edge.from];
+          const to = positions[edge.to];
+          if (!from || !to) return;
+
+          const start = network.canvasToDOM(from);
+          const end = network.canvasToDOM(to);
+
+          const pattern = getDashPattern(edge);
+          if (pattern) {
+            ctx.save();
+            ctx.strokeStyle = edge.color?.color || window.LINK_COLORS.primary;
+            ctx.lineWidth = Math.max(1, (edge.width || 2) + 0.6);
+            ctx.globalAlpha = 0.9;
+            ctx.lineCap = "round";
+            ctx.setLineDash(pattern);
+            ctx.lineDashOffset = -(state.dashOffset + index * 4);
+            ctx.shadowColor = ctx.strokeStyle;
+            ctx.shadowBlur = 4;
+            drawEdgePath(start, end, edge.smooth);
+            ctx.restore();
+          }
+
+          const localT = (state.t + index * 0.13) % 1;
+          const x = start.x + (end.x - start.x) * localT;
+          const y = start.y + (end.y - start.y) * localT;
+
+          const color = edge.color?.color || window.LINK_COLORS.primary;
+          ctx.fillStyle = color;
+          ctx.globalAlpha = 0.85;
+          ctx.beginPath();
+          ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        state.raf = window.requestAnimationFrame(render);
+      };
+
+      render();
+    }
+
     function appendExtensionEdges(edgeSet, nodes) {
       const extensionAgents = window.agentDatabase.filter((agent) => agent.isExtension);
       if (!extensionAgents.length) return;
@@ -620,6 +826,7 @@
             width: 1.6,
             dashes: [4, 6],
             smooth: { type: "curvedCW", roundness: 0.2 },
+            title: getEdgeTitle(parentId, agent.id),
             hidden,
             extensionFor: anchorId,
           };
@@ -834,6 +1041,8 @@
       applyTopologyLayout(container, nodes, network);
       observeTopologyLayout(container, network);
       requestAnimationFrame(() => syncTopologyLayout(container, network));
+      startEdgeFlowAnimation(edgeSet);
+      startEdgeDotFlow(network, edgeSet, container);
   
       network.on("click", function (params) {
         if (params.nodes.length > 0) {

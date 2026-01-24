@@ -676,6 +676,13 @@ header {
   box-shadow: 0 2px 8px rgba(26, 115, 232, 0.3);
 }
 
+.edge-flow-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
 /* ===== Discovery List Items ===== */
 .agent-card {
   padding: 12px 14px;
