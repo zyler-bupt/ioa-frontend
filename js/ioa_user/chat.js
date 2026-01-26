@@ -10,7 +10,10 @@
     function initializeChatSystem() {
       const userInput = document.getElementById("userInput");
       const sendButton = document.getElementById("sendButton");
+      const fileInput = document.getElementById("fileInput");
+      const fileButton = document.getElementById("fileButton");
       const messages = document.getElementById("messages");
+      const MAX_FILE_BYTES = 5 * 1024 * 1024;
   
       function escapeHtml(text) {
         return String(text ?? "")
@@ -24,7 +27,29 @@
       function formatMultilineText(text) {
         return escapeHtml(text).replace(/\n/g, "<br>");
       }
-  
+
+      function formatBytes(bytes) {
+        if (!Number.isFinite(bytes)) return "0 B";
+        if (bytes < 1024) return `${bytes} B`;
+        const units = ["KB", "MB", "GB"];
+        let size = bytes;
+        let unitIndex = -1;
+        while (size >= 1024 && unitIndex < units.length - 1) {
+          size /= 1024;
+          unitIndex += 1;
+        }
+        return `${size.toFixed(size >= 10 ? 0 : 1)} ${units[unitIndex]}`;
+      }
+
+      function readFileAsDataUrl(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error("文件读取失败"));
+          reader.readAsDataURL(file);
+        });
+      }
+
       const STREAM_SPEED = { slow: 100, fast: 60 };
       const streamTimers = new WeakMap();
   
@@ -170,7 +195,8 @@
         return wsReadyPromise;
       }
   
-      async function callBackendAPI(userInputText) {
+      async function callBackendAPI(userInputText, options = {}) {
+        const { file } = options;
         const loadingDiv = document.createElement("div");
         loadingDiv.className = "message assistant";
         loadingDiv.id = "loading-message";
@@ -325,7 +351,9 @@
   
           socket.addEventListener("message", handleMessage);
   
-          socket.send(JSON.stringify({ type: "run", request_id: requestId, user_input: userInputText, top_k: 5 }));
+          const payload = { type: "run", request_id: requestId, user_input: userInputText, top_k: 5 };
+          if (file) payload.file = file;
+          socket.send(JSON.stringify(payload));
         } catch (error) {
           if (loadingDiv) loadingDiv.remove();
           const errorDiv = document.createElement("div");
@@ -441,6 +469,41 @@
       userInput.addEventListener("keypress", (e) => {
         if (e.key === "Enter") sendMessage();
       });
+
+      if (fileButton && fileInput) {
+        fileButton.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", async () => {
+          const file = fileInput.files && fileInput.files[0];
+          if (!file) return;
+          fileInput.value = "";
+
+          if (file.size > MAX_FILE_BYTES) {
+            displayMessage(`❌ 文件过大，最大支持 ${formatBytes(MAX_FILE_BYTES)}`, "assistant");
+            return;
+          }
+
+          const safeName = escapeHtml(file.name);
+          displayMessage(`📎 ${safeName} (${formatBytes(file.size)})`, "user");
+          window.appState.messages.push({ type: "user", text: `[File] ${file.name}` });
+
+          let dataUrl;
+          try {
+            dataUrl = await readFileAsDataUrl(file);
+          } catch (error) {
+            displayMessage(`❌ 文件读取失败: ${error.message}`, "assistant");
+            return;
+          }
+
+          callBackendAPI(`[File] ${file.name}`, {
+            file: {
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              data_url: dataUrl
+            }
+          });
+        });
+      }
   
       displayMessage(
         "👋 欢迎使用 IOA 平台！\n\n• 使用<strong>Discovery Process</strong>来搜索和选择 Agent\n• 点击<strong>Register Agent</strong>注册新的 Agent\n• 在此与 Orchestrator Agent 进行交互",

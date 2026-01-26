@@ -312,6 +312,7 @@
   
       // 高亮拓扑
       window.highlightNodeInNetwork?.(agent.id);
+      window.triggerTopologyFlow?.(agent.id);
   
       // 进入 selected
       if (!window.appState.selectedAgents.find((a) => a.id === agent.id)) {

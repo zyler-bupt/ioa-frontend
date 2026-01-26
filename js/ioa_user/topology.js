@@ -629,7 +629,7 @@
         offset = (offset + 1) % 1000;
         const updates = [];
         edgeSet.forEach((edge) => {
-          if (!edge.dashes) return;
+          if (!edge.dashes || !edge.flowActive) return;
           let length = 6;
           let gap = 6;
           if (Array.isArray(edge.dashes)) {
@@ -648,6 +648,253 @@
           edgeSet.update(updates);
         }
       }, 40);
+    }
+
+    const FLOW_DEFAULTS = {
+      durationMs: 6500,
+      particlesPerEdge: 8,
+      particleRadius: 3,
+      speed: 0.55,
+    };
+    const FLOW_USER_ID = "infra-terminal-user-left";
+    const FLOW_TERMINAL_DEVICES = [
+      "infra-terminal-phone-left",
+      "infra-terminal-desktop-left",
+      "infra-terminal-desktop-right",
+      "infra-terminal-phone-right",
+    ];
+    const FLOW_GATEWAYS = ["infra-edge-gateway-left", "infra-edge-gateway-right"];
+    const flowEdgeOriginals = new Map();
+    let flowActiveEdgeIds = [];
+    let flowClearTimer = null;
+
+    function resolveNodeId(targetId, nodes) {
+      if (!targetId || !nodes) return null;
+      if (nodes.get(targetId)) return targetId;
+      const agent = window.agentDatabase?.find(
+        (item) =>
+          item.id === targetId ||
+          item.name === targetId ||
+          item.displayName === targetId ||
+          item.nodeLabel === targetId
+      );
+      if (agent && nodes.get(agent.id)) return agent.id;
+      const matches = nodes.get({ filter: (node) => node.label === targetId });
+      return matches.length ? matches[0].id : null;
+    }
+
+    function findEdgeBetween(edgeSet, fromId, toId) {
+      if (!edgeSet || !fromId || !toId) return null;
+      const matches = edgeSet.get({
+        filter: (edge) =>
+          (edge.from === fromId && edge.to === toId) ||
+          (edge.from === toId && edge.to === fromId),
+      });
+      return matches.length ? matches[0] : null;
+    }
+
+    function buildAdjacency(edgeSet, nodes) {
+      const adjacency = new Map();
+      if (!edgeSet || !nodes) return adjacency;
+      edgeSet.forEach((edge) => {
+        if (!nodes.get(edge.from) || !nodes.get(edge.to)) return;
+        if (!adjacency.has(edge.from)) adjacency.set(edge.from, new Set());
+        if (!adjacency.has(edge.to)) adjacency.set(edge.to, new Set());
+        adjacency.get(edge.from).add(edge.to);
+        adjacency.get(edge.to).add(edge.from);
+      });
+      return adjacency;
+    }
+
+    function findPathBfs(adjacency, startId, endId) {
+      if (!adjacency || !startId || !endId) return null;
+      if (startId === endId) return [startId];
+      const queue = [startId];
+      const visited = new Set([startId]);
+      const prev = new Map();
+      while (queue.length) {
+        const current = queue.shift();
+        const neighbors = adjacency.get(current);
+        if (!neighbors) continue;
+        for (const next of neighbors) {
+          if (visited.has(next)) continue;
+          visited.add(next);
+          prev.set(next, current);
+          if (next === endId) {
+            queue.length = 0;
+            break;
+          }
+          queue.push(next);
+        }
+      }
+      if (!visited.has(endId)) return null;
+      const path = [endId];
+      let cursor = endId;
+      while (prev.has(cursor)) {
+        cursor = prev.get(cursor);
+        path.push(cursor);
+      }
+      return path.reverse();
+    }
+
+    function pickGatewayForTarget(targetId, edgeSet, nodes) {
+      const candidates = FLOW_GATEWAYS.filter((id) => nodes.get(id));
+      for (const gatewayId of candidates) {
+        if (findEdgeBetween(edgeSet, gatewayId, targetId)) return gatewayId;
+      }
+      return candidates[0] || null;
+    }
+
+    function pickDeviceForGateway(gatewayId, edgeSet, nodes) {
+      const candidates = FLOW_TERMINAL_DEVICES.filter((id) => nodes.get(id));
+      if (!gatewayId) return candidates[0] || null;
+      for (const deviceId of candidates) {
+        if (findEdgeBetween(edgeSet, deviceId, gatewayId)) return deviceId;
+      }
+      return candidates[0] || null;
+    }
+
+    function buildPreferredFlowPath(targetId, edgeSet, nodes) {
+      if (!nodes.get(FLOW_USER_ID) || !nodes.get(targetId)) return null;
+      const adjacency = buildAdjacency(edgeSet, nodes);
+      if (!adjacency.size) return null;
+      const gatewayId = pickGatewayForTarget(targetId, edgeSet, nodes);
+      const deviceId = pickDeviceForGateway(gatewayId, edgeSet, nodes);
+      const waypoints = [FLOW_USER_ID, deviceId, gatewayId, targetId].filter(Boolean);
+      let path = [];
+      for (let i = 0; i < waypoints.length - 1; i += 1) {
+        const segment = findPathBfs(adjacency, waypoints[i], waypoints[i + 1]);
+        if (!segment) {
+          return findPathBfs(adjacency, FLOW_USER_ID, targetId);
+        }
+        if (path.length) segment.shift();
+        path = path.concat(segment);
+      }
+      return path.length ? path : null;
+    }
+
+    function buildFlowSegments(nodePath, edgeSet, options = {}) {
+      if (!nodePath || nodePath.length < 2) return null;
+      const segments = [];
+      const edgeIds = [];
+      const particlesPerEdge = Number.isFinite(options.particlesPerEdge)
+        ? options.particlesPerEdge
+        : FLOW_DEFAULTS.particlesPerEdge;
+      for (let i = 0; i < nodePath.length - 1; i += 1) {
+        const fromId = nodePath[i];
+        const toId = nodePath[i + 1];
+        const edge = findEdgeBetween(edgeSet, fromId, toId);
+        if (!edge) return null;
+        const tOffsets = [];
+        for (let j = 0; j < particlesPerEdge; j += 1) {
+          tOffsets.push(j / particlesPerEdge);
+        }
+        segments.push({
+          fromId,
+          toId,
+          edgeId: edge.id,
+          color: edge.color?.color || window.LINK_COLORS.primary,
+          width: edge.width || 2,
+          dashes: edge.dashes,
+          smooth: edge.smooth,
+          tOffsets,
+        });
+        edgeIds.push(edge.id);
+      }
+      return { segments, edgeIds };
+    }
+
+    function setFlowActiveEdges(edgeSet, edgeIds, active) {
+      if (!edgeSet || !edgeIds || !edgeIds.length) return;
+      const updates = [];
+      edgeIds.forEach((edgeId) => {
+        const edge = edgeSet.get(edgeId);
+        if (!edge) return;
+        if (active) {
+          if (!flowEdgeOriginals.has(edgeId)) {
+            flowEdgeOriginals.set(edgeId, {
+              color: edge.color ? { ...edge.color } : edge.color,
+              width: edge.width,
+              dashes: edge.dashes,
+            });
+          }
+          updates.push({
+            id: edgeId,
+            flowActive: true,
+            color: { color: window.LINK_COLORS.highlight, highlight: window.LINK_COLORS.highlight },
+            width: Math.max(2.6, (edge.width || 2) + 0.8),
+          });
+          return;
+        }
+        const original = flowEdgeOriginals.get(edgeId);
+        updates.push({
+          id: edgeId,
+          flowActive: false,
+          color: original?.color || edge.color,
+          width: original?.width ?? edge.width,
+          dashes: original?.dashes ?? edge.dashes,
+        });
+        flowEdgeOriginals.delete(edgeId);
+      });
+      if (updates.length) edgeSet.update(updates);
+    }
+
+    function clearFlowState() {
+      const graph = window.networkGraph;
+      if (!graph) return;
+      if (flowClearTimer) {
+        window.clearTimeout(flowClearTimer);
+        flowClearTimer = null;
+      }
+      if (flowActiveEdgeIds.length) {
+        setFlowActiveEdges(graph.edges, flowActiveEdgeIds, false);
+        flowActiveEdgeIds = [];
+      }
+      if (window.edgeDotFlow) {
+        window.edgeDotFlow.activeSegments = null;
+        window.edgeDotFlow.activeUntil = 0;
+        window.edgeDotFlow.lastTs = 0;
+      }
+    }
+
+    function triggerTopologyFlow(targetId, options = {}) {
+      const graph = window.networkGraph;
+      if (!graph || !window.networkInstance) return;
+      const nodes = graph.nodes;
+      const edges = graph.edges;
+      const resolvedTarget = resolveNodeId(targetId, nodes);
+      if (!resolvedTarget) return;
+
+      const nodePath = options.nodePath
+        ? options.nodePath.map((id) => resolveNodeId(id, nodes)).filter(Boolean)
+        : buildPreferredFlowPath(resolvedTarget, edges, nodes);
+      if (!nodePath || nodePath.length < 2) return;
+
+      const flowSegments = buildFlowSegments(nodePath, edges, options);
+      if (!flowSegments) return;
+
+      clearFlowState();
+      setFlowActiveEdges(edges, flowSegments.edgeIds, true);
+      flowActiveEdgeIds = flowSegments.edgeIds;
+
+      if (!window.edgeDotFlow) {
+        const container = document.getElementById("networkGraph");
+        if (container) startEdgeDotFlow(window.networkInstance, edges, container);
+      }
+
+      const durationMs = Number.isFinite(options.durationMs) ? options.durationMs : FLOW_DEFAULTS.durationMs;
+      if (window.edgeDotFlow) {
+        window.edgeDotFlow.activeSegments = flowSegments.segments;
+        window.edgeDotFlow.activeUntil = Date.now() + durationMs;
+        window.edgeDotFlow.flowSpeed = Number.isFinite(options.speed) ? options.speed : FLOW_DEFAULTS.speed;
+        window.edgeDotFlow.particleRadius = Number.isFinite(options.particleRadius)
+          ? options.particleRadius
+          : FLOW_DEFAULTS.particleRadius;
+        window.edgeDotFlow.lastTs = 0;
+        window.edgeDotFlow.onExpire = clearFlowState;
+      }
+
+      flowClearTimer = window.setTimeout(clearFlowState, durationMs);
     }
 
     function startEdgeDotFlow(network, edgeSet, container) {
@@ -671,7 +918,17 @@
       }
 
       const ctx = canvas.getContext("2d");
-      const state = { t: 0, dashOffset: 0, raf: 0, observer: null };
+      const state = {
+        dashOffset: 0,
+        raf: 0,
+        observer: null,
+        activeSegments: null,
+        activeUntil: 0,
+        lastTs: 0,
+        flowSpeed: FLOW_DEFAULTS.speed,
+        particleRadius: FLOW_DEFAULTS.particleRadius,
+        onExpire: null,
+      };
       window.edgeDotFlow = state;
 
       const resize = () => {
@@ -695,33 +952,47 @@
         window.addEventListener("resize", resize);
       }
 
-      const speed = 0.008;
       const dashSpeed = 1.2;
-      const dotRadius = 2.6;
 
-      const getDashPattern = (edge) => {
-        if (!edge || !edge.dashes) return null;
-        if (edge.dashes === true) return [6, 6];
+      const getDashPattern = (dashes) => {
+        if (!dashes) return null;
+        if (dashes === true) return [6, 6];
         let length = 6;
         let gap = 6;
         let altLength = null;
         let altGap = null;
-        if (Array.isArray(edge.dashes)) {
-          length = Number(edge.dashes[0]) || length;
-          gap = Number(edge.dashes[1]) || gap;
-          altLength = Number(edge.dashes[2]);
-          altGap = Number(edge.dashes[3]);
-        } else if (typeof edge.dashes === "object") {
-          length = Number(edge.dashes.length) || length;
-          gap = Number(edge.dashes.gap) || gap;
-          altLength = Number(edge.dashes.altLength);
-          altGap = Number(edge.dashes.altGap);
+        if (Array.isArray(dashes)) {
+          length = Number(dashes[0]) || length;
+          gap = Number(dashes[1]) || gap;
+          altLength = Number(dashes[2]);
+          altGap = Number(dashes[3]);
+        } else if (typeof dashes === "object") {
+          length = Number(dashes.length) || length;
+          gap = Number(dashes.gap) || gap;
+          altLength = Number(dashes.altLength);
+          altGap = Number(dashes.altGap);
         }
         const pattern = [length, gap];
         if (Number.isFinite(altLength) && Number.isFinite(altGap)) {
           pattern.push(altLength, altGap);
         }
         return pattern;
+      };
+
+      const getQuadraticControlPoint = (start, end, smooth) => {
+        if (!smooth || smooth === false) return null;
+        const roundness = typeof smooth.roundness === "number" ? smooth.roundness : 0.2;
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const distance = Math.hypot(dx, dy) || 1;
+        const nx = -dy / distance;
+        const ny = dx / distance;
+        const direction = smooth.type === "curvedCCW" ? 1 : -1;
+        const offset = distance * roundness * direction;
+        return {
+          x: (start.x + end.x) / 2 + nx * offset,
+          y: (start.y + end.y) / 2 + ny * offset,
+        };
       };
 
       const drawEdgePath = (start, end, smooth) => {
@@ -750,46 +1021,80 @@
         ctx.stroke();
       };
 
-      const render = () => {
-        state.t = (state.t + speed) % 1;
-        state.dashOffset = (state.dashOffset + dashSpeed) % 1000;
+      const getPointAlongEdge = (start, end, smooth, t) => {
+        const control = getQuadraticControlPoint(start, end, smooth);
+        if (!control) {
+          return {
+            x: start.x + (end.x - start.x) * t,
+            y: start.y + (end.y - start.y) * t,
+          };
+        }
+        const inv = 1 - t;
+        return {
+          x: inv * inv * start.x + 2 * inv * t * control.x + t * t * end.x,
+          y: inv * inv * start.y + 2 * inv * t * control.y + t * t * end.y,
+        };
+      };
+
+      const render = (ts) => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        const now = Date.now();
+        if (state.activeSegments && now >= state.activeUntil) {
+          if (typeof state.onExpire === "function") state.onExpire();
+          state.activeSegments = null;
+          state.activeUntil = 0;
+          state.lastTs = 0;
+        }
+
+        if (!state.activeSegments || !state.activeSegments.length) {
+          state.raf = window.requestAnimationFrame(render);
+          return;
+        }
+
+        const dt = state.lastTs ? Math.min(0.05, (ts - state.lastTs) / 1000) : 0;
+        state.lastTs = ts;
+        const delta = (state.flowSpeed || FLOW_DEFAULTS.speed) * dt;
+        state.dashOffset = (state.dashOffset + dashSpeed) % 1000;
+
         const positions = network.getPositions();
-        edgeSet.forEach((edge, index) => {
-          if (edge.hidden) return;
-          const from = positions[edge.from];
-          const to = positions[edge.to];
+        state.activeSegments.forEach((segment, index) => {
+          const from = positions[segment.fromId];
+          const to = positions[segment.toId];
           if (!from || !to) return;
 
           const start = network.canvasToDOM(from);
           const end = network.canvasToDOM(to);
 
-          const pattern = getDashPattern(edge);
+          const pattern = getDashPattern(segment.dashes);
           if (pattern) {
             ctx.save();
-            ctx.strokeStyle = edge.color?.color || window.LINK_COLORS.primary;
-            ctx.lineWidth = Math.max(1, (edge.width || 2) + 0.6);
+            ctx.strokeStyle = segment.color || window.LINK_COLORS.primary;
+            ctx.lineWidth = Math.max(1, (segment.width || 2) + 0.6);
             ctx.globalAlpha = 0.9;
             ctx.lineCap = "round";
             ctx.setLineDash(pattern);
             ctx.lineDashOffset = -(state.dashOffset + index * 4);
             ctx.shadowColor = ctx.strokeStyle;
             ctx.shadowBlur = 4;
-            drawEdgePath(start, end, edge.smooth);
+            drawEdgePath(start, end, segment.smooth);
             ctx.restore();
           }
 
-          const localT = (state.t + index * 0.13) % 1;
-          const x = start.x + (end.x - start.x) * localT;
-          const y = start.y + (end.y - start.y) * localT;
-
-          const color = edge.color?.color || window.LINK_COLORS.primary;
-          ctx.fillStyle = color;
-          ctx.globalAlpha = 0.85;
-          ctx.beginPath();
-          ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
-          ctx.fill();
+          const dotRadius = state.particleRadius || FLOW_DEFAULTS.particleRadius;
+          const color = segment.color || window.LINK_COLORS.primary;
+          const offsets = segment.tOffsets || [];
+          for (let i = 0; i < offsets.length; i += 1) {
+            let t = offsets[i] + delta;
+            if (t >= 1) t -= 1;
+            offsets[i] = t;
+            const pt = getPointAlongEdge(start, end, segment.smooth, t);
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.9;
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, dotRadius, 0, Math.PI * 2);
+            ctx.fill();
+          }
         });
 
         state.raf = window.requestAnimationFrame(render);
@@ -1293,5 +1598,6 @@
   
     window.highlightNodeInNetwork = highlightNodeInNetwork;
     window.addAgentToNetwork = addAgentToNetwork;
+    window.triggerTopologyFlow = triggerTopologyFlow;
   })();
   

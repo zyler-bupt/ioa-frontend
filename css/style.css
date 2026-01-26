@@ -279,6 +279,42 @@ header {
   gap: 10px;
   padding-top: 10px;
   border-top: 1px solid #e0e0e0;
+  align-items: center;
+}
+
+.file-input {
+  display: none;
+}
+
+#fileButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  background-color: #ffffff;
+  color: #1a73e8;
+  border: 1px solid #c7dafb;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+#fileButton img {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+#fileButton:hover {
+  background-color: #eef4ff;
+  border-color: #a9c7f7;
+}
+
+#fileButton:active {
+  transform: scale(0.98);
 }
 
 #userInput {
