@@ -12,8 +12,10 @@
       const sendButton = document.getElementById("sendButton");
       const fileInput = document.getElementById("fileInput");
       const fileButton = document.getElementById("fileButton");
+      const attachmentPreview = document.getElementById("attachmentPreview");
       const messages = document.getElementById("messages");
       const MAX_FILE_BYTES = 5 * 1024 * 1024;
+      let pendingFile = null;
   
       function escapeHtml(text) {
         return String(text ?? "")
@@ -39,6 +41,40 @@
           unitIndex += 1;
         }
         return `${size.toFixed(size >= 10 ? 0 : 1)} ${units[unitIndex]}`;
+      }
+
+      function clearPendingFile() {
+        pendingFile = null;
+        if (!attachmentPreview) return;
+        attachmentPreview.innerHTML = "";
+        attachmentPreview.classList.remove("is-visible");
+      }
+
+      function renderAttachmentPreview(file) {
+        if (!attachmentPreview) return;
+        attachmentPreview.innerHTML = "";
+        if (!file) {
+          attachmentPreview.classList.remove("is-visible");
+          return;
+        }
+
+        const chip = document.createElement("div");
+        chip.className = "attachment-chip";
+
+        const label = document.createElement("span");
+        label.textContent = `${file.name} (${formatBytes(file.size)})`;
+        chip.appendChild(label);
+
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "attachment-remove";
+        removeButton.setAttribute("aria-label", "Remove attachment");
+        removeButton.textContent = "✕";
+        removeButton.addEventListener("click", clearPendingFile);
+        chip.appendChild(removeButton);
+
+        attachmentPreview.appendChild(chip);
+        attachmentPreview.classList.add("is-visible");
       }
 
       function readFileAsDataUrl(file) {
@@ -146,16 +182,71 @@
         messages.appendChild(messageDiv);
         messages.scrollTop = messages.scrollHeight;
       }
-  
-      function sendMessage() {
+
+      function displayUserMessage(text, fileMeta) {
+        if (!text && !fileMeta) return;
+
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "message user";
+
+        if (fileMeta) {
+          const chip = document.createElement("div");
+          chip.className = "attachment-chip";
+          const label = document.createElement("span");
+          label.textContent = `${fileMeta.name} (${formatBytes(fileMeta.size)})`;
+          chip.appendChild(label);
+          messageDiv.appendChild(chip);
+        }
+
+        if (text) {
+          const textDiv = document.createElement("div");
+          textDiv.className = "user-text";
+          textDiv.textContent = text;
+          messageDiv.appendChild(textDiv);
+        }
+
+        messages.appendChild(messageDiv);
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      async function sendMessage() {
         const text = userInput.value.trim();
-        if (!text) return;
-  
-        window.appState.messages.push({ type: "user", text });
-        displayMessage(text, "user");
+        if (!text && !pendingFile) return;
+
+        const fileToSend = pendingFile;
+        const fileMeta = fileToSend
+          ? { name: fileToSend.name, size: fileToSend.size, type: fileToSend.type }
+          : null;
+
+        displayUserMessage(text, fileMeta);
+        window.appState.messages.push({ type: "user", text, file: fileMeta });
         userInput.value = "";
-  
-        callBackendAPI(text);
+        clearPendingFile();
+
+        const messageText = text || (fileToSend ? `[File] ${fileToSend.name}` : "");
+        let filePayload = null;
+
+        if (fileToSend) {
+          if (fileToSend.size > MAX_FILE_BYTES) {
+            displayMessage(`❌ 文件过大，最大支持 ${formatBytes(MAX_FILE_BYTES)}`, "assistant");
+            return;
+          }
+
+          try {
+            const dataUrl = await readFileAsDataUrl(fileToSend);
+            filePayload = {
+              name: fileToSend.name,
+              size: fileToSend.size,
+              type: fileToSend.type,
+              data_url: dataUrl
+            };
+          } catch (error) {
+            displayMessage(`❌ 文件读取失败: ${error.message}`, "assistant");
+            return;
+          }
+        }
+
+        callBackendAPI(messageText, filePayload ? { file: filePayload } : {});
       }
   
       // ====== WS ======
@@ -472,7 +563,7 @@
 
       if (fileButton && fileInput) {
         fileButton.addEventListener("click", () => fileInput.click());
-        fileInput.addEventListener("change", async () => {
+        fileInput.addEventListener("change", () => {
           const file = fileInput.files && fileInput.files[0];
           if (!file) return;
           fileInput.value = "";
@@ -482,26 +573,8 @@
             return;
           }
 
-          const safeName = escapeHtml(file.name);
-          displayMessage(`📎 ${safeName} (${formatBytes(file.size)})`, "user");
-          window.appState.messages.push({ type: "user", text: `[File] ${file.name}` });
-
-          let dataUrl;
-          try {
-            dataUrl = await readFileAsDataUrl(file);
-          } catch (error) {
-            displayMessage(`❌ 文件读取失败: ${error.message}`, "assistant");
-            return;
-          }
-
-          callBackendAPI(`[File] ${file.name}`, {
-            file: {
-              name: file.name,
-              size: file.size,
-              type: file.type,
-              data_url: dataUrl
-            }
-          });
+          pendingFile = file;
+          renderAttachmentPreview(file);
         });
       }
   

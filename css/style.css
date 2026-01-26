@@ -276,10 +276,62 @@ header {
 
 .input-area {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   padding-top: 10px;
   border-top: 1px solid #e0e0e0;
+}
+
+.input-row {
+  display: flex;
+  gap: 10px;
   align-items: center;
+}
+
+.attachment-preview {
+  display: none;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.attachment-preview.is-visible {
+  display: flex;
+}
+
+.attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background-color: #eef4ff;
+  border: 1px solid #c7dafb;
+  font-size: 0.85em;
+  color: #1a3f7a;
+}
+
+.attachment-chip span {
+  white-space: nowrap;
+}
+
+.attachment-remove {
+  border: none;
+  background: transparent;
+  color: #4c6aa5;
+  font-size: 1em;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.user-text {
+  white-space: pre-wrap;
+}
+
+.message .attachment-chip {
+  margin-bottom: 6px;
+  background-color: #ffffff;
+  border-color: #bde5bd;
+  color: #1f3a1f;
 }
 
 .file-input {
