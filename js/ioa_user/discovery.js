@@ -109,7 +109,6 @@
   
         card.innerHTML = `
           <div class="agent-card-left">
-            <input type="checkbox" class="agent-card-checkbox" id="checkbox-${agent.id}" data-agent-id="${agent.id}">
             <div class="agent-card-info">
               <div class="agent-card-name">
                 ${displayName}
@@ -136,27 +135,6 @@
             </div>
           </div>
         `;
-  
-        const checkbox = card.querySelector('input[type="checkbox"]');
-  
-        // 同步 checkbox 初始状态：如果已选过，就勾上
-        const alreadySelected = window.appState.selectedAgents.some((a) => a.id === agent.id);
-        checkbox.checked = alreadySelected;
-  
-        checkbox.addEventListener("change", (e) => {
-          if (e.target.checked) {
-            // 加入 selected
-            if (!window.appState.selectedAgents.find((a) => a.id === agent.id)) {
-              window.appState.selectedAgents.push(agent);
-            }
-            // 高亮拓扑
-            window.highlightNodeInNetwork?.(agent.id);
-          } else {
-            // 移除 selected
-            window.appState.selectedAgents = window.appState.selectedAgents.filter((a) => a.id !== agent.id);
-          }
-          updateSelectedAgentsList();
-        });
   
         discoveryList.appendChild(card);
       });
@@ -187,10 +165,6 @@
   
     function removeSelectedAgent(agentId) {
       window.appState.selectedAgents = window.appState.selectedAgents.filter((a) => a.id !== agentId);
-  
-      // 取消对应 checkbox
-      const checkbox = document.getElementById(`checkbox-${agentId}`);
-      if (checkbox) checkbox.checked = false;
   
       updateSelectedAgentsList();
     }
@@ -253,7 +227,6 @@
       const netPercent = `${net.congestionPct.toFixed(0)}%`;
   
         card.innerHTML = `
-          <input type="checkbox" class="agent-card-checkbox" data-agent-name="${agentName}">
           <div class="agent-card-info">
             <div class="agent-card-name">
               ${displayName}
@@ -278,27 +251,6 @@
         </div>
       `;
   
-        const checkbox = card.querySelector('input[type="checkbox"]');
-  
-        // 如果这个候选已在 selectedAgents 里，也勾上
-        if (hit) {
-          checkbox.checked = window.appState.selectedAgents.some((a) => a.id === hit.id);
-        }
-  
-        checkbox.addEventListener("change", (e) => {
-          if (!hit) return;
-  
-          if (e.target.checked) {
-            if (!window.appState.selectedAgents.find((a) => a.id === hit.id)) {
-              window.appState.selectedAgents.push(hit);
-            }
-            window.highlightNodeInNetwork?.(hit.id);
-          } else {
-            window.appState.selectedAgents = window.appState.selectedAgents.filter((a) => a.id !== hit.id);
-          }
-          updateSelectedAgentsList();
-        });
-  
         discoveryList.appendChild(card);
       });
     }
@@ -320,9 +272,6 @@
         updateSelectedAgentsList();
       }
   
-      // 同步 checkbox（两种列表里都尽量同步）
-      const checkbox1 = document.getElementById(`checkbox-${agent.id}`);
-      if (checkbox1) checkbox1.checked = true;
     }
   
     // ========== localStorage 新增 agent ==========

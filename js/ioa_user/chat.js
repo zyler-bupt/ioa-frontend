@@ -13,8 +13,10 @@
       const fileInput = document.getElementById("fileInput");
       const fileButton = document.getElementById("fileButton");
       const attachmentPreview = document.getElementById("attachmentPreview");
+      const imageModal = document.getElementById("imageModal");
+      const imageModalImage = document.getElementById("imageModalImage");
       const messages = document.getElementById("messages");
-      const MAX_FILE_BYTES = 5 * 1024 * 1024;
+      const MAX_FILE_BYTES = 20 * 1024 * 1024;
       let pendingFile = null;
   
       function escapeHtml(text) {
@@ -181,6 +183,21 @@
         messageDiv.innerHTML = text;
         messages.appendChild(messageDiv);
         messages.scrollTop = messages.scrollHeight;
+      }
+
+      function openImageModal(src, altText) {
+        if (!imageModal || !imageModalImage) return;
+        imageModalImage.src = src;
+        imageModalImage.alt = altText || "Preview";
+        imageModal.classList.add("is-open");
+        imageModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeImageModal() {
+        if (!imageModal || !imageModalImage) return;
+        imageModal.classList.remove("is-open");
+        imageModal.setAttribute("aria-hidden", "true");
+        imageModalImage.src = "";
       }
 
       function displayUserMessage(text, fileMeta) {
@@ -518,6 +535,8 @@
             img.style.borderRadius = "6px";
             img.style.margin = "8px 0";
             img.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+            img.className = "chat-image";
+            img.addEventListener("click", () => openImageModal(imageUrl, "结果图片"));
             img.onerror = () => {
               img.src = "data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%2220%22 y=%2235%22 font-size=%2220%22%3E图片加载失败%3C/text%3E%3C/svg%3E";
             };
@@ -577,6 +596,19 @@
           renderAttachmentPreview(file);
         });
       }
+
+      if (imageModal) {
+        imageModal.addEventListener("click", (event) => {
+          const target = event.target;
+          if (target && (target.matches(".image-modal__close") || target.dataset.close === "true")) {
+            closeImageModal();
+          }
+        });
+      }
+
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeImageModal();
+      });
   
       displayMessage(
         "👋 欢迎使用 IOA 平台！\n\n• 使用<strong>Discovery Process</strong>来搜索和选择 Agent\n• 点击<strong>Register Agent</strong>注册新的 Agent\n• 在此与 Orchestrator Agent 进行交互",
