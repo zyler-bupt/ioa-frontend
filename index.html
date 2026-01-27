@@ -91,6 +91,19 @@
     </div>
   </div>
 
+  <div class="alert-modal" id="alertModal" aria-hidden="true">
+    <div class="alert-modal__backdrop" data-close="true"></div>
+    <div class="alert-modal__content" role="alertdialog" aria-modal="true" aria-labelledby="alertModalTitle" aria-describedby="alertModalMessage">
+      <div class="alert-modal__icon" aria-hidden="true">🚨</div>
+      <div class="alert-modal__body">
+        <h3 id="alertModalTitle">已报警</h3>
+        <p id="alertModalMessage">事故/火情已上报，正在联动附近救援力量。</p>
+        <div class="alert-modal__meta" id="alertModalMeta"></div>
+      </div>
+      <button class="alert-modal__close" type="button" aria-label="关闭报警提示">知道了</button>
+    </div>
+  </div>
+
   <!-- 脚本 -->
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     

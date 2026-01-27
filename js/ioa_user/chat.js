@@ -7,685 +7,816 @@
  */
 
 (function () {
-    function initializeChatSystem() {
-      const userInput = document.getElementById("userInput");
-      const sendButton = document.getElementById("sendButton");
-      const fileInput = document.getElementById("fileInput");
-      const fileButton = document.getElementById("fileButton");
-      const attachmentPreview = document.getElementById("attachmentPreview");
-      const imageModal = document.getElementById("imageModal");
-      const imageModalImage = document.getElementById("imageModalImage");
-      const messages = document.getElementById("messages");
-      const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
-      const BACKEND_HTTP = "http://10.200.1.35:8001";
-      let pendingFile = null;
-  
-      function escapeHtml(text) {
-        return String(text ?? "")
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#39;");
-      }
-  
-      function formatMultilineText(text) {
-        return escapeHtml(text).replace(/\n/g, "<br>");
-      }
+  function initializeChatSystem() {
+    const userInput = document.getElementById("userInput");
+    const sendButton = document.getElementById("sendButton");
+    const fileInput = document.getElementById("fileInput");
+    const fileButton = document.getElementById("fileButton");
+    const attachmentPreview = document.getElementById("attachmentPreview");
+    const imageModal = document.getElementById("imageModal");
+    const imageModalImage = document.getElementById("imageModalImage");
+    const alertModal = document.getElementById("alertModal");
+    const alertModalMessage = document.getElementById("alertModalMessage");
+    const alertModalMeta = document.getElementById("alertModalMeta");
+    const messages = document.getElementById("messages");
 
-      function formatBytes(bytes) {
-        if (!Number.isFinite(bytes)) return "0 B";
-        if (bytes < 1024) return `${bytes} B`;
-        const units = ["KB", "MB", "GB"];
-        let size = bytes;
-        let unitIndex = -1;
-        while (size >= 1024 && unitIndex < units.length - 1) {
-          size /= 1024;
-          unitIndex += 1;
-        }
-        return `${size.toFixed(size >= 10 ? 0 : 1)} ${units[unitIndex]}`;
-      }
+    const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
 
-      function clearPendingFile() {
-        pendingFile = null;
-        if (!attachmentPreview) return;
-        attachmentPreview.innerHTML = "";
+    // ✅ 统一：后端 HTTP 基址（图片/上传走 HTTP；聊天走 WS）
+    const BACKEND_HTTP = "http://10.200.1.35:8001";
+
+    let pendingFile = null;
+
+    // --------------------------------
+    // Backend URL helpers
+    // --------------------------------
+    const BACKEND_ORIGIN = (() => {
+      try {
+        return new URL(BACKEND_HTTP).origin; // e.g. http://10.200.1.35:8001
+      } catch (e) {
+        return String(BACKEND_HTTP || "").replace(/\/+$/, "");
+      }
+    })();
+
+    function resolveBackendUrl(maybePathOrUrl) {
+      const s = String(maybePathOrUrl || "").trim();
+      if (!s) return "";
+      if (s.startsWith("data:")) return s;
+      if (/^https?:\/\//i.test(s)) return s;
+      if (s.startsWith("/")) return BACKEND_ORIGIN + s;
+      return BACKEND_ORIGIN + "/" + s;
+    }
+
+    // --------------------------------
+    // Text helpers
+    // --------------------------------
+    function escapeHtml(text) {
+      return String(text ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function formatMultilineText(text) {
+      return escapeHtml(text).replace(/\n/g, "<br>");
+    }
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes)) return "0 B";
+      if (bytes < 1024) return `${bytes} B`;
+      const units = ["KB", "MB", "GB"];
+      let size = bytes;
+      let unitIndex = -1;
+      while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex += 1;
+      }
+      return `${size.toFixed(size >= 10 ? 0 : 1)} ${units[unitIndex]}`;
+    }
+
+    // --------------------------------
+    // Attachment UI
+    // --------------------------------
+    function clearPendingFile() {
+      pendingFile = null;
+      if (!attachmentPreview) return;
+      attachmentPreview.innerHTML = "";
+      attachmentPreview.classList.remove("is-visible");
+    }
+
+    function renderAttachmentPreview(file) {
+      if (!attachmentPreview) return;
+      attachmentPreview.innerHTML = "";
+      if (!file) {
         attachmentPreview.classList.remove("is-visible");
+        return;
       }
 
-      function renderAttachmentPreview(file) {
-        if (!attachmentPreview) return;
-        attachmentPreview.innerHTML = "";
-        if (!file) {
-          attachmentPreview.classList.remove("is-visible");
-          return;
-        }
+      const chip = document.createElement("div");
+      chip.className = "attachment-chip";
 
+      const label = document.createElement("span");
+      label.textContent = `${file.name} (${formatBytes(file.size)})`;
+      chip.appendChild(label);
+
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "attachment-remove";
+      removeButton.setAttribute("aria-label", "Remove attachment");
+      removeButton.textContent = "✕";
+      removeButton.addEventListener("click", clearPendingFile);
+      chip.appendChild(removeButton);
+
+      attachmentPreview.appendChild(chip);
+      attachmentPreview.classList.add("is-visible");
+    }
+
+    function isVideoFile(file) {
+      return Boolean(file && typeof file.type === "string" && file.type.startsWith("video/"));
+    }
+
+    async function uploadVideo(file) {
+      if (!file) throw new Error("未选择文件");
+      if (!isVideoFile(file)) throw new Error(`不是视频文件：${file?.type || "unknown"}`);
+      if (file.size > MAX_VIDEO_BYTES) throw new Error(`文件过大：${formatBytes(file.size)}，超过限制`);
+
+      const form = new FormData();
+      form.append("file", file, file.name);
+
+      const resp = await fetch(`${BACKEND_ORIGIN}/upload/video`, {
+        method: "POST",
+        body: form,
+      });
+
+      if (!resp.ok) {
+        let detail = "";
+        try {
+          detail = (await resp.json())?.detail || "";
+        } catch (e) {}
+        throw new Error(`上传失败：HTTP ${resp.status} ${detail}`);
+      }
+
+      const data = await resp.json();
+      if (data.status !== "ok" || !data.path) {
+        throw new Error(`上传返回异常：${JSON.stringify(data)}`);
+      }
+
+      return data; // {status, filename, path, url, size}
+    }
+
+    // --------------------------------
+    // Streaming UI helpers
+    // --------------------------------
+    const STREAM_SPEED = { slow: 100, fast: 60 };
+    const streamTimers = new WeakMap();
+
+    function streamText(target, text, speed = STREAM_SPEED.slow) {
+      const content = text === undefined || text === null ? "" : String(text);
+      const existingTimer = streamTimers.get(target);
+      if (existingTimer) {
+        window.clearInterval(existingTimer);
+        streamTimers.delete(target);
+      }
+
+      target.textContent = "";
+      if (!content) return Promise.resolve();
+
+      let index = 0;
+      return new Promise((resolve) => {
+        const timer = window.setInterval(() => {
+          target.textContent += content[index];
+          index += 1;
+          messages.scrollTop = messages.scrollHeight;
+          if (index >= content.length) {
+            window.clearInterval(timer);
+            streamTimers.delete(target);
+            resolve();
+          }
+        }, speed);
+
+        streamTimers.set(target, timer);
+      });
+    }
+
+    function createAssistantMessage() {
+      const messageDiv = document.createElement("div");
+      messageDiv.className = "message assistant";
+      messages.appendChild(messageDiv);
+      messages.scrollTop = messages.scrollHeight;
+      return messageDiv;
+    }
+
+    function appendStreamBlock(container, labelText, valueText, speed = STREAM_SPEED.fast) {
+      const label = document.createElement("div");
+      const labelStrong = document.createElement("strong");
+      labelStrong.textContent = labelText;
+      label.appendChild(labelStrong);
+      container.appendChild(label);
+
+      const box = document.createElement("div");
+      box.style.backgroundColor = "#f5f5f5";
+      box.style.padding = "10px";
+      box.style.borderRadius = "4px";
+      box.style.marginTop = "8px";
+      box.style.fontSize = "0.9em";
+      box.style.lineHeight = "1.5";
+
+      const valueSpan = document.createElement("span");
+      valueSpan.style.whiteSpace = "pre-wrap";
+      box.appendChild(valueSpan);
+      container.appendChild(box);
+
+      streamText(valueSpan, valueText, speed);
+    }
+
+    function appendExecutionTime(container, timeStr) {
+      const timeLine = document.createElement("small");
+      timeLine.style.color = "#999";
+      timeLine.style.marginTop = "8px";
+      timeLine.style.display = "block";
+      timeLine.textContent = `⏱️ 执行时间: ${timeStr}ms`;
+      container.appendChild(timeLine);
+    }
+
+    function appendStepMessage(label, content, styleClass, speed = STREAM_SPEED.slow) {
+      const messageDiv = createAssistantMessage();
+      const inner = document.createElement("div");
+      if (styleClass) inner.className = styleClass;
+
+      const labelEl = document.createElement("strong");
+      labelEl.textContent = `${label}:`;
+      inner.appendChild(labelEl);
+      inner.appendChild(document.createElement("br"));
+
+      const contentSpan = document.createElement("span");
+      contentSpan.style.whiteSpace = "pre-wrap";
+      inner.appendChild(contentSpan);
+      messageDiv.appendChild(inner);
+
+      streamText(contentSpan, content, speed);
+    }
+
+    function displayMessage(text, type) {
+      const messageDiv = document.createElement("div");
+      messageDiv.className = `message ${type}`;
+      messageDiv.innerHTML = text;
+      messages.appendChild(messageDiv);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    // --------------------------------
+    // Image modal (fix aria-hidden warning)
+    // --------------------------------
+    let lastFocusedEl = null;
+
+    function openImageModal(src, altText) {
+      if (!imageModal || !imageModalImage) return;
+
+      lastFocusedEl = document.activeElement;
+
+      imageModalImage.src = src;
+      imageModalImage.alt = altText || "Preview";
+
+      imageModal.classList.add("is-open");
+      imageModal.setAttribute("aria-hidden", "false");
+
+      const closeBtn = imageModal.querySelector(".image-modal__close");
+      if (closeBtn) closeBtn.focus();
+    }
+
+    function closeImageModal() {
+      if (!imageModal || !imageModalImage) return;
+
+      // 关键：先把焦点移出 modal，再 aria-hidden
+      if (lastFocusedEl && typeof lastFocusedEl.focus === "function") {
+        lastFocusedEl.focus();
+      }
+
+      imageModal.classList.remove("is-open");
+      imageModal.setAttribute("aria-hidden", "true");
+      imageModalImage.src = "";
+    }
+
+    // --------------------------------
+    // Alert modal
+    // --------------------------------
+    function openAlertModal(options = {}) {
+      if (!alertModal) return;
+      const message = options.message || "事故/火情已上报，正在联动附近救援力量。";
+      const meta = options.meta || "";
+      if (alertModalMessage) alertModalMessage.textContent = message;
+      if (alertModalMeta) {
+        alertModalMeta.textContent = meta;
+        alertModalMeta.style.display = meta ? "block" : "none";
+      }
+      alertModal.classList.add("is-open");
+      alertModal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeAlertModal() {
+      if (!alertModal) return;
+      alertModal.classList.remove("is-open");
+      alertModal.setAttribute("aria-hidden", "true");
+    }
+
+    // --------------------------------
+    // User message UI
+    // --------------------------------
+    function displayUserMessage(text, fileMeta) {
+      if (!text && !fileMeta) return;
+
+      const messageDiv = document.createElement("div");
+      messageDiv.className = "message user";
+
+      if (fileMeta) {
         const chip = document.createElement("div");
         chip.className = "attachment-chip";
-
         const label = document.createElement("span");
-        label.textContent = `${file.name} (${formatBytes(file.size)})`;
+        label.textContent = `${fileMeta.name} (${formatBytes(fileMeta.size)})`;
         chip.appendChild(label);
-
-        const removeButton = document.createElement("button");
-        removeButton.type = "button";
-        removeButton.className = "attachment-remove";
-        removeButton.setAttribute("aria-label", "Remove attachment");
-        removeButton.textContent = "✕";
-        removeButton.addEventListener("click", clearPendingFile);
-        chip.appendChild(removeButton);
-
-        attachmentPreview.appendChild(chip);
-        attachmentPreview.classList.add("is-visible");
+        messageDiv.appendChild(chip);
       }
 
-      function isVideoFile(file) {
-        return Boolean(file && typeof file.type === "string" && file.type.startsWith("video/"));
+      if (text) {
+        const textDiv = document.createElement("div");
+        textDiv.className = "user-text";
+        textDiv.textContent = text;
+        messageDiv.appendChild(textDiv);
       }
 
-      async function uploadVideo(file) {
-        if (!file) throw new Error("未选择文件");
-        if (!isVideoFile(file)) {
-          throw new Error(`不是视频文件：${file?.type || "unknown"}`);
+      messages.appendChild(messageDiv);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    // --------------------------------
+    // Send message
+    // --------------------------------
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text && !pendingFile) return;
+
+      const fileToSend = pendingFile;
+      const fileMeta = fileToSend
+        ? { name: fileToSend.name, size: fileToSend.size, type: fileToSend.type }
+        : null;
+
+      displayUserMessage(text, fileMeta);
+
+      // appState 保护
+      window.appState = window.appState || { messages: [] };
+      window.appState.messages = window.appState.messages || [];
+      window.appState.messages.push({ type: "user", text, file: fileMeta });
+
+      userInput.value = "";
+      clearPendingFile();
+
+      const messageText = text || (fileToSend ? `[File] ${fileToSend.name}` : "");
+      let uploadedVideoPath = null;
+
+      if (fileToSend) {
+        if (!isVideoFile(fileToSend)) {
+          displayMessage("❌ 仅支持视频文件上传", "assistant");
+          return;
         }
-        if (file.size > MAX_VIDEO_BYTES) {
-          throw new Error(`文件过大：${formatBytes(file.size)}，超过限制`);
+        if (fileToSend.size > MAX_VIDEO_BYTES) {
+          displayMessage(`❌ 文件过大，最大支持 ${formatBytes(MAX_VIDEO_BYTES)}`, "assistant");
+          return;
         }
-
-        const form = new FormData();
-        form.append("file", file, file.name);
-
-        const resp = await fetch(`${BACKEND_HTTP}/upload/video`, {
-          method: "POST",
-          body: form,
-        });
-
-        if (!resp.ok) {
-          let detail = "";
-          try {
-            detail = (await resp.json())?.detail || "";
-          } catch (e) {}
-          throw new Error(`上传失败：HTTP ${resp.status} ${detail}`);
-        }
-
-        const data = await resp.json();
-        if (data.status !== "ok" || !data.path) {
-          throw new Error(`上传返回异常：${JSON.stringify(data)}`);
-        }
-
-        return data; // {status, filename, path, url, size}
-      }
-
-      const STREAM_SPEED = { slow: 100, fast: 60 };
-      const streamTimers = new WeakMap();
-  
-      function streamText(target, text, speed = STREAM_SPEED.slow) {
-        const content = text === undefined || text === null ? "" : String(text);
-        const existingTimer = streamTimers.get(target);
-        if (existingTimer) {
-          window.clearInterval(existingTimer);
-          streamTimers.delete(target);
-        }
-  
-        target.textContent = "";
-        if (!content) return Promise.resolve();
-  
-        let index = 0;
-        return new Promise((resolve) => {
-          const timer = window.setInterval(() => {
-            target.textContent += content[index];
-            index += 1;
-            messages.scrollTop = messages.scrollHeight;
-            if (index >= content.length) {
-              window.clearInterval(timer);
-              streamTimers.delete(target);
-              resolve();
-            }
-          }, speed);
-  
-          streamTimers.set(target, timer);
-        });
-      }
-  
-      function createAssistantMessage() {
-        const messageDiv = document.createElement("div");
-        messageDiv.className = "message assistant";
-        messages.appendChild(messageDiv);
-        messages.scrollTop = messages.scrollHeight;
-        return messageDiv;
-      }
-  
-      function appendStreamBlock(container, labelText, valueText, speed = STREAM_SPEED.fast) {
-        const label = document.createElement("div");
-        const labelStrong = document.createElement("strong");
-        labelStrong.textContent = labelText;
-        label.appendChild(labelStrong);
-        container.appendChild(label);
-  
-        const box = document.createElement("div");
-        box.style.backgroundColor = "#f5f5f5";
-        box.style.padding = "10px";
-        box.style.borderRadius = "4px";
-        box.style.marginTop = "8px";
-        box.style.fontSize = "0.9em";
-        box.style.lineHeight = "1.5";
-  
-        const valueSpan = document.createElement("span");
-        valueSpan.style.whiteSpace = "pre-wrap";
-        box.appendChild(valueSpan);
-        container.appendChild(box);
-  
-        streamText(valueSpan, valueText, speed);
-      }
-  
-      function appendExecutionTime(container, timeStr) {
-        const timeLine = document.createElement("small");
-        timeLine.style.color = "#999";
-        timeLine.style.marginTop = "8px";
-        timeLine.style.display = "block";
-        timeLine.textContent = `⏱️ 执行时间: ${timeStr}ms`;
-        container.appendChild(timeLine);
-      }
-  
-      function appendStepMessage(label, content, styleClass, speed = STREAM_SPEED.slow) {
-        const messageDiv = createAssistantMessage();
-        const inner = document.createElement("div");
-        if (styleClass) inner.className = styleClass;
-  
-        const labelEl = document.createElement("strong");
-        labelEl.textContent = `${label}:`;
-        inner.appendChild(labelEl);
-        inner.appendChild(document.createElement("br"));
-  
-        const contentSpan = document.createElement("span");
-        contentSpan.style.whiteSpace = "pre-wrap";
-        inner.appendChild(contentSpan);
-        messageDiv.appendChild(inner);
-  
-        streamText(contentSpan, content, speed);
-      }
-  
-      function displayMessage(text, type) {
-        const messageDiv = document.createElement("div");
-        messageDiv.className = `message ${type}`;
-        messageDiv.innerHTML = text;
-        messages.appendChild(messageDiv);
-        messages.scrollTop = messages.scrollHeight;
-      }
-
-      function openImageModal(src, altText) {
-        if (!imageModal || !imageModalImage) return;
-        imageModalImage.src = src;
-        imageModalImage.alt = altText || "Preview";
-        imageModal.classList.add("is-open");
-        imageModal.setAttribute("aria-hidden", "false");
-      }
-
-      function closeImageModal() {
-        if (!imageModal || !imageModalImage) return;
-        imageModal.classList.remove("is-open");
-        imageModal.setAttribute("aria-hidden", "true");
-        imageModalImage.src = "";
-      }
-
-      function displayUserMessage(text, fileMeta) {
-        if (!text && !fileMeta) return;
-
-        const messageDiv = document.createElement("div");
-        messageDiv.className = "message user";
-
-        if (fileMeta) {
-          const chip = document.createElement("div");
-          chip.className = "attachment-chip";
-          const label = document.createElement("span");
-          label.textContent = `${fileMeta.name} (${formatBytes(fileMeta.size)})`;
-          chip.appendChild(label);
-          messageDiv.appendChild(chip);
-        }
-
-        if (text) {
-          const textDiv = document.createElement("div");
-          textDiv.className = "user-text";
-          textDiv.textContent = text;
-          messageDiv.appendChild(textDiv);
-        }
-
-        messages.appendChild(messageDiv);
-        messages.scrollTop = messages.scrollHeight;
-      }
-
-      async function sendMessage() {
-        const text = userInput.value.trim();
-        if (!text && !pendingFile) return;
-
-        const fileToSend = pendingFile;
-        const fileMeta = fileToSend
-          ? { name: fileToSend.name, size: fileToSend.size, type: fileToSend.type }
-          : null;
-
-        displayUserMessage(text, fileMeta);
-        window.appState.messages.push({ type: "user", text, file: fileMeta });
-        userInput.value = "";
-        clearPendingFile();
-
-        const messageText = text || (fileToSend ? `[File] ${fileToSend.name}` : "");
-        let uploadedVideoPath = null;
-
-        if (fileToSend) {
-          if (!isVideoFile(fileToSend)) {
-            displayMessage("❌ 仅支持视频文件上传", "assistant");
-            return;
-          }
-          if (fileToSend.size > MAX_VIDEO_BYTES) {
-            displayMessage(`❌ 文件过大，最大支持 ${formatBytes(MAX_VIDEO_BYTES)}`, "assistant");
-            return;
-          }
-
-          try {
-            displayMessage("⬆️ 正在上传视频到服务器...", "assistant");
-            const uploadResp = await uploadVideo(fileToSend);
-            uploadedVideoPath = uploadResp.path;
-            displayMessage(
-              `✅ 视频上传完成：${escapeHtml(uploadResp.filename || fileToSend.name)}`,
-              "assistant"
-            );
-          } catch (error) {
-            displayMessage(`❌ 视频上传失败: ${escapeHtml(error.message)}`, "assistant");
-            return;
-          }
-        }
-
-        callBackendAPI(messageText, uploadedVideoPath ? { uploadedVideoPath } : {});
-      }
-  
-      // ====== WS ======
-      let ws = null;
-      let wsReadyPromise = null;
-  
-      function getWSUrl() {
-        const proto = location.protocol === "https:" ? "wss" : "ws";
-        return `${proto}://10.200.1.35:8001/ws`;
-      }
-  
-      function ensureWSConnection() {
-        if (ws && ws.readyState === WebSocket.OPEN) return Promise.resolve(ws);
-        if (wsReadyPromise) return wsReadyPromise;
-  
-        wsReadyPromise = new Promise((resolve, reject) => {
-          ws = new WebSocket(getWSUrl());
-  
-          ws.onopen = () => {
-            console.log("[WS] ✅ connected");
-            resolve(ws);
-          };
-  
-          ws.onerror = (e) => {
-            console.error("[WS] ❌ error", e);
-            wsReadyPromise = null;
-            reject(new Error("WebSocket 连接失败：请确认后端已启动 & ngrok 域名未过期"));
-          };
-  
-          ws.onclose = () => {
-            console.warn("[WS] ⚠️ closed");
-            ws = null;
-            wsReadyPromise = null;
-          };
-        });
-  
-        return wsReadyPromise;
-      }
-  
-      async function callBackendAPI(userInputText, options = {}) {
-        const { uploadedVideoPath } = options;
-        const loadingDiv = document.createElement("div");
-        loadingDiv.className = "message assistant";
-        loadingDiv.id = "loading-message";
-        loadingDiv.innerHTML = "🔄 正在建立实时连接...";
-        messages.appendChild(loadingDiv);
-        messages.scrollTop = messages.scrollHeight;
-  
-        let progressContent = null;
-        let spinnerRow = null;
-        let progressQueue = Promise.resolve();
-  
-        function ensureProgressContent() {
-          if (!progressContent) {
-            progressContent = document.createElement("div");
-            progressContent.className = "progress-content";
-            loadingDiv.innerHTML = "";
-            loadingDiv.appendChild(progressContent);
-          }
-          return progressContent;
-        }
-  
-        function appendProgressStep(label, content, variant) {
-          progressQueue = progressQueue.then(() => {
-            const container = ensureProgressContent();
-            const step = document.createElement("div");
-            step.className = variant ? `progress-step progress-step--${variant}` : "progress-step";
-  
-            const labelEl = document.createElement("strong");
-            labelEl.textContent = `${label}:`;
-            step.appendChild(labelEl);
-            step.appendChild(document.createElement("br"));
-  
-            const contentSpan = document.createElement("span");
-            contentSpan.style.whiteSpace = "pre-wrap";
-            step.appendChild(contentSpan);
-            container.appendChild(step);
-  
-            return streamText(contentSpan, content, STREAM_SPEED.slow);
-          });
-          return progressQueue;
-        }
-  
-        function showSpinnerRow() {
-          progressQueue = progressQueue.then(() => {
-            const container = ensureProgressContent();
-            if (spinnerRow) return null;
-  
-            spinnerRow = document.createElement("div");
-            spinnerRow.className = "progress-step progress-step--spinner";
-  
-            const spinner = document.createElement("span");
-            spinner.className = "inline-spinner";
-            spinnerRow.appendChild(spinner);
-  
-            const text = document.createElement("span");
-            text.textContent = "正在生成结果...";
-            spinnerRow.appendChild(text);
-  
-            container.appendChild(spinnerRow);
-            return null;
-          });
-          return progressQueue;
-        }
-  
-        let flowTriggered = false;
-        const triggerFlow = (agentName) => {
-          if (flowTriggered) return;
-          if (!agentName || typeof window.triggerTopologyFlow !== "function") return;
-          window.triggerTopologyFlow(agentName);
-          flowTriggered = true;
-        };
 
         try {
-          const socket = await ensureWSConnection();
-          const requestId = `req_${Date.now()}`;
-  
-          const handleMessage = (ev) => {
-            let msg;
-            try {
-              msg = JSON.parse(ev.data);
-            } catch (e) {
-              console.warn("[WS] 非JSON消息：", ev.data);
-              return;
-            }
-            if (msg.request_id !== requestId) return;
-  
-            console.log(`[WS] ${msg.type}`, msg.data);
-  
-            if (msg.type === "ack") {
-              if (!progressContent) loadingDiv.innerHTML = "✅ 服务器已确认，正在调度 Agent...";
-              return;
-            }
-  
-            if (msg.type === "routing") {
-              if (!progressContent) loadingDiv.innerHTML = "🧭 正在路由最匹配的 Agent...";
-              const payload = msg.data;
-              const selected = payload.selected_agent;
-          const selectedName = selected?.agent_name || selected?.name || selected?.id || "";
-          if (selectedName) {
-            window.highlightSelectedAgent(selectedName);
-            triggerFlow(selectedName);
-            appendProgressStep("路由结果", `已选择 Agent：${selectedName}`, "routing");
-          }
-          const routingCandidates =
-            (Array.isArray(payload?.candidates) && payload.candidates) ||
-            (Array.isArray(payload?.routing?.candidates) && payload.routing.candidates) ||
-            (Array.isArray(payload?.routing) && payload.routing) ||
-            [];
-          if (routingCandidates.length) {
-            window.updateDiscoveryListFromBackend(routingCandidates);
-          }
-          return;
-        }
-  
-            if (msg.type === "thought") {
-              appendProgressStep("思考", msg.data, "thought");
-              return;
-            }
-  
-            if (msg.type === "rewrite") {
-              if (!progressContent) loadingDiv.innerHTML = "✍️ 正在改写提示词并准备执行...";
-              if (msg.data?.final_prompt) {
-                appendProgressStep("改写提示词", msg.data.final_prompt, "rewrite");
-              }
-              return;
-            }
-  
-            if (msg.type === "status") {
-              showSpinnerRow();
-              return;
-            }
-  
-            if (msg.type === "log") {
-              appendStepMessage("日志", msg.data, "thought-content");
-              return;
-            }
-  
-            if (msg.type === "final") {
-              progressQueue = progressQueue.then(() => {
-                if (spinnerRow) {
-                  spinnerRow.remove();
-                  spinnerRow = null;
-                }
-                if (loadingDiv && !progressContent) loadingDiv.remove();
-                const finalSelected =
-                  msg.data?.best_match?.agent_name ||
-                  msg.data?.selected_agent?.agent_name ||
-                  msg.data?.agent?.selected ||
-                  msg.data?.agent_name ||
-                  "";
-                triggerFlow(finalSelected);
-                processBackendResponse(msg.data, { formatMultilineText, createAssistantMessage, appendStreamBlock, appendExecutionTime });
-              });
-              socket.removeEventListener("message", handleMessage);
-              return;
-            }
-  
-            if (msg.type === "error") {
-              if (loadingDiv) loadingDiv.remove();
-              const errorDiv = document.createElement("div");
-              errorDiv.className = "message assistant";
-              const message = msg.data?.message || msg.message || "unknown";
-              errorDiv.innerHTML = `❌ 后端错误: ${message}`;
-              messages.appendChild(errorDiv);
-              messages.scrollTop = messages.scrollHeight;
-              socket.removeEventListener("message", handleMessage);
-            }
-          };
-  
-          socket.addEventListener("message", handleMessage);
-  
-          const payload = { type: "run", request_id: requestId, user_input: userInputText, top_k: 5 };
-          if (uploadedVideoPath) payload.uploaded_video_path = uploadedVideoPath;
-          console.log("[WS send] payload:", payload);
-          socket.send(JSON.stringify(payload));
+          displayMessage("⬆️ 正在上传视频到服务器...", "assistant");
+          const uploadResp = await uploadVideo(fileToSend);
+          uploadedVideoPath = uploadResp.path;
+          displayMessage(`✅ 视频上传完成：${escapeHtml(uploadResp.filename || fileToSend.name)}`, "assistant");
         } catch (error) {
-          if (loadingDiv) loadingDiv.remove();
-          const errorDiv = document.createElement("div");
-          errorDiv.className = "message assistant";
-          errorDiv.innerHTML = `❌ 连接失败: ${error.message}`;
-          messages.appendChild(errorDiv);
-          messages.scrollTop = messages.scrollHeight;
+          displayMessage(`❌ 视频上传失败: ${escapeHtml(error.message)}`, "assistant");
+          return;
         }
       }
-  
-      function processBackendResponse(data, helpers) {
-        const { formatMultilineText, createAssistantMessage, appendStreamBlock, appendExecutionTime } = helpers;
-  
-        console.log("Backend response:", data);
-  
-        if (data.status === "error" || (data.status && data.status !== "ok" && data.status !== "success")) {
-          displayMessage("❌ 后端返回错误状态", "assistant");
-          return;
-        }
-  
-        const thoughtContent = data.thought || data.final_prompt || "";
-        if (thoughtContent) {
-          const thoughtDiv = document.createElement("div");
-          thoughtDiv.className = "message assistant";
-          thoughtDiv.innerHTML = `<div class="thought-content"><strong>🧠 处理逻辑:</strong><br>${formatMultilineText(thoughtContent)}</div>`;
-          messages.appendChild(thoughtDiv);
-        }
-  
-        let hasAnswer = false;
-        let answerDiv = null;
-  
-        const answerText =
-          (typeof data.answer?.text === "string" && data.answer.text.trim()) ||
-          (typeof data.answer_text === "string" && data.answer_text.trim()) ||
-          "";
-  
-        if (typeof data.answer === "object" && data.answer !== null) {
-          const images = Array.isArray(data.answer.images) ? data.answer.images : [];
-          const keyframe = data.answer.keyframe ? [data.answer.keyframe] : [];
-          const structuredImages = Array.isArray(data.structured?.images) ? data.structured.images : [];
-          const allImages = [...images, ...keyframe, ...structuredImages].filter(Boolean);
-  
-          if (answerText || allImages.length) {
-            answerDiv = createAssistantMessage();
-            const header = document.createElement("div");
-            const headerStrong = document.createElement("strong");
-            headerStrong.textContent = "📋 分析结果:";
-            header.appendChild(headerStrong);
-            answerDiv.appendChild(header);
-          }
-  
-          if (answerText && answerDiv) {
-            appendStreamBlock(answerDiv, "📌 结果:", answerText, 60);
-            hasAnswer = true;
-          }
-  
-          allImages.forEach((image) => {
-            const src = image?.data_uri || image?.url;
-            if (!src || !answerDiv) return;
-  
-            let imageUrl = src;
-            if (!imageUrl.startsWith("data:") && !imageUrl.startsWith("http")) {
-              imageUrl = "https://andree-unwistful-ilene.ngrok-free.dev" + (imageUrl.startsWith("/") ? "" : "/") + imageUrl;
-            }
-  
-            const img = document.createElement("img");
-            img.src = imageUrl;
-            img.alt = "结果图片";
-            img.style.maxWidth = "100%";
-            img.style.maxHeight = "300px";
-            img.style.borderRadius = "6px";
-            img.style.margin = "8px 0";
-            img.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-            img.className = "chat-image";
-            img.addEventListener("click", () => openImageModal(imageUrl, "结果图片"));
-            img.onerror = () => {
-              img.src = "data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%2220%22 y=%2235%22 font-size=%2220%22%3E图片加载失败%3C/text%3E%3C/svg%3E";
-            };
-            answerDiv.appendChild(img);
-            hasAnswer = true;
+
+      callBackendAPI(messageText, uploadedVideoPath ? { uploadedVideoPath } : {});
+    }
+
+    // --------------------------------
+    // WebSocket
+    // --------------------------------
+    let ws = null;
+    let wsReadyPromise = null;
+
+    function getWSUrl() {
+      // 用 BACKEND_HTTP 的 host/port，协议按页面 http/https 走 ws/wss
+      const proto = location.protocol === "https:" ? "wss" : "ws";
+      let hostPort = "10.200.1.35:8001";
+      try {
+        const u = new URL(BACKEND_HTTP);
+        hostPort = u.host; // includes port
+      } catch (e) {}
+      return `${proto}://${hostPort}/ws`;
+    }
+
+    function ensureWSConnection() {
+      if (ws && ws.readyState === WebSocket.OPEN) return Promise.resolve(ws);
+      if (wsReadyPromise) return wsReadyPromise;
+
+      wsReadyPromise = new Promise((resolve, reject) => {
+        ws = new WebSocket(getWSUrl());
+
+        ws.onopen = () => {
+          console.log("[WS] ✅ connected", ws.url);
+          resolve(ws);
+        };
+
+        ws.onerror = (e) => {
+          console.error("[WS] ❌ error", e);
+          wsReadyPromise = null;
+          reject(new Error("WebSocket 连接失败：请确认后端已启动 / 网络可达"));
+        };
+
+        ws.onclose = (ev) => {
+          console.warn("[WS] ⚠️ closed", {
+            code: ev.code,
+            reason: ev.reason,
+            wasClean: ev.wasClean,
+            url: ws?.url,
           });
-        } else if (answerText) {
-          answerDiv = createAssistantMessage();
-          appendStreamBlock(answerDiv, "📋 结果:", answerText, 60);
-          hasAnswer = true;
+          ws = null;
+          wsReadyPromise = null;
+        };
+      });
+
+      return wsReadyPromise;
+    }
+
+    async function callBackendAPI(userInputText, options = {}) {
+      const { uploadedVideoPath } = options;
+
+      const loadingDiv = document.createElement("div");
+      loadingDiv.className = "message assistant";
+      loadingDiv.id = "loading-message";
+      loadingDiv.innerHTML = "🔄 正在建立实时连接...";
+      messages.appendChild(loadingDiv);
+      messages.scrollTop = messages.scrollHeight;
+
+      let progressContent = null;
+      let spinnerRow = null;
+      let progressQueue = Promise.resolve();
+
+      function ensureProgressContent() {
+        if (!progressContent) {
+          progressContent = document.createElement("div");
+          progressContent.className = "progress-content";
+          loadingDiv.innerHTML = "";
+          loadingDiv.appendChild(progressContent);
         }
-  
-        if (hasAnswer && answerDiv) {
-          const executionTime = data.execution_time || (data.result && data.result.execution_time) || "N/A";
-          const timeStr = typeof executionTime === "number" ? executionTime.toFixed(2) : executionTime;
-          appendExecutionTime(answerDiv, timeStr);
-        }
-  
-        const candidates =
-          (Array.isArray(data.candidates) && data.candidates) ||
-          (Array.isArray(data.routing?.candidates) && data.routing.candidates) ||
-          (Array.isArray(data.routing) && data.routing) ||
-          [];
-  
-        if (candidates.length) window.updateDiscoveryListFromBackend(candidates);
-  
-        const selectedAgentName =
-          data.best_match?.agent_name ||
-          data.selected_agent?.agent_name ||
-          data.agent?.selected ||
-          data.agent_name ||
-          "";
-  
-        if (selectedAgentName) window.highlightSelectedAgent(selectedAgentName);
-  
+        return progressContent;
+      }
+
+      function appendProgressStep(label, content, variant) {
+        progressQueue = progressQueue.then(() => {
+          const container = ensureProgressContent();
+          const step = document.createElement("div");
+          step.className = variant ? `progress-step progress-step--${variant}` : "progress-step";
+
+          const labelEl = document.createElement("strong");
+          labelEl.textContent = `${label}:`;
+          step.appendChild(labelEl);
+          step.appendChild(document.createElement("br"));
+
+          const contentSpan = document.createElement("span");
+          contentSpan.style.whiteSpace = "pre-wrap";
+          step.appendChild(contentSpan);
+          container.appendChild(step);
+
+          return streamText(contentSpan, content, STREAM_SPEED.slow);
+        });
+        return progressQueue;
+      }
+
+      function showSpinnerRow() {
+        progressQueue = progressQueue.then(() => {
+          const container = ensureProgressContent();
+          if (spinnerRow) return null;
+
+          spinnerRow = document.createElement("div");
+          spinnerRow.className = "progress-step progress-step--spinner";
+
+          const spinner = document.createElement("span");
+          spinner.className = "inline-spinner";
+          spinnerRow.appendChild(spinner);
+
+          const text = document.createElement("span");
+          text.textContent = "正在生成结果...";
+          spinnerRow.appendChild(text);
+
+          container.appendChild(spinnerRow);
+          return null;
+        });
+        return progressQueue;
+      }
+
+      let flowTriggered = false;
+      const triggerFlow = (agentName) => {
+        if (flowTriggered) return;
+        if (!agentName || typeof window.triggerTopologyFlow !== "function") return;
+        window.triggerTopologyFlow(agentName);
+        flowTriggered = true;
+      };
+
+      try {
+        const socket = await ensureWSConnection();
+        const requestId = `req_${Date.now()}`;
+
+        const handleMessage = (ev) => {
+          let msg;
+          try {
+            msg = JSON.parse(ev.data);
+          } catch (e) {
+            console.warn("[WS] 非JSON消息：", ev.data);
+            return;
+          }
+          if (msg.request_id !== requestId) return;
+
+          console.log(`[WS] ${msg.type}`, msg.data);
+
+          if (msg.type === "ack") {
+            if (!progressContent) loadingDiv.innerHTML = "✅ 服务器已确认，正在调度 Agent...";
+            return;
+          }
+
+          if (msg.type === "routing") {
+            if (!progressContent) loadingDiv.innerHTML = "🧭 正在路由最匹配的 Agent...";
+            const payload = msg.data;
+
+            const selected = payload.selected_agent;
+            const selectedName = selected?.agent_name || selected?.name || selected?.id || "";
+            if (selectedName) {
+              if (typeof window.highlightSelectedAgent === "function") window.highlightSelectedAgent(selectedName);
+              triggerFlow(selectedName);
+              appendProgressStep("路由结果", `已选择 Agent：${selectedName}`, "routing");
+            }
+
+            const routingCandidates =
+              (Array.isArray(payload?.candidates) && payload.candidates) ||
+              (Array.isArray(payload?.routing?.candidates) && payload.routing.candidates) ||
+              (Array.isArray(payload?.routing) && payload.routing) ||
+              [];
+
+            if (routingCandidates.length && typeof window.updateDiscoveryListFromBackend === "function") {
+              window.updateDiscoveryListFromBackend(routingCandidates);
+            }
+            return;
+          }
+
+          if (msg.type === "thought") {
+            appendProgressStep("思考", msg.data, "thought");
+            return;
+          }
+
+          if (msg.type === "rewrite") {
+            if (!progressContent) loadingDiv.innerHTML = "✍️ 正在改写提示词并准备执行...";
+            if (msg.data?.final_prompt) {
+              appendProgressStep("改写提示词", msg.data.final_prompt, "rewrite");
+            }
+            return;
+          }
+
+          if (msg.type === "status") {
+            showSpinnerRow();
+            return;
+          }
+
+          if (msg.type === "log") {
+            appendStepMessage("日志", msg.data, "thought-content");
+            return;
+          }
+
+          if (msg.type === "final") {
+            progressQueue = progressQueue.then(() => {
+              if (spinnerRow) {
+                spinnerRow.remove();
+                spinnerRow = null;
+              }
+              if (loadingDiv && !progressContent) loadingDiv.remove();
+
+              const finalSelected =
+                msg.data?.best_match?.agent_name ||
+                msg.data?.selected_agent?.agent_name ||
+                msg.data?.agent?.selected ||
+                msg.data?.agent_name ||
+                "";
+              triggerFlow(finalSelected);
+
+              processBackendResponse(msg.data, {
+                formatMultilineText,
+                createAssistantMessage,
+                appendStreamBlock,
+                appendExecutionTime,
+                resolveBackendUrl,
+              });
+            });
+            socket.removeEventListener("message", handleMessage);
+            return;
+          }
+
+          if (msg.type === "error") {
+            if (loadingDiv) loadingDiv.remove();
+            const errorDiv = document.createElement("div");
+            errorDiv.className = "message assistant";
+            const message = msg.data?.message || msg.message || "unknown";
+            errorDiv.innerHTML = `❌ 后端错误: ${escapeHtml(message)}`;
+            messages.appendChild(errorDiv);
+            messages.scrollTop = messages.scrollHeight;
+            socket.removeEventListener("message", handleMessage);
+          }
+        };
+
+        socket.addEventListener("message", handleMessage);
+
+        const payload = {
+          type: "run",
+          request_id: requestId,
+          user_input: userInputText,
+          top_k: 5,
+        };
+        if (uploadedVideoPath) payload.uploaded_video_path = uploadedVideoPath;
+
+        console.log("[WS send] payload:", payload);
+        socket.send(JSON.stringify(payload));
+      } catch (error) {
+        if (loadingDiv) loadingDiv.remove();
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "message assistant";
+        errorDiv.innerHTML = `❌ 连接失败: ${escapeHtml(error.message)}`;
+        messages.appendChild(errorDiv);
         messages.scrollTop = messages.scrollHeight;
       }
-  
-      sendButton.addEventListener("click", sendMessage);
-      userInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") sendMessage();
-      });
-
-      if (fileButton && fileInput) {
-        fileButton.addEventListener("click", () => fileInput.click());
-        fileInput.addEventListener("change", () => {
-          const file = fileInput.files && fileInput.files[0];
-          if (!file) return;
-          fileInput.value = "";
-
-          if (!isVideoFile(file)) {
-            displayMessage("❌ 仅支持视频文件上传", "assistant");
-            return;
-          }
-
-          if (file.size > MAX_VIDEO_BYTES) {
-            displayMessage(`❌ 文件过大，最大支持 ${formatBytes(MAX_VIDEO_BYTES)}`, "assistant");
-            return;
-          }
-
-          pendingFile = file;
-          renderAttachmentPreview(file);
-        });
-      }
-
-      if (imageModal) {
-        imageModal.addEventListener("click", (event) => {
-          const target = event.target;
-          if (target && (target.matches(".image-modal__close") || target.dataset.close === "true")) {
-            closeImageModal();
-          }
-        });
-      }
-
-      window.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") closeImageModal();
-      });
-  
-      displayMessage(
-        "👋 欢迎使用 IOA 平台！\n\n• 使用<strong>Discovery Process</strong>来搜索和选择 Agent\n• 点击<strong>Register Agent</strong>注册新的 Agent\n• 在此与 Orchestrator Agent 进行交互",
-        "assistant"
-      );
     }
-  
-    // ====== 总入口：放到 chat.js 里统一启动 ======
-    document.addEventListener("DOMContentLoaded", function () {
-      console.log("IOA Application Initializing...");
-  
-      window.initializeStats();
-      window.initializeNetworkGraph();
-      window.initializeDiscoveryProcess();
-      initializeChatSystem();
-  
-      window.loadNewAgents();
-  
-      console.log("IOA Application Ready!");
+
+    // --------------------------------
+    // Render final answer (text + images)
+    // --------------------------------
+    function processBackendResponse(data, helpers) {
+      const { createAssistantMessage, appendStreamBlock, appendExecutionTime, resolveBackendUrl } = helpers;
+
+      console.log("Backend response:", data);
+
+      if (data.status === "error" || (data.status && data.status !== "ok" && data.status !== "success")) {
+        displayMessage("❌ 后端返回错误状态", "assistant");
+        return;
+      }
+
+      // ✅ 默认不再额外渲染 thought（你们目标是“最靠谱的一句话”）
+      // 如果你要开调试再显示，可加一个开关：
+      // const SHOW_DEBUG_THOUGHT = false;
+
+      let hasAnswer = false;
+      let answerDiv = null;
+
+      const answerText =
+        (typeof data.answer?.text === "string" && data.answer.text.trim()) ||
+        (typeof data.answer_text === "string" && data.answer_text.trim()) ||
+        "";
+
+      // images list gather
+      const images =
+        (Array.isArray(data.answer?.images) && data.answer.images) ||
+        (Array.isArray(data.images) && data.images) ||
+        [];
+      const keyframe = data.answer?.keyframe ? [data.answer.keyframe] : [];
+      const structuredImages = Array.isArray(data.structured?.images) ? data.structured.images : [];
+      const allImages = [...images, ...keyframe, ...structuredImages].filter(Boolean);
+
+      if (answerText || allImages.length) {
+        answerDiv = createAssistantMessage();
+
+        const header = document.createElement("div");
+        const headerStrong = document.createElement("strong");
+        headerStrong.textContent = "📋 分析结果:";
+        header.appendChild(headerStrong);
+        answerDiv.appendChild(header);
+      }
+
+      if (answerText && answerDiv) {
+        appendStreamBlock(answerDiv, "📌 结果:", answerText, 60);
+        hasAnswer = true;
+      }
+
+      allImages.forEach((image) => {
+        const src = image?.data_uri || image?.url;
+        if (!src || !answerDiv) return;
+
+        const imageUrl = resolveBackendUrl(src);
+        if (!imageUrl) return;
+
+        const img = document.createElement("img");
+        img.src = imageUrl;
+        img.alt = "结果图片";
+        img.style.maxWidth = "100%";
+        img.style.maxHeight = "300px";
+        img.style.borderRadius = "6px";
+        img.style.margin = "8px 0";
+        img.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+        img.className = "chat-image";
+        img.addEventListener("click", () => openImageModal(imageUrl, "结果图片"));
+        img.onerror = () => {
+          img.src =
+            "data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%2220%22 y=%2235%22 font-size=%2220%22%3E图片加载失败%3C/text%3E%3C/svg%3E";
+        };
+        answerDiv.appendChild(img);
+        hasAnswer = true;
+      });
+
+      if (hasAnswer && answerDiv) {
+        const executionTime = data.execution_time || (data.result && data.result.execution_time) || "N/A";
+        const timeStr = typeof executionTime === "number" ? executionTime.toFixed(2) : executionTime;
+        appendExecutionTime(answerDiv, timeStr);
+        openAlertModal({
+          message: "🚨 已报警：事故/火情信息已同步至应急平台。",
+          meta: `报警时间：${new Date().toLocaleString()}`,
+        });
+      }
+
+      // 更新 discovery
+      const candidates =
+        (Array.isArray(data.candidates) && data.candidates) ||
+        (Array.isArray(data.routing?.candidates) && data.routing.candidates) ||
+        (Array.isArray(data.routing) && data.routing) ||
+        [];
+
+      if (candidates.length && typeof window.updateDiscoveryListFromBackend === "function") {
+        window.updateDiscoveryListFromBackend(candidates);
+      }
+
+      const selectedAgentName =
+        data.best_match?.agent_name || data.selected_agent?.agent_name || data.agent?.selected || data.agent_name || "";
+
+      if (selectedAgentName && typeof window.highlightSelectedAgent === "function") {
+        window.highlightSelectedAgent(selectedAgentName);
+      }
+
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    // --------------------------------
+    // Bind events
+    // --------------------------------
+    sendButton.addEventListener("click", sendMessage);
+    userInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
     });
-  
-    window.initializeChatSystem = initializeChatSystem;
-  })();
-  
+
+    if (fileButton && fileInput) {
+      fileButton.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) return;
+        fileInput.value = "";
+
+        if (!isVideoFile(file)) {
+          displayMessage("❌ 仅支持视频文件上传", "assistant");
+          return;
+        }
+
+        if (file.size > MAX_VIDEO_BYTES) {
+          displayMessage(`❌ 文件过大，最大支持 ${formatBytes(MAX_VIDEO_BYTES)}`, "assistant");
+          return;
+        }
+
+        pendingFile = file;
+        renderAttachmentPreview(file);
+      });
+    }
+
+    if (imageModal) {
+      imageModal.addEventListener("click", (event) => {
+        const target = event.target;
+        if (target && (target.matches(".image-modal__close") || target.dataset.close === "true")) {
+          closeImageModal();
+        }
+      });
+    }
+
+    if (alertModal) {
+      alertModal.addEventListener("click", (event) => {
+        const target = event.target;
+        if (target && (target.classList.contains("alert-modal__close") || target.dataset.close === "true")) {
+          closeAlertModal();
+        }
+      });
+    }
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeImageModal();
+        closeAlertModal();
+      }
+    });
+
+    // --------------------------------
+    // Welcome
+    // --------------------------------
+    displayMessage(
+      "👋 欢迎使用 IOA 平台！\n\n• 使用<strong>Discovery Process</strong>来搜索和选择 Agent\n• 点击<strong>Register Agent</strong>注册新的 Agent\n• 在此与 Orchestrator Agent 进行交互",
+      "assistant"
+    );
+  }
+
+  // ====== 总入口：放到 chat.js 里统一启动 ======
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("IOA Application Initializing...");
+
+    if (typeof window.initializeStats === "function") window.initializeStats();
+    if (typeof window.initializeNetworkGraph === "function") window.initializeNetworkGraph();
+    if (typeof window.initializeDiscoveryProcess === "function") window.initializeDiscoveryProcess();
+
+    initializeChatSystem();
+
+    if (typeof window.loadNewAgents === "function") window.loadNewAgents();
+
+    console.log("IOA Application Ready!");
+  });
+
+  window.initializeChatSystem = initializeChatSystem;
+})();
