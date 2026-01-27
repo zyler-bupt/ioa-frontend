@@ -651,11 +651,15 @@
     }
 
     const FLOW_DEFAULTS = {
-      durationMs: 6500,
-      particlesPerEdge: 8,
-      particleRadius: 3,
+      durationMs: 0,
+      particlesPerEdge: 10,
+      particleRadius: 1,
       speed: 0.55,
+      blinkIntervalMs: 1000,
+      nodeScale: 1.3529,
     };
+    const FLOW_HIGHLIGHT_COLOR = "#ffd84a";
+    const FLOW_HIGHLIGHT_SHADOW = "rgba(255, 216, 74, 0.45)";
     const FLOW_USER_ID = "infra-terminal-user-left";
     const FLOW_TERMINAL_DEVICES = [
       "infra-terminal-phone-left",
@@ -664,9 +668,12 @@
       "infra-terminal-phone-right",
     ];
     const FLOW_GATEWAYS = ["infra-edge-gateway-left", "infra-edge-gateway-right"];
+    const flowNodeOriginals = new Map();
     const flowEdgeOriginals = new Map();
+    let flowActiveNodeIds = [];
     let flowActiveEdgeIds = [];
     let flowClearTimer = null;
+    let flowBlinkTimer = null;
 
     function resolveNodeId(targetId, nodes) {
       if (!targetId || !nodes) return null;
@@ -816,13 +823,16 @@
               color: edge.color ? { ...edge.color } : edge.color,
               width: edge.width,
               dashes: edge.dashes,
+              shadow: edge.shadow,
             });
           }
           updates.push({
             id: edgeId,
             flowActive: true,
             color: { color: window.LINK_COLORS.highlight, highlight: window.LINK_COLORS.highlight },
-            width: Math.max(2.6, (edge.width || 2) + 0.8),
+            width: Math.max(3.2, (edge.width || 2) + 1.4),
+            dashes: edge.dashes || [10, 6],
+            shadow: { enabled: true, color: "rgba(255, 215, 0, 0.5)", size: 10, x: 0, y: 0 },
           });
           return;
         }
@@ -833,10 +843,154 @@
           color: original?.color || edge.color,
           width: original?.width ?? edge.width,
           dashes: original?.dashes ?? edge.dashes,
+          shadow: original?.shadow ?? edge.shadow,
         });
         flowEdgeOriginals.delete(edgeId);
       });
       if (updates.length) edgeSet.update(updates);
+    }
+
+    function cloneNodeColor(color) {
+      if (!color || typeof color !== "object") return color;
+      return {
+        ...color,
+        highlight: color.highlight ? { ...color.highlight } : color.highlight,
+      };
+    }
+
+    function cloneNodeShadow(shadow) {
+      if (!shadow || typeof shadow !== "object") return shadow;
+      return { ...shadow };
+    }
+
+    function isHighlightStyle(node) {
+      const border = node?.color?.border;
+      if (!border || typeof border !== "string") return false;
+      return border.toLowerCase() === "#ffd700";
+    }
+
+    function saveFlowNodeState(nodeIds, nodes) {
+      if (!nodes || !nodeIds || !nodeIds.length) return;
+      nodeIds.forEach((nodeId) => {
+        if (flowNodeOriginals.has(nodeId)) return;
+        const node = nodes.get(nodeId);
+        if (!node) return;
+        const baseState = {
+          size: node.size,
+          color: cloneNodeColor(node.color),
+          borderWidth: node.borderWidth,
+          shadow: cloneNodeShadow(node.shadow),
+          font: node.font ? { ...node.font } : node.font,
+        };
+
+        if (isHighlightStyle(node)) {
+          const agent = window.agentDatabase?.find((item) => item.id === nodeId);
+          if (agent) {
+            const layer = agent.layer || "edge";
+            const style = getNodeStyleForLayer(layer);
+            baseState.size = style.size;
+            baseState.borderWidth = style.borderWidth;
+            baseState.shadow = {
+              enabled: true,
+              color: style.shadowColor,
+              size: style.shadowSize,
+              x: 0,
+              y: 4,
+            };
+            baseState.color = {
+              background: "#1d3f8f",
+              border: style.borderColor,
+              highlight: { background: "#3a5fb7", border: "#000" },
+            };
+          }
+        }
+
+        flowNodeOriginals.set(nodeId, baseState);
+      });
+    }
+
+    function setNodeFlowActive(nodes, nodeId, active) {
+      if (!nodes) return;
+      const base = flowNodeOriginals.get(nodeId);
+      if (!base) return;
+      if (!nodes.get(nodeId)) return;
+      if (active) {
+        const baseSize = Number.isFinite(base.size) ? base.size : 20;
+        const nextSize = Math.max(baseSize * FLOW_DEFAULTS.nodeScale, baseSize + 6);
+        const baseColor = cloneNodeColor(base.color);
+        let activeColor = baseColor;
+        if (!activeColor || typeof activeColor !== "object") {
+          const fallback = typeof baseColor === "string" ? baseColor : "#1d3f8f";
+          activeColor = {
+            background: fallback,
+            border: FLOW_HIGHLIGHT_COLOR,
+            highlight: { background: fallback, border: "#000" },
+          };
+        } else {
+          const highlight = activeColor.highlight && typeof activeColor.highlight === "object"
+            ? { ...activeColor.highlight }
+            : { background: activeColor.background, border: "#000" };
+          activeColor = {
+            ...activeColor,
+            border: FLOW_HIGHLIGHT_COLOR,
+            highlight: { ...highlight, border: "#000" },
+          };
+        }
+
+        nodes.update({
+          id: nodeId,
+          size: nextSize,
+          borderWidth: Math.max(1.4, Number(base.borderWidth) || 1.8) + 1.2,
+          color: activeColor,
+          shadow: {
+            enabled: true,
+            color: FLOW_HIGHLIGHT_SHADOW,
+            size: Math.max(10, Number(base.shadow?.size) || 6) + 4,
+            x: 0,
+            y: 4,
+          },
+        });
+        return;
+      }
+
+      nodes.update({
+        id: nodeId,
+        size: base.size,
+        color: base.color,
+        borderWidth: base.borderWidth,
+        shadow: base.shadow,
+        font: base.font,
+      });
+    }
+
+    function stopFlowBlink() {
+      if (flowBlinkTimer) {
+        window.clearInterval(flowBlinkTimer);
+        flowBlinkTimer = null;
+      }
+    }
+
+    function startFlowBlink(nodes, edgeSet, nodeIds, edgeIds, intervalMs) {
+      if (!nodes || !edgeSet || !nodeIds || !edgeIds) return;
+      stopFlowBlink();
+
+      let on = true;
+      nodeIds.forEach((nodeId) => setNodeFlowActive(nodes, nodeId, on));
+      setFlowActiveEdges(edgeSet, edgeIds, on);
+
+      const blinkInterval = Number.isFinite(intervalMs) ? intervalMs : FLOW_DEFAULTS.blinkIntervalMs;
+      if (blinkInterval <= 0) return;
+      flowBlinkTimer = window.setInterval(() => {
+        on = !on;
+        nodeIds.forEach((nodeId) => setNodeFlowActive(nodes, nodeId, on));
+        setFlowActiveEdges(edgeSet, edgeIds, on);
+      }, blinkInterval);
+    }
+
+    function restoreFlowNodes(nodes, nodeIds) {
+      if (!nodes || !nodeIds || !nodeIds.length) return;
+      nodeIds.forEach((nodeId) => setNodeFlowActive(nodes, nodeId, false));
+      flowNodeOriginals.clear();
     }
 
     function clearFlowState() {
@@ -846,6 +1000,11 @@
         window.clearTimeout(flowClearTimer);
         flowClearTimer = null;
       }
+      stopFlowBlink();
+      if (flowActiveNodeIds.length) {
+        restoreFlowNodes(graph.nodes, flowActiveNodeIds);
+        flowActiveNodeIds = [];
+      }
       if (flowActiveEdgeIds.length) {
         setFlowActiveEdges(graph.edges, flowActiveEdgeIds, false);
         flowActiveEdgeIds = [];
@@ -854,6 +1013,10 @@
         window.edgeDotFlow.activeSegments = null;
         window.edgeDotFlow.activeUntil = 0;
         window.edgeDotFlow.lastTs = 0;
+        if (window.edgeDotFlow.raf) {
+          window.cancelAnimationFrame(window.edgeDotFlow.raf);
+          window.edgeDotFlow.raf = 0;
+        }
       }
     }
 
@@ -874,8 +1037,14 @@
       if (!flowSegments) return;
 
       clearFlowState();
-      setFlowActiveEdges(edges, flowSegments.edgeIds, true);
+      flowActiveNodeIds = nodePath;
+      saveFlowNodeState(flowActiveNodeIds, nodes);
       flowActiveEdgeIds = flowSegments.edgeIds;
+
+      const blinkIntervalMs = Number.isFinite(options.blinkIntervalMs)
+        ? options.blinkIntervalMs
+        : FLOW_DEFAULTS.blinkIntervalMs;
+      startFlowBlink(nodes, edges, flowActiveNodeIds, flowActiveEdgeIds, blinkIntervalMs);
 
       if (!window.edgeDotFlow) {
         const container = document.getElementById("networkGraph");
@@ -883,101 +1052,51 @@
       }
 
       const durationMs = Number.isFinite(options.durationMs) ? options.durationMs : FLOW_DEFAULTS.durationMs;
+      const hasDuration = Number.isFinite(durationMs) && durationMs > 0;
       if (window.edgeDotFlow) {
         window.edgeDotFlow.activeSegments = flowSegments.segments;
-        window.edgeDotFlow.activeUntil = Date.now() + durationMs;
+        window.edgeDotFlow.activeUntil = hasDuration ? Date.now() + durationMs : 0;
         window.edgeDotFlow.flowSpeed = Number.isFinite(options.speed) ? options.speed : FLOW_DEFAULTS.speed;
         window.edgeDotFlow.particleRadius = Number.isFinite(options.particleRadius)
           ? options.particleRadius
           : FLOW_DEFAULTS.particleRadius;
         window.edgeDotFlow.lastTs = 0;
         window.edgeDotFlow.onExpire = clearFlowState;
+        if (typeof window.edgeDotFlow.start === "function") {
+          window.edgeDotFlow.start();
+        }
+        if (window.networkInstance) {
+          window.networkInstance.redraw();
+        }
       }
 
-      flowClearTimer = window.setTimeout(clearFlowState, durationMs);
+      if (hasDuration) {
+        flowClearTimer = window.setTimeout(clearFlowState, durationMs);
+      }
     }
 
-    function startEdgeDotFlow(network, edgeSet, container) {
-      if (window.edgeDotFlow?.raf) {
-        window.cancelAnimationFrame(window.edgeDotFlow.raf);
+    function startEdgeDotFlow(network) {
+      if (!network) return;
+      const previous = window.edgeDotFlow;
+      if (previous?.raf) {
+        window.cancelAnimationFrame(previous.raf);
       }
-      if (window.edgeDotFlow?.observer) {
-        window.edgeDotFlow.observer.disconnect();
-      }
-
-      if (getComputedStyle(container).position === "static") {
-        container.style.position = "relative";
+      if (previous?.afterDrawingHandler) {
+        network.off("afterDrawing", previous.afterDrawingHandler);
       }
 
-      let canvas = container.querySelector(".edge-flow-canvas");
-      if (!canvas) {
-        canvas = document.createElement("canvas");
-        canvas.className = "edge-flow-canvas";
-        canvas.style.zIndex = "5";
-        container.appendChild(canvas);
-      }
-
-      const ctx = canvas.getContext("2d");
       const state = {
-        dashOffset: 0,
         raf: 0,
-        observer: null,
         activeSegments: null,
         activeUntil: 0,
         lastTs: 0,
         flowSpeed: FLOW_DEFAULTS.speed,
         particleRadius: FLOW_DEFAULTS.particleRadius,
         onExpire: null,
+        afterDrawingHandler: null,
+        start: null,
       };
       window.edgeDotFlow = state;
-
-      const resize = () => {
-        const dpr = window.devicePixelRatio || 1;
-        const width = container.clientWidth;
-        const height = container.clientHeight;
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-        canvas.width = Math.max(1, Math.floor(width * dpr));
-        canvas.height = Math.max(1, Math.floor(height * dpr));
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      };
-
-      resize();
-
-      if ("ResizeObserver" in window) {
-        const observer = new ResizeObserver(resize);
-        observer.observe(container);
-        state.observer = observer;
-      } else {
-        window.addEventListener("resize", resize);
-      }
-
-      const dashSpeed = 1.2;
-
-      const getDashPattern = (dashes) => {
-        if (!dashes) return null;
-        if (dashes === true) return [6, 6];
-        let length = 6;
-        let gap = 6;
-        let altLength = null;
-        let altGap = null;
-        if (Array.isArray(dashes)) {
-          length = Number(dashes[0]) || length;
-          gap = Number(dashes[1]) || gap;
-          altLength = Number(dashes[2]);
-          altGap = Number(dashes[3]);
-        } else if (typeof dashes === "object") {
-          length = Number(dashes.length) || length;
-          gap = Number(dashes.gap) || gap;
-          altLength = Number(dashes.altLength);
-          altGap = Number(dashes.altGap);
-        }
-        const pattern = [length, gap];
-        if (Number.isFinite(altLength) && Number.isFinite(altGap)) {
-          pattern.push(altLength, altGap);
-        }
-        return pattern;
-      };
 
       const getQuadraticControlPoint = (start, end, smooth) => {
         if (!smooth || smooth === false) return null;
@@ -995,32 +1114,6 @@
         };
       };
 
-      const drawEdgePath = (start, end, smooth) => {
-        if (!smooth || smooth === false) {
-          ctx.beginPath();
-          ctx.moveTo(start.x, start.y);
-          ctx.lineTo(end.x, end.y);
-          ctx.stroke();
-          return;
-        }
-
-        const roundness = typeof smooth.roundness === "number" ? smooth.roundness : 0.2;
-        const dx = end.x - start.x;
-        const dy = end.y - start.y;
-        const distance = Math.hypot(dx, dy) || 1;
-        const nx = -dy / distance;
-        const ny = dx / distance;
-        const direction = smooth.type === "curvedCCW" ? 1 : -1;
-        const offset = distance * roundness * direction;
-        const cx = (start.x + end.x) / 2 + nx * offset;
-        const cy = (start.y + end.y) / 2 + ny * offset;
-
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.quadraticCurveTo(cx, cy, end.x, end.y);
-        ctx.stroke();
-      };
-
       const getPointAlongEdge = (start, end, smooth, t) => {
         const control = getQuadraticControlPoint(start, end, smooth);
         if (!control) {
@@ -1036,71 +1129,85 @@
         };
       };
 
-      const render = (ts) => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const drawParticles = (ctx) => {
+        if (!state.activeSegments || !state.activeSegments.length) return;
+        const now = Date.now();
+        if (state.activeUntil && now >= state.activeUntil) {
+          if (typeof state.onExpire === "function") state.onExpire();
+          return;
+        }
+        const ts = typeof performance !== "undefined" && performance.now ? performance.now() : now;
+        ctx.save();
+
+        state.activeSegments.forEach((segment) => {
+          const positions = network.getPositions([segment.fromId, segment.toId]);
+          const start = positions[segment.fromId];
+          const end = positions[segment.toId];
+          if (!start || !end) return;
+
+          const dotRadius = Math.max(2, state.particleRadius || FLOW_DEFAULTS.particleRadius);
+          const color = segment.color || window.LINK_COLORS.primary;
+          const offsets = segment.tOffsets || [];
+          for (let i = 0; i < offsets.length; i += 1) {
+            const t = offsets[i];
+            const pt = getPointAlongEdge(start, end, segment.smooth, t);
+            const pulse = 0.6 + 0.4 * Math.sin(ts / 140 + i);
+            ctx.fillStyle = color;
+            ctx.globalAlpha = pulse;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, Math.max(2, dotRadius + pulse), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+
+        ctx.restore();
+      };
+
+      const afterDrawingHandler = (ctx) => {
+        drawParticles(ctx);
+      };
+      state.afterDrawingHandler = afterDrawingHandler;
+      network.on("afterDrawing", afterDrawingHandler);
+
+      const tick = (ts) => {
+        if (!state.activeSegments || !state.activeSegments.length) {
+          state.raf = 0;
+          return;
+        }
 
         const now = Date.now();
-        if (state.activeSegments && now >= state.activeUntil) {
+        if (state.activeUntil && now >= state.activeUntil) {
           if (typeof state.onExpire === "function") state.onExpire();
           state.activeSegments = null;
           state.activeUntil = 0;
           state.lastTs = 0;
-        }
-
-        if (!state.activeSegments || !state.activeSegments.length) {
-          state.raf = window.requestAnimationFrame(render);
+          state.raf = 0;
           return;
         }
 
         const dt = state.lastTs ? Math.min(0.05, (ts - state.lastTs) / 1000) : 0;
         state.lastTs = ts;
         const delta = (state.flowSpeed || FLOW_DEFAULTS.speed) * dt;
-        state.dashOffset = (state.dashOffset + dashSpeed) % 1000;
 
-        const positions = network.getPositions();
-        state.activeSegments.forEach((segment, index) => {
-          const from = positions[segment.fromId];
-          const to = positions[segment.toId];
-          if (!from || !to) return;
-
-          const start = network.canvasToDOM(from);
-          const end = network.canvasToDOM(to);
-
-          const pattern = getDashPattern(segment.dashes);
-          if (pattern) {
-            ctx.save();
-            ctx.strokeStyle = segment.color || window.LINK_COLORS.primary;
-            ctx.lineWidth = Math.max(1, (segment.width || 2) + 0.6);
-            ctx.globalAlpha = 0.9;
-            ctx.lineCap = "round";
-            ctx.setLineDash(pattern);
-            ctx.lineDashOffset = -(state.dashOffset + index * 4);
-            ctx.shadowColor = ctx.strokeStyle;
-            ctx.shadowBlur = 4;
-            drawEdgePath(start, end, segment.smooth);
-            ctx.restore();
-          }
-
-          const dotRadius = state.particleRadius || FLOW_DEFAULTS.particleRadius;
-          const color = segment.color || window.LINK_COLORS.primary;
+        state.activeSegments.forEach((segment) => {
           const offsets = segment.tOffsets || [];
           for (let i = 0; i < offsets.length; i += 1) {
             let t = offsets[i] + delta;
             if (t >= 1) t -= 1;
             offsets[i] = t;
-            const pt = getPointAlongEdge(start, end, segment.smooth, t);
-            ctx.fillStyle = color;
-            ctx.globalAlpha = 0.9;
-            ctx.beginPath();
-            ctx.arc(pt.x, pt.y, dotRadius, 0, Math.PI * 2);
-            ctx.fill();
           }
         });
 
-        state.raf = window.requestAnimationFrame(render);
+        network.redraw();
+        state.raf = window.requestAnimationFrame(tick);
       };
 
-      render();
+      state.start = () => {
+        if (state.raf) return;
+        state.raf = window.requestAnimationFrame(tick);
+      };
     }
 
     function appendExtensionEdges(edgeSet, nodes) {

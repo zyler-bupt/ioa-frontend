@@ -16,7 +16,8 @@
       const imageModal = document.getElementById("imageModal");
       const imageModalImage = document.getElementById("imageModalImage");
       const messages = document.getElementById("messages");
-      const MAX_FILE_BYTES = 20 * 1024 * 1024;
+      const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
+      const BACKEND_HTTP = "http://10.200.1.35:8001";
       let pendingFile = null;
   
       function escapeHtml(text) {
@@ -79,13 +80,41 @@
         attachmentPreview.classList.add("is-visible");
       }
 
-      function readFileAsDataUrl(file) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = () => reject(new Error("文件读取失败"));
-          reader.readAsDataURL(file);
+      function isVideoFile(file) {
+        return Boolean(file && typeof file.type === "string" && file.type.startsWith("video/"));
+      }
+
+      async function uploadVideo(file) {
+        if (!file) throw new Error("未选择文件");
+        if (!isVideoFile(file)) {
+          throw new Error(`不是视频文件：${file?.type || "unknown"}`);
+        }
+        if (file.size > MAX_VIDEO_BYTES) {
+          throw new Error(`文件过大：${formatBytes(file.size)}，超过限制`);
+        }
+
+        const form = new FormData();
+        form.append("file", file, file.name);
+
+        const resp = await fetch(`${BACKEND_HTTP}/upload/video`, {
+          method: "POST",
+          body: form,
         });
+
+        if (!resp.ok) {
+          let detail = "";
+          try {
+            detail = (await resp.json())?.detail || "";
+          } catch (e) {}
+          throw new Error(`上传失败：HTTP ${resp.status} ${detail}`);
+        }
+
+        const data = await resp.json();
+        if (data.status !== "ok" || !data.path) {
+          throw new Error(`上传返回异常：${JSON.stringify(data)}`);
+        }
+
+        return data; // {status, filename, path, url, size}
       }
 
       const STREAM_SPEED = { slow: 100, fast: 60 };
@@ -241,29 +270,33 @@
         clearPendingFile();
 
         const messageText = text || (fileToSend ? `[File] ${fileToSend.name}` : "");
-        let filePayload = null;
+        let uploadedVideoPath = null;
 
         if (fileToSend) {
-          if (fileToSend.size > MAX_FILE_BYTES) {
-            displayMessage(`❌ 文件过大，最大支持 ${formatBytes(MAX_FILE_BYTES)}`, "assistant");
+          if (!isVideoFile(fileToSend)) {
+            displayMessage("❌ 仅支持视频文件上传", "assistant");
+            return;
+          }
+          if (fileToSend.size > MAX_VIDEO_BYTES) {
+            displayMessage(`❌ 文件过大，最大支持 ${formatBytes(MAX_VIDEO_BYTES)}`, "assistant");
             return;
           }
 
           try {
-            const dataUrl = await readFileAsDataUrl(fileToSend);
-            filePayload = {
-              name: fileToSend.name,
-              size: fileToSend.size,
-              type: fileToSend.type,
-              data_url: dataUrl
-            };
+            displayMessage("⬆️ 正在上传视频到服务器...", "assistant");
+            const uploadResp = await uploadVideo(fileToSend);
+            uploadedVideoPath = uploadResp.path;
+            displayMessage(
+              `✅ 视频上传完成：${escapeHtml(uploadResp.filename || fileToSend.name)}`,
+              "assistant"
+            );
           } catch (error) {
-            displayMessage(`❌ 文件读取失败: ${error.message}`, "assistant");
+            displayMessage(`❌ 视频上传失败: ${escapeHtml(error.message)}`, "assistant");
             return;
           }
         }
 
-        callBackendAPI(messageText, filePayload ? { file: filePayload } : {});
+        callBackendAPI(messageText, uploadedVideoPath ? { uploadedVideoPath } : {});
       }
   
       // ====== WS ======
@@ -304,7 +337,7 @@
       }
   
       async function callBackendAPI(userInputText, options = {}) {
-        const { file } = options;
+        const { uploadedVideoPath } = options;
         const loadingDiv = document.createElement("div");
         loadingDiv.className = "message assistant";
         loadingDiv.id = "loading-message";
@@ -369,6 +402,14 @@
           return progressQueue;
         }
   
+        let flowTriggered = false;
+        const triggerFlow = (agentName) => {
+          if (flowTriggered) return;
+          if (!agentName || typeof window.triggerTopologyFlow !== "function") return;
+          window.triggerTopologyFlow(agentName);
+          flowTriggered = true;
+        };
+
         try {
           const socket = await ensureWSConnection();
           const requestId = `req_${Date.now()}`;
@@ -394,9 +435,11 @@
               if (!progressContent) loadingDiv.innerHTML = "🧭 正在路由最匹配的 Agent...";
               const payload = msg.data;
               const selected = payload.selected_agent;
-          if (selected?.agent_name) {
-            window.highlightSelectedAgent(selected.agent_name);
-            appendProgressStep("路由结果", `已选择 Agent：${selected.agent_name}`, "routing");
+          const selectedName = selected?.agent_name || selected?.name || selected?.id || "";
+          if (selectedName) {
+            window.highlightSelectedAgent(selectedName);
+            triggerFlow(selectedName);
+            appendProgressStep("路由结果", `已选择 Agent：${selectedName}`, "routing");
           }
           const routingCandidates =
             (Array.isArray(payload?.candidates) && payload.candidates) ||
@@ -439,6 +482,13 @@
                   spinnerRow = null;
                 }
                 if (loadingDiv && !progressContent) loadingDiv.remove();
+                const finalSelected =
+                  msg.data?.best_match?.agent_name ||
+                  msg.data?.selected_agent?.agent_name ||
+                  msg.data?.agent?.selected ||
+                  msg.data?.agent_name ||
+                  "";
+                triggerFlow(finalSelected);
                 processBackendResponse(msg.data, { formatMultilineText, createAssistantMessage, appendStreamBlock, appendExecutionTime });
               });
               socket.removeEventListener("message", handleMessage);
@@ -460,7 +510,8 @@
           socket.addEventListener("message", handleMessage);
   
           const payload = { type: "run", request_id: requestId, user_input: userInputText, top_k: 5 };
-          if (file) payload.file = file;
+          if (uploadedVideoPath) payload.uploaded_video_path = uploadedVideoPath;
+          console.log("[WS send] payload:", payload);
           socket.send(JSON.stringify(payload));
         } catch (error) {
           if (loadingDiv) loadingDiv.remove();
@@ -587,8 +638,13 @@
           if (!file) return;
           fileInput.value = "";
 
-          if (file.size > MAX_FILE_BYTES) {
-            displayMessage(`❌ 文件过大，最大支持 ${formatBytes(MAX_FILE_BYTES)}`, "assistant");
+          if (!isVideoFile(file)) {
+            displayMessage("❌ 仅支持视频文件上传", "assistant");
+            return;
+          }
+
+          if (file.size > MAX_VIDEO_BYTES) {
+            displayMessage(`❌ 文件过大，最大支持 ${formatBytes(MAX_VIDEO_BYTES)}`, "assistant");
             return;
           }
 

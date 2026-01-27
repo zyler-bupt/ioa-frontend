@@ -6,12 +6,23 @@ const sendButton = document.getElementById('sendButton');
 // WebSocket 连接
 let ws = null;
 let requestIdCounter = 0;
+const fileButton = document.getElementById('fileButton');
+const fileInput = document.getElementById('fileInput');
+
+let pendingFile = null; // 选中的待上传视频
+
+// 后端基址（HTTP 上传 & WS 调度）
+const BACKEND_HTTP = 'http://10.200.1.35:8001';
+const BACKEND_WS = 'ws://10.200.1.35:8001/ws';
+
+// 可选：限制大小（例如 200MB）
+const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
 
 // 初始化 WebSocket 连接
 function initWebSocket() {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   // 后端在 ngrok
-  const wsUrl = `ws://10.200.1.35:8001/ws`;
+  const wsUrl = BACKEND_WS;
   
   ws = new WebSocket(wsUrl);
   
@@ -43,17 +54,26 @@ function handleWebSocketMessage(msg) {
       console.log('ACK received:', data);
       break;
       
-    case 'routing':
-      // 显示路由信息
-      const routing = data.routing || [];
-      const selectedAgent = data.selected_agent || {};
-      updateDiscoveryList(routing, selectedAgent);
-      break;
+      case 'routing': {
+        // ✅ 兼容你后端：data.candidates / data.routing.candidates / data.routing
+        const candidates =
+          (Array.isArray(data?.candidates) && data.candidates) ||
+          (Array.isArray(data?.routing?.candidates) && data.routing.candidates) ||
+          (Array.isArray(data?.routing) && data.routing) ||
+          [];
       
-    case 'thought':
-      // 显示思考过程
-      addMessage(true, `<div class="thought-content">${data.replace(/\n/g, '<br>')}</div>`);
-      break;
+        const selectedAgent = data?.selected_agent || data?.selectedAgent || {};
+        updateDiscoveryList(candidates, selectedAgent);
+        break;
+      }
+      
+      
+      case 'thought': {
+        const text = (typeof data === 'string') ? data : JSON.stringify(data, null, 2);
+        addMessage(true, `<div class="thought-content">${text.replace(/\n/g, '<br>')}</div>`);
+        break;
+      }
+      
       
     case 'rewrite':
       // 显示重写的提示词
@@ -82,49 +102,41 @@ function handleWebSocketMessage(msg) {
 
 // 处理最终结果
 function handleFinalResult(data) {
-  const { status, answer_text, answer, execution_time } = data;
-  
-  if (status === 'no_route') {
-    addMessage(true, answer_text);
+  const { status, answer, execution_time } = data;
+
+  if (status !== 'ok') {
+    addMessage(true, `❌ ${answer?.text || data.answer_text || '任务失败'}`);
     return;
   }
-  
-  if (status === 'ok') {
-    // 构建响应内容
-    const answerInfo = answer || {};
-    const accidentType = answerInfo.accident_type || '未知';
-    const observation = answerInfo.observation || '(未提取到)';
-    const keyframe = answerInfo.keyframe || {};
-    const keyframePath = keyframe.path || '(未提取到)';
-    const keyframeUrl = keyframe.url || '';
-    
-    let responseHtml = `
-      <div class="final-result">
-        <div class="result-item">
-          <strong>事故类型:</strong> ${accidentType}
-        </div>
-        <div class="result-item">
-          <strong>描述:</strong> ${observation}
-        </div>
-        <div class="result-item">
-          <strong>关键帧:</strong> ${keyframePath}
-    `;
-    
-    if (keyframeUrl) {
-      responseHtml += `<br><img src="${keyframeUrl}" alt="keyframe" style="max-width: 200px; margin-top: 10px;">`;
-    }
-    
-    responseHtml += `
-        </div>
-        <div class="result-item">
-          <strong>执行时间:</strong> ${(execution_time || 0).toFixed(2)}s
-        </div>
-      </div>
-    `;
-    
-    addMessage(true, responseHtml);
+
+  const text = answer?.text || '';
+  const observation = answer?.structured?.observation || '';
+  const images = Array.isArray(answer?.images) ? answer.images : [];
+
+  let html = `<div class="final-result">`;
+
+  if (text) {
+    html += `<div class="result-item"><strong>结果:</strong> ${String(text).replace(/\n/g, '<br>')}</div>`;
   }
+  if (observation) {
+    html += `<div class="result-item"><strong>Observation:</strong> ${String(observation).replace(/\n/g, '<br>')}</div>`;
+  }
+
+  if (images.length) {
+    html += `<div class="result-item"><strong>图片:</strong><br>`;
+    images.forEach(img => {
+      const src = img.data_uri || (img.url ? (img.url.startsWith('http') ? img.url : `${BACKEND_HTTP}${img.url}`) : '');
+      if (src) html += `<img src="${src}" style="max-width:220px;margin:8px 8px 0 0;border-radius:6px;">`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="result-item"><strong>执行时间:</strong> ${Number(execution_time || 0).toFixed(2)}s</div>`;
+  html += `</div>`;
+
+  addMessage(true, html);
 }
+
 
 // 更新 Discovery 列表
 function updateDiscoveryList(candidates, selectedAgent) {
@@ -245,47 +257,92 @@ function formatAgentResponse(response) {
   }
   return html;
 }
+async function uploadVideo(file) {
+  if (!file) throw new Error('未选择文件');
+  if (file.size > MAX_VIDEO_BYTES) {
+    throw new Error(`文件过大：${(file.size / 1024 / 1024).toFixed(1)}MB，超过限制`);
+  }
+
+  // 只让视频走这个上传
+  if (!(file.type || '').startsWith('video/')) {
+    throw new Error(`不是视频文件：${file.type || 'unknown'}`);
+  }
+
+  const form = new FormData();
+  form.append('file', file, file.name);
+
+  const resp = await fetch(`${BACKEND_HTTP}/upload/video`, {
+    method: 'POST',
+    body: form,
+  });
+
+  if (!resp.ok) {
+    let detail = '';
+    try { detail = (await resp.json())?.detail || ''; } catch (e) {}
+    throw new Error(`上传失败：HTTP ${resp.status} ${detail}`);
+  }
+
+  const data = await resp.json();
+  if (data.status !== 'ok' || !data.path) {
+    throw new Error(`上传返回异常：${JSON.stringify(data)}`);
+  }
+
+  return data; // {status, filename, path, url, size}
+}
 
 // 发送消息
 async function sendMessage() {
   const message = userInput.value.trim();
-  if (!message) return;
-  
+
+  // ✅ 允许 “只发视频不打字”
+  if (!message && !pendingFile) return;
+
   if (!ws || ws.readyState !== WebSocket.OPEN) {
     addMessage(true, '错误: WebSocket 未连接，请刷新页面重新连接');
     return;
   }
 
-  // 添加用户消息
-  addMessage(false, message);
+  // 显示用户消息（文字）
+  if (message) addMessage(false, message);
   userInput.value = '';
-  
-  // 禁用发送按钮
   sendButton.disabled = true;
 
   try {
-    // 生成请求ID
     requestIdCounter++;
     const requestId = `req_${Date.now()}_${requestIdCounter}`;
-    
-    // 构建请求消息
+
+    // 1) 如果有视频：先 HTTP 上传拿到服务器 path
+    let uploadedVideoPath = null;
+    if (pendingFile) {
+      addMessage(true, '⬆️ 正在上传视频到服务器...');
+      const uploadResp = await uploadVideo(pendingFile);
+      uploadedVideoPath = uploadResp.path;
+      addMessage(true, `✅ 视频上传完成：${uploadResp.filename}`);
+      pendingFile = null;
+    }
+
+    // 2) WS 触发任务（带 uploaded_video_path）
     const wsMsg = {
       type: 'run',
       request_id: requestId,
-      user_input: message,
-      top_k: 5
+      user_input: message || '请分析该视频内容并输出报告', // 没文字时给个默认
+      top_k: 5,
     };
-    
-    // 发送到 WebSocket
+
+    if (uploadedVideoPath) {
+      wsMsg.uploaded_video_path = uploadedVideoPath;
+    }
+
+    console.log('[WS send] payload:', wsMsg);
     ws.send(JSON.stringify(wsMsg));
   } catch (error) {
     console.error('Error sending message:', error);
     addMessage(true, `错误: ${error.message}`);
   } finally {
-    // 重新启用发送按钮
     sendButton.disabled = false;
   }
 }
+
 
 // 初始化示例对话
 function initializeChat() {
@@ -305,15 +362,43 @@ function initializeChat() {
   };
   addMessage(true, initialMessage);
 }
+if (fileButton && fileInput) {
+  fileButton.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files && fileInput.files[0];
+    fileInput.value = '';
+    if (!file) return;
+
+    if (!(file.type || '').startsWith('video/')) {
+      addMessage(true, `请选择视频文件（当前：${file.type || 'unknown'}）`);
+      return;
+    }
+
+    if (file.size > MAX_VIDEO_BYTES) {
+      addMessage(true, `视频过大：${(file.size / 1024 / 1024).toFixed(1)}MB`);
+      return;
+    }
+
+    pendingFile = file;
+    addMessage(false, `📎 已选择视频：${file.name}（${(file.size / 1024 / 1024).toFixed(1)}MB）`);
+  });
+}
 
 // 事件监听
 function bootIOA() {
   console.log("IOA Application Initializing...");
 
-  // ✅ 先启动聊天（欢迎语必出）
-  initializeChatSystem();
+  // ✅ 1) 先连 WS（不然 ws 永远是 null）
+  initWebSocket();
 
-  // ✅ 其他模块不影响 chat
+  // ✅ 2) 绑定发送事件
+  sendButton?.addEventListener('click', sendMessage);
+  userInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  // ✅ 3) 其他模块（有就跑，没有不影响）
   try { window.initializeStats?.(); } catch (e) { console.error(e); }
   try { window.initializeNetworkGraph?.(); } catch (e) { console.error(e); }
   try { window.initializeDiscoveryProcess?.(); } catch (e) { console.error(e); }
@@ -321,6 +406,7 @@ function bootIOA() {
 
   console.log("IOA Application Ready!");
 }
+
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", bootIOA, { once: true });
