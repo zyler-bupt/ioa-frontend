@@ -19,9 +19,17 @@
   <div class="register-container">
     <section class="agent-list-panel layout-list">
       <div class="agent-list-card">
+        <div class="agent-list-tabs" role="tablist" aria-label="Agent list switcher">
+          <button type="button" class="agent-list-tab is-active" id="agentTabRegistered" data-view="registered" aria-selected="true" role="tab">
+            Registered
+          </button>
+          <button type="button" class="agent-list-tab" id="agentTabDiscovered" data-view="discovered" aria-selected="false" role="tab">
+            Discovered
+          </button>
+        </div>
         <div class="agent-list-header">
-          <h3>Registered Agents</h3>
-          <div class="agent-list-controls">
+          <h3 id="agentListTitle">Registered Agents</h3>
+          <div class="agent-list-controls" id="registeredControls">
             <button type="button" class="agent-list-action agent-bulk-toggle" id="agentBulkToggle">Remove</button>
             <button type="button" class="agent-list-action agent-bulk-delete" id="agentBulkDelete" disabled>Delete</button>
             <span class="agent-count" id="agentCountLabel">0</span>

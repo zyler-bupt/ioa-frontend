@@ -99,6 +99,38 @@ header h1 {
   overflow: hidden;
 }
 
+.agent-list-card[data-view="discovered"] {
+  border-left-color: #f59e0b;
+}
+
+.agent-list-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  margin-bottom: 16px;
+}
+
+.agent-list-tab {
+  border: none;
+  background: transparent;
+  color: #4b5563;
+  font-weight: 600;
+  font-size: 0.85em;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.agent-list-tab.is-active {
+  background: #ffffff;
+  color: #1a73e8;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
 .agent-list-header {
   display: flex;
   align-items: center;
@@ -116,6 +148,10 @@ header h1 {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.agent-list-controls--compact {
+  justify-content: flex-end;
 }
 
 .agent-list-action {
@@ -239,6 +275,29 @@ header h1 {
   gap: 8px;
 }
 
+.agent-item-actions--stack {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.agent-item-register {
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  color: #3730a3;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.72em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.agent-item-register:hover {
+  background: #e0e7ff;
+  box-shadow: 0 2px 6px rgba(67, 56, 202, 0.18);
+}
+
 .agent-item-toggle {
   border: 1px solid #dbe2ea;
   background: #ffffff;
@@ -297,6 +356,11 @@ header h1 {
 .agent-item-status.offline {
   background: #fee2e2;
   color: #b91c1c;
+}
+
+.agent-item-status.discovered {
+  background: #fff7ed;
+  color: #b45309;
 }
 
 .agent-item-meta {
