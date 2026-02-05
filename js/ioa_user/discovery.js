@@ -36,6 +36,16 @@
     // net_score: 0~1 (越大越好、越不拥塞)
     // net_pct  : 0~100 (越大越好、越不拥塞)
     // 返回：{ netPctGood, congestionPct, level }
+    const _netCongestionCache = new Map();
+
+    function _getCachedCongestionPct(key) {
+      if (!key) return Math.round(Math.random() * 50);
+      if (_netCongestionCache.has(key)) return _netCongestionCache.get(key);
+      const value = Math.round(Math.random() * 50);
+      _netCongestionCache.set(key, value);
+      return value;
+    }
+
     function _calcCongestion(obj) {
       let netPctGood = _parsePercentLike(obj?.net_pct); // 0~100 (good)
   
@@ -44,8 +54,18 @@
         if (Number.isFinite(ns)) netPctGood = ns * 100;
       }
   
-      // 本地 agentDatabase 通常没有网络字段：默认 100%（不拥塞）
-      if (!Number.isFinite(netPctGood)) netPctGood = 100;
+      // 本地 agentDatabase 通常没有网络字段：给一个 0~50 的拥塞随机值（可缓存）
+      if (!Number.isFinite(netPctGood)) {
+        const key =
+          obj?.id ||
+          obj?.agent_name ||
+          obj?.name ||
+          obj?.workflow_id ||
+          obj?.capability ||
+          "";
+        const congestionPctSeed = _getCachedCongestionPct(String(key));
+        netPctGood = 100 - congestionPctSeed;
+      }
   
       netPctGood = Math.max(0, Math.min(100, netPctGood));
   
@@ -197,19 +217,23 @@
           matchPercent = Number.isFinite(m) ? m * 100 : NaN;
         } else if (item.confidence !== undefined && item.confidence !== null) {
           matchPercent = _parsePercentLike(item.confidence);
+        } else if (item.score !== undefined && item.score !== null) {
+          const s = Number(item.score);
+          matchPercent = Number.isFinite(s) ? s * 100 : NaN;
         }
   
         if (!Number.isFinite(matchPercent)) matchPercent = 0;
         matchPercent = Math.max(0, Math.min(100, matchPercent));
   
         const matchLabel = matchPercent.toFixed(2).replace(/\.00$/, "");
-        const agentName = item.agent_name || item.name || "";
+        const agentName = item.agent_name || item.name || item.workflow_id || "";
         const hit = window.agentDatabase?.find(
           (a) => a.name === agentName || a.displayName === agentName || a.id === agentName
         );
         const displayName = hit?.displayName || hit?.name || agentName;
         const capability =
           item.capability ||
+          item.workflow_id ||
           (Array.isArray(hit?.capabilities) && hit.capabilities.length ? hit.capabilities[0] : "未知功能");
 
         let shortDesc = "";
@@ -256,7 +280,7 @@
     }
   
     // ========== chat.js 会用：高亮选中 agent，并同步 Selected ==========
-    function highlightSelectedAgent(agentName) {
+    function highlightSelectedAgent(agentName, options = {}) {
       const agent = window.agentDatabase?.find(
         (a) => a.name === agentName || a.displayName === agentName || a.id === agentName
       );
@@ -264,7 +288,9 @@
   
       // 高亮拓扑
       window.highlightNodeInNetwork?.(agent.id);
-      window.triggerTopologyFlow?.(agent.id);
+      if (!options.skipFlow) {
+        window.triggerTopologyFlow?.(agent.id);
+      }
   
       // 进入 selected
       if (!window.appState.selectedAgents.find((a) => a.id === agent.id)) {

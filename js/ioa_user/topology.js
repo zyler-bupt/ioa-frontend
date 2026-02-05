@@ -407,8 +407,10 @@
         extensionGroups.forEach((agents, nodeKey) => {
           const anchorId = findAnchorNodeId(nodeKey, nodes);
           if (!anchorId) return;
-          const anchorPos = nodes.getPositions([anchorId])[anchorId];
-          if (!anchorPos) return;
+          const anchorPos = network?.getPositions
+            ? network.getPositions([anchorId])[anchorId]
+            : nodes.get(anchorId);
+          if (!anchorPos || typeof anchorPos.x !== "number" || typeof anchorPos.y !== "number") return;
           const ordered = sortExtensionAgents(agents);
           ordered.forEach((agent, index) => {
             const offset = getExtensionTreeOffset(index, ordered.length, metrics);
@@ -1075,6 +1077,88 @@
       }
     }
 
+    function triggerTopologyFlows(targetIds, options = {}) {
+      if (!Array.isArray(targetIds)) {
+        triggerTopologyFlow(targetIds, options);
+        return;
+      }
+
+      const graph = window.networkGraph;
+      if (!graph || !window.networkInstance) return;
+      const nodes = graph.nodes;
+      const edges = graph.edges;
+
+      const resolvedTargets = targetIds
+        .map((id) => resolveNodeId(id, nodes))
+        .filter(Boolean);
+      const uniqueTargets = Array.from(new Set(resolvedTargets));
+      if (!uniqueTargets.length) return;
+
+      const nodeIdSet = new Set();
+      const edgeIdSet = new Set();
+      const segmentMap = new Map();
+
+      uniqueTargets.forEach((targetId) => {
+        const nodePath = options.nodePath
+          ? options.nodePath.map((id) => resolveNodeId(id, nodes)).filter(Boolean)
+          : buildPreferredFlowPath(targetId, edges, nodes);
+        if (!nodePath || nodePath.length < 2) return;
+
+        nodePath.forEach((id) => nodeIdSet.add(id));
+
+        const flowSegments = buildFlowSegments(nodePath, edges, options);
+        if (!flowSegments) return;
+
+        flowSegments.edgeIds.forEach((edgeId) => edgeIdSet.add(edgeId));
+        flowSegments.segments.forEach((segment) => {
+          if (!segmentMap.has(segment.edgeId)) {
+            segmentMap.set(segment.edgeId, segment);
+          }
+        });
+      });
+
+      const segments = Array.from(segmentMap.values());
+      if (!segments.length || !edgeIdSet.size) return;
+
+      clearFlowState();
+      flowActiveNodeIds = Array.from(nodeIdSet);
+      saveFlowNodeState(flowActiveNodeIds, nodes);
+      flowActiveEdgeIds = Array.from(edgeIdSet);
+
+      const blinkIntervalMs = Number.isFinite(options.blinkIntervalMs)
+        ? options.blinkIntervalMs
+        : FLOW_DEFAULTS.blinkIntervalMs;
+      startFlowBlink(nodes, edges, flowActiveNodeIds, flowActiveEdgeIds, blinkIntervalMs);
+
+      if (!window.edgeDotFlow) {
+        const container = document.getElementById("networkGraph");
+        if (container) startEdgeDotFlow(window.networkInstance, edges, container);
+      }
+
+      const durationMs = Number.isFinite(options.durationMs) ? options.durationMs : FLOW_DEFAULTS.durationMs;
+      const hasDuration = Number.isFinite(durationMs) && durationMs > 0;
+      if (window.edgeDotFlow) {
+        window.edgeDotFlow.activeSegments = segments;
+        window.edgeDotFlow.activeUntil = hasDuration ? Date.now() + durationMs : 0;
+        window.edgeDotFlow.flowSpeed = Number.isFinite(options.speed) ? options.speed : FLOW_DEFAULTS.speed;
+        window.edgeDotFlow.particleRadius = Number.isFinite(options.particleRadius)
+          ? options.particleRadius
+          : FLOW_DEFAULTS.particleRadius;
+        window.edgeDotFlow.lastTs = 0;
+        window.edgeDotFlow.onExpire = clearFlowState;
+        if (typeof window.edgeDotFlow.start === "function") {
+          window.edgeDotFlow.start();
+        }
+        if (window.networkInstance) {
+          window.networkInstance.redraw();
+        }
+      }
+
+      if (hasDuration) {
+        flowClearTimer = window.setTimeout(clearFlowState, durationMs);
+      }
+    }
+
     function startEdgeDotFlow(network) {
       if (!network) return;
       const previous = window.edgeDotFlow;
@@ -1529,13 +1613,16 @@
       const baseStyle = getNodeStyleForLayer(layer);
       const highlightSize = Math.max(baseStyle.size * 1.6, baseStyle.size + 8);
   
+      const currentNode = window.networkGraph.nodes.get(nodeId);
+      if (!currentNode || !currentNode.color) return;
+
       window.networkGraph.nodes.update({
         id: nodeId,
         size: highlightSize,
         color: {
-          background: window.networkGraph.nodes.get(nodeId).color.background,
+          background: currentNode.color.background,
           border: "#FFD700",
-          highlight: { background: window.networkGraph.nodes.get(nodeId).color.background, border: "#000" },
+          highlight: { background: currentNode.color.background, border: "#000" },
         },
         borderWidth: baseStyle.borderWidth + 1.8,
         shadow: { enabled: true, color: "rgba(255, 215, 0, 0.5)", size: 12, x: 5, y: 5 },
@@ -1706,5 +1793,6 @@
     window.highlightNodeInNetwork = highlightNodeInNetwork;
     window.addAgentToNetwork = addAgentToNetwork;
     window.triggerTopologyFlow = triggerTopologyFlow;
+    window.triggerTopologyFlows = triggerTopologyFlows;
   })();
   

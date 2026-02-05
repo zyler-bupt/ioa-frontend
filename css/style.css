@@ -1302,6 +1302,12 @@ header {
   color: #1f5b37;
 }
 
+.progress-step--status {
+  border-left-color: #8b5cf6;
+  background-color: #f3efff;
+  color: #4c3a84;
+}
+
 .progress-step--spinner {
   display: flex;
   align-items: center;
@@ -1373,6 +1379,83 @@ header {
 .result-item img {
   border-radius: 6px;
   border: 1px solid #e0e0e0;
+}
+
+.trace-steps {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trace-step {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #ffffff;
+  padding: 6px 10px;
+}
+
+.trace-step summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #1f2937;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.trace-step summary::before {
+  content: "▸";
+  font-size: 0.9em;
+  color: #64748b;
+  transition: transform 0.15s ease;
+}
+
+.trace-step[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.trace-step-text {
+  margin-top: 6px;
+  font-size: 0.9em;
+  color: #374151;
+  line-height: 1.55;
+}
+
+.trace-step-media {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.trace-step-media img {
+  max-width: 220px;
+  max-height: 160px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.trace-step-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.trace-step-attachments a,
+.trace-step-attachments span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background-color: #eef2ff;
+  color: #3730a3;
+  font-size: 0.8em;
+  text-decoration: none;
+  border: 1px solid #c7d2fe;
 }
 
 /* ===== Discovery 列表项样式 ===== */

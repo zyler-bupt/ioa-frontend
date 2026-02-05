@@ -80,10 +80,12 @@ function handleWebSocketMessage(msg) {
       console.log('Rewritten prompt:', data.final_prompt);
       break;
       
-    case 'status':
-      // 显示状态更新
-      addMessage(true, `<div class="status-message">状态: ${data}</div>`);
+    case 'status': {
+      const statusText = formatStatusPayload(data);
+      const text = statusText || (typeof data === 'string' ? data : JSON.stringify(data));
+      addMessage(true, `<div class="status-message">状态: ${text}</div>`);
       break;
+    }
       
     case 'final':
       // 显示最终结果
@@ -100,6 +102,26 @@ function handleWebSocketMessage(msg) {
   }
 }
 
+function formatStatusPayload(payload) {
+  if (!payload) return '';
+  if (typeof payload === 'string') return payload;
+  const phase = payload.phase || payload.stage || '';
+  const workflow = payload.workflow_id || payload.workflowId || payload.workflow || '';
+  const agent = payload.agent || payload.agent_name || payload.name || '';
+  const stepIndexRaw = payload.step_index ?? payload.stepIndex;
+  const stepTotalRaw = payload.step_total ?? payload.stepTotal;
+  const stepIndex = Number(stepIndexRaw);
+  const stepTotal = Number(stepTotalRaw);
+  const stepPart =
+    Number.isFinite(stepIndex) && Number.isFinite(stepTotal)
+      ? `步骤 ${stepIndex}/${stepTotal}`
+      : '';
+  const message = payload.message || payload.status || '';
+  return [phase && `阶段:${phase}`, workflow && `流程:${workflow}`, stepPart, agent && `Agent:${agent}`, message]
+    .filter(Boolean)
+    .join(' · ');
+}
+
 // 处理最终结果
 function handleFinalResult(data) {
   const { status, answer, execution_time } = data;
@@ -111,9 +133,45 @@ function handleFinalResult(data) {
 
   const text = answer?.text || '';
   const observation = answer?.structured?.observation || '';
-  const images = Array.isArray(answer?.images) ? answer.images : [];
+
+  const answerImages = Array.isArray(answer?.images) ? answer.images : [];
+  const legacyImages = Array.isArray(data?.images) ? data.images : [];
+  const allImages = [...answerImages, ...legacyImages].filter(Boolean);
+  const attachments = Array.isArray(answer?.attachments) ? answer.attachments : [];
+  const traceSteps =
+    (Array.isArray(data?.trace?.steps) && data.trace.steps) ||
+    (Array.isArray(data?.answer?.structured?.steps) && data.answer.structured.steps) ||
+    [];
+
+  const selectedAgent =
+    data?.agent?.selected ||
+    data?.selected?.agent ||
+    data?.selected?.agent_name ||
+    data?.best_match?.agent_name ||
+    data?.selected_agent?.agent_name ||
+    data?.agent?.selected ||
+    data?.agent_name ||
+    '';
+  const selectedCapability = data?.agent?.capability || data?.selected?.capability || data?.workflow_id || '';
+  const confidence = data?.agent?.confidence || data?.selected?.confidence || {};
+  let finalPct = Number(confidence.final_pct);
+  if (!Number.isFinite(finalPct)) {
+    const finalScore = Number(confidence.final_score);
+    if (Number.isFinite(finalScore)) finalPct = finalScore * 100;
+  }
+  if (Number.isFinite(finalPct)) {
+    finalPct = Math.max(0, Math.min(100, finalPct));
+  }
 
   let html = `<div class="final-result">`;
+
+  if (selectedAgent) {
+    const cap = selectedCapability ? `（${selectedCapability}）` : '';
+    html += `<div class="result-item"><strong>选择 Agent:</strong> ${selectedAgent}${cap}</div>`;
+  }
+  if (Number.isFinite(finalPct)) {
+    html += `<div class="result-item"><strong>匹配准确度:</strong> ${finalPct.toFixed(0)}%</div>`;
+  }
 
   if (text) {
     html += `<div class="result-item"><strong>结果:</strong> ${String(text).replace(/\n/g, '<br>')}</div>`;
@@ -122,11 +180,74 @@ function handleFinalResult(data) {
     html += `<div class="result-item"><strong>Observation:</strong> ${String(observation).replace(/\n/g, '<br>')}</div>`;
   }
 
-  if (images.length) {
+  if (allImages.length) {
     html += `<div class="result-item"><strong>图片:</strong><br>`;
-    images.forEach(img => {
-      const src = img.data_uri || (img.url ? (img.url.startsWith('http') ? img.url : `${BACKEND_HTTP}${img.url}`) : '');
+    allImages.forEach(img => {
+      const raw = img.data_uri || img.url || img.url_rel || img.path || '';
+      const src = raw
+        ? (raw.startsWith('http') || raw.startsWith('data:') ? raw : `${BACKEND_HTTP}${raw.startsWith('/') ? '' : '/'}${raw}`)
+        : '';
       if (src) html += `<img src="${src}" style="max-width:220px;margin:8px 8px 0 0;border-radius:6px;">`;
+    });
+    html += `</div>`;
+  }
+
+  if (attachments.length) {
+    html += `<div class="result-item"><strong>附件:</strong><br>`;
+    attachments.forEach(att => {
+      const raw = att.url || att.url_rel || att.path || '';
+      const label = String(raw).split('/').pop() || att.type || 'attachment';
+      const href = raw
+        ? (raw.startsWith('http') ? raw : `${BACKEND_HTTP}${raw.startsWith('/') ? '' : '/'}${raw}`)
+        : '';
+      if (href) {
+        html += `<a href="${href}" target="_blank" rel="noopener">${label}</a><br>`;
+      } else {
+        html += `<span>${label}</span><br>`;
+      }
+    });
+    html += `</div>`;
+  }
+
+  if (traceSteps.length) {
+    html += `<div class="result-item"><strong>步骤:</strong>`;
+    traceSteps.forEach((step, idx) => {
+      const agent = step.agent || step.agent_name || step.name || step.id || `Step ${idx + 1}`;
+      const statusText = step.status ? ` · ${step.status}` : '';
+      html += `<details style="margin-top:6px;"><summary>${idx + 1}. ${agent}${statusText}</summary>`;
+      if (step.text) {
+        html += `<div style="margin-top:6px;">${String(step.text).replace(/\n/g, '<br>')}</div>`;
+      }
+      const stepImages = Array.isArray(step.images) ? step.images : [];
+      if (stepImages.length) {
+        html += `<div style="margin-top:6px;">`;
+        stepImages.forEach(img => {
+          const raw = img.data_uri || img.url || img.url_rel || img.path || '';
+          const src = raw
+            ? (raw.startsWith('http') || raw.startsWith('data:') ? raw : `${BACKEND_HTTP}${raw.startsWith('/') ? '' : '/'}${raw}`)
+            : '';
+          if (src) html += `<img src="${src}" style="max-width:200px;margin:6px 6px 0 0;border-radius:6px;">`;
+        });
+        html += `</div>`;
+      }
+      const stepAttachments = Array.isArray(step.attachments) ? step.attachments : [];
+      if (stepAttachments.length) {
+        html += `<div style="margin-top:6px;">`;
+        stepAttachments.forEach(att => {
+          const raw = att.url || att.url_rel || att.path || '';
+          const label = String(raw).split('/').pop() || att.type || 'attachment';
+          const href = raw
+            ? (raw.startsWith('http') ? raw : `${BACKEND_HTTP}${raw.startsWith('/') ? '' : '/'}${raw}`)
+            : '';
+          if (href) {
+            html += `<a href="${href}" target="_blank" rel="noopener">${label}</a><br>`;
+          } else {
+            html += `<span>${label}</span><br>`;
+          }
+        });
+        html += `</div>`;
+      }
+      html += `</details>`;
     });
     html += `</div>`;
   }
@@ -151,10 +272,16 @@ function updateDiscoveryList(candidates, selectedAgent) {
     if (candidate.agent_name === selectedAgent.agent_name) {
       div.classList.add('selected');
     }
+    let matchPct = Number(candidate.final_pct ?? candidate.match_pct ?? candidate.match ?? candidate.confidence ?? null);
+    if (!Number.isFinite(matchPct)) {
+      const score = Number(candidate.score);
+      if (Number.isFinite(score)) matchPct = score * 100;
+    }
+    if (!Number.isFinite(matchPct)) matchPct = 0;
     div.innerHTML = `
       <div class="item-name">${candidate.agent_name}</div>
       <div class="item-detail">
-        <span>匹配度: ${(candidate.match_pct || 0).toFixed(2)}%</span>
+        <span>匹配度: ${Number.isFinite(matchPct) ? matchPct.toFixed(2) : '0.00'}%</span>
         <span>能力: ${candidate.capability}</span>
       </div>
     `;
@@ -168,7 +295,7 @@ function updateDiscoveryList(candidates, selectedAgent) {
       <div class="selected-agent-item">
         <div class="agent-name">${selectedAgent.agent_name || 'N/A'}</div>
         <div class="agent-detail">
-          <div>匹配度: ${(selectedAgent.match_pct || 0).toFixed(2)}%</div>
+          <div>匹配度: ${Number(selectedAgent.final_pct ?? selectedAgent.match_pct ?? 0).toFixed(2)}%</div>
         </div>
       </div>
     `;

@@ -211,12 +211,23 @@
       streamText(valueSpan, valueText, speed);
     }
 
-    function appendExecutionTime(container, timeStr) {
+    function appendExecutionTime(container, timeValue) {
       const timeLine = document.createElement("small");
       timeLine.style.color = "#999";
       timeLine.style.marginTop = "8px";
       timeLine.style.display = "block";
-      timeLine.textContent = `⏱️ 执行时间: ${timeStr}ms`;
+      let label = "";
+      if (typeof timeValue === "number" && Number.isFinite(timeValue)) {
+        label = `${timeValue.toFixed(2)}s`;
+      } else {
+        const raw = String(timeValue ?? "").trim();
+        if (raw) {
+          label = /^\d+(\.\d+)?$/.test(raw) ? `${raw}s` : raw;
+        } else {
+          label = "N/A";
+        }
+      }
+      timeLine.textContent = `⏱️ 执行时间: ${label}`;
       container.appendChild(timeLine);
     }
 
@@ -474,6 +485,26 @@
         return progressQueue;
       }
 
+      function formatStatusPayload(payload) {
+        if (!payload) return "";
+        if (typeof payload === "string") return payload;
+        const phase = payload.phase || payload.stage || "";
+        const workflow = payload.workflow_id || payload.workflowId || payload.workflow || "";
+        const agent = payload.agent || payload.agent_name || payload.name || "";
+        const stepIndexRaw = payload.step_index ?? payload.stepIndex;
+        const stepTotalRaw = payload.step_total ?? payload.stepTotal;
+        const stepIndex = Number(stepIndexRaw);
+        const stepTotal = Number(stepTotalRaw);
+        const stepPart =
+          Number.isFinite(stepIndex) && Number.isFinite(stepTotal)
+            ? `步骤 ${stepIndex}/${stepTotal}`
+            : "";
+        const message = payload.message || payload.status || "";
+        return [phase && `阶段:${phase}`, workflow && `流程:${workflow}`, stepPart, agent && `Agent:${agent}`, message]
+          .filter(Boolean)
+          .join(" · ");
+      }
+
       function showSpinnerRow() {
         progressQueue = progressQueue.then(() => {
           const container = ensureProgressContent();
@@ -497,8 +528,21 @@
       }
 
       let flowTriggered = false;
-      const triggerFlow = (agentName) => {
-        if (flowTriggered) return;
+      const triggerFlow = (agentNameOrList, options = {}) => {
+        const shouldForce = options.force === true;
+        if (flowTriggered && !shouldForce) return;
+        if (!agentNameOrList) return;
+
+        const agentList = Array.isArray(agentNameOrList)
+          ? agentNameOrList.filter(Boolean)
+          : [];
+        if (agentList.length > 1 && typeof window.triggerTopologyFlows === "function") {
+          window.triggerTopologyFlows(agentList);
+          flowTriggered = true;
+          return;
+        }
+
+        const agentName = agentList.length === 1 ? agentList[0] : agentNameOrList;
         if (!agentName || typeof window.triggerTopologyFlow !== "function") return;
         window.triggerTopologyFlow(agentName);
         flowTriggered = true;
@@ -564,6 +608,10 @@
 
           if (msg.type === "status") {
             showSpinnerRow();
+            const statusText = formatStatusPayload(msg.data);
+            if (statusText) {
+              appendProgressStep("状态", statusText, "status");
+            }
             return;
           }
 
@@ -580,13 +628,25 @@
               }
               if (loadingDiv && !progressContent) loadingDiv.remove();
 
+              const stepAgents =
+                (Array.isArray(msg.data?.trace?.steps) && msg.data.trace.steps.map((step) => step?.agent).filter(Boolean)) ||
+                (Array.isArray(msg.data?.answer?.structured?.steps) &&
+                  msg.data.answer.structured.steps.map((step) => step?.agent).filter(Boolean)) ||
+                [];
               const finalSelected =
+                msg.data?.agent?.selected ||
+                msg.data?.selected?.agent ||
+                msg.data?.selected?.agent_name ||
                 msg.data?.best_match?.agent_name ||
                 msg.data?.selected_agent?.agent_name ||
                 msg.data?.agent?.selected ||
                 msg.data?.agent_name ||
                 "";
-              triggerFlow(finalSelected);
+              if (stepAgents.length > 1) {
+                triggerFlow(stepAgents, { force: true });
+              } else {
+                triggerFlow(stepAgents[0] || finalSelected, { force: true });
+              }
 
               processBackendResponse(msg.data, {
                 formatMultilineText,
@@ -659,16 +719,165 @@
         (typeof data.answer_text === "string" && data.answer_text.trim()) ||
         "";
 
-      // images list gather
-      const images =
-        (Array.isArray(data.answer?.images) && data.answer.images) ||
+      const answerImages = Array.isArray(data.answer?.images) ? data.answer.images : [];
+      const answerAttachments = Array.isArray(data.answer?.attachments) ? data.answer.attachments : [];
+
+      // 兼容旧字段
+      const legacyImages =
         (Array.isArray(data.images) && data.images) ||
         [];
       const keyframe = data.answer?.keyframe ? [data.answer.keyframe] : [];
       const structuredImages = Array.isArray(data.structured?.images) ? data.structured.images : [];
-      const allImages = [...images, ...keyframe, ...structuredImages].filter(Boolean);
+      const allImages = [...answerImages, ...legacyImages, ...keyframe, ...structuredImages].filter(Boolean);
 
-      if (answerText || allImages.length) {
+      const traceSteps =
+        (Array.isArray(data.trace?.steps) && data.trace.steps) ||
+        (Array.isArray(data.answer?.structured?.steps) && data.answer.structured.steps) ||
+        [];
+
+      const selectedAgent =
+        data.agent?.selected ||
+        data.selected?.agent ||
+        data.selected?.agent_name ||
+        data.best_match?.agent_name ||
+        data.selected_agent?.agent_name ||
+        data.agent?.selected ||
+        data.agent_name ||
+        "";
+
+      const selectedCapability =
+        data.agent?.capability || data.selected?.capability || data.workflow_id || data.workflowId || "";
+      const confidence = data.agent?.confidence || data.selected?.confidence || {};
+      let finalPct = Number(confidence.final_pct);
+      if (!Number.isFinite(finalPct)) {
+        const finalScore = Number(confidence.final_score);
+        if (Number.isFinite(finalScore)) finalPct = finalScore * 100;
+      }
+      if (Number.isFinite(finalPct)) {
+        finalPct = Math.max(0, Math.min(100, finalPct));
+      }
+
+      function appendMetaLine(container, text) {
+        const line = document.createElement("div");
+        line.style.marginTop = "6px";
+        line.style.fontSize = "0.9em";
+        line.style.color = "#3b4b64";
+        line.textContent = text;
+        container.appendChild(line);
+      }
+
+      function appendImageList(container, images, labelText) {
+        if (!images.length) return;
+        const wrap = document.createElement("div");
+        wrap.className = "trace-step-media";
+        if (labelText) {
+          const label = document.createElement("div");
+          label.textContent = labelText;
+          label.style.fontWeight = "600";
+          label.style.marginTop = "6px";
+          container.appendChild(label);
+        }
+        images.forEach((image) => {
+          const src = image?.data_uri || image?.url || image?.url_rel || image?.path;
+          if (!src) return;
+          const imageUrl = resolveBackendUrl(src);
+          if (!imageUrl) return;
+          const img = document.createElement("img");
+          img.src = imageUrl;
+          img.alt = "结果图片";
+          img.className = "chat-image";
+          img.addEventListener("click", () => openImageModal(imageUrl, "结果图片"));
+          img.onerror = () => {
+            img.src =
+              "data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%2220%22 y=%2235%22 font-size=%2220%22%3E图片加载失败%3C/text%3E%3C/svg%3E";
+          };
+          wrap.appendChild(img);
+        });
+        container.appendChild(wrap);
+      }
+
+      function getAttachmentLabel(item) {
+        const url = item?.url || item?.path || "";
+        const nameFromPath = String(url).split("/").pop();
+        return nameFromPath || item?.type || "attachment";
+      }
+
+      function appendAttachmentList(container, attachments, labelText) {
+        if (!attachments.length) return;
+        const block = document.createElement("div");
+        if (labelText) {
+          const label = document.createElement("div");
+          label.textContent = labelText;
+          label.style.fontWeight = "600";
+          label.style.marginTop = "8px";
+          block.appendChild(label);
+        }
+        const list = document.createElement("div");
+        list.className = "trace-step-attachments";
+        attachments.forEach((att) => {
+          const url = resolveBackendUrl(att?.url || att?.url_rel || att?.path || "");
+          const label = getAttachmentLabel(att);
+          if (url) {
+            const link = document.createElement("a");
+            link.href = url;
+            link.target = "_blank";
+            link.rel = "noopener";
+            link.textContent = label;
+            list.appendChild(link);
+          } else {
+            const span = document.createElement("span");
+            span.textContent = label;
+            list.appendChild(span);
+          }
+        });
+        block.appendChild(list);
+        container.appendChild(block);
+      }
+
+      function appendTraceSteps(container, steps) {
+        if (!Array.isArray(steps) || !steps.length) return;
+        const header = document.createElement("div");
+        const strong = document.createElement("strong");
+        strong.textContent = "🧩 执行步骤:";
+        header.appendChild(strong);
+        header.style.marginTop = "10px";
+        container.appendChild(header);
+
+        const list = document.createElement("div");
+        list.className = "trace-steps";
+
+        steps.forEach((step, idx) => {
+          const details = document.createElement("details");
+          details.className = "trace-step";
+          details.open = idx === steps.length - 1;
+
+          const summary = document.createElement("summary");
+          const agentName =
+            step?.agent || step?.agent_name || step?.name || step?.id || `Step ${idx + 1}`;
+          const statusText = step?.status ? ` · ${step.status}` : "";
+          summary.textContent = `${idx + 1}. ${agentName}${statusText}`;
+          details.appendChild(summary);
+
+          if (step?.text) {
+            const textDiv = document.createElement("div");
+            textDiv.className = "trace-step-text";
+            textDiv.innerHTML = formatMultilineText(step.text);
+            details.appendChild(textDiv);
+          }
+
+          const stepImages = Array.isArray(step?.images) ? step.images : [];
+          appendImageList(details, stepImages, "");
+
+          const stepAttachments = Array.isArray(step?.attachments) ? step.attachments : [];
+          appendAttachmentList(details, stepAttachments, "");
+
+          list.appendChild(details);
+        });
+
+        container.appendChild(list);
+      }
+
+      if (answerText || allImages.length || answerAttachments.length || traceSteps.length || selectedAgent) {
         answerDiv = createAssistantMessage();
 
         const header = document.createElement("div");
@@ -678,40 +887,32 @@
         answerDiv.appendChild(header);
       }
 
+      if (answerDiv && selectedAgent) {
+        const capabilityText = selectedCapability ? `（${selectedCapability}）` : "";
+        appendMetaLine(answerDiv, `🤖 选择 Agent: ${selectedAgent}${capabilityText}`);
+      }
+
+      if (answerDiv && Number.isFinite(finalPct)) {
+        appendMetaLine(answerDiv, `🎯 匹配准确度: ${finalPct.toFixed(0)}%`);
+      }
+
       if (answerText && answerDiv) {
         appendStreamBlock(answerDiv, "📌 结果:", answerText, 60);
         hasAnswer = true;
       }
 
-      allImages.forEach((image) => {
-        const src = image?.data_uri || image?.url;
-        if (!src || !answerDiv) return;
-
-        const imageUrl = resolveBackendUrl(src);
-        if (!imageUrl) return;
-
-        const img = document.createElement("img");
-        img.src = imageUrl;
-        img.alt = "结果图片";
-        img.style.maxWidth = "100%";
-        img.style.maxHeight = "300px";
-        img.style.borderRadius = "6px";
-        img.style.margin = "8px 0";
-        img.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-        img.className = "chat-image";
-        img.addEventListener("click", () => openImageModal(imageUrl, "结果图片"));
-        img.onerror = () => {
-          img.src =
-            "data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%2220%22 y=%2235%22 font-size=%2220%22%3E图片加载失败%3C/text%3E%3C/svg%3E";
-        };
-        answerDiv.appendChild(img);
-        hasAnswer = true;
-      });
+      if (answerDiv) {
+        appendImageList(answerDiv, allImages, allImages.length ? "🖼️ 图片:" : "");
+        appendAttachmentList(answerDiv, answerAttachments, "📎 附件:");
+        appendTraceSteps(answerDiv, traceSteps);
+        if (allImages.length || answerAttachments.length || traceSteps.length) {
+          hasAnswer = true;
+        }
+      }
 
       if (hasAnswer && answerDiv) {
         const executionTime = data.execution_time || (data.result && data.result.execution_time) || "N/A";
-        const timeStr = typeof executionTime === "number" ? executionTime.toFixed(2) : executionTime;
-        appendExecutionTime(answerDiv, timeStr);
+        appendExecutionTime(answerDiv, executionTime);
         openAlertModal({
           message: "🚨 已报警：事故/火情信息已同步至应急平台。",
           meta: `报警时间：${new Date().toLocaleString()}`,
@@ -730,10 +931,18 @@
       }
 
       const selectedAgentName =
-        data.best_match?.agent_name || data.selected_agent?.agent_name || data.agent?.selected || data.agent_name || "";
+        data.agent?.selected ||
+        data.selected?.agent ||
+        data.selected?.agent_name ||
+        data.best_match?.agent_name ||
+        data.selected_agent?.agent_name ||
+        data.agent?.selected ||
+        data.agent_name ||
+        "";
 
       if (selectedAgentName && typeof window.highlightSelectedAgent === "function") {
-        window.highlightSelectedAgent(selectedAgentName);
+        const hasMultiSteps = traceSteps.length > 1;
+        window.highlightSelectedAgent(selectedAgentName, { skipFlow: hasMultiSteps });
       }
 
       messages.scrollTop = messages.scrollHeight;
