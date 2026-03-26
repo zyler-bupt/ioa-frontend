@@ -588,13 +588,13 @@ header {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
   min-height: 0;
   min-width: 0;
 }
 
 .network-section {
-  flex: 1;
+  flex: 1 1 auto;
   background: white;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -603,8 +603,7 @@ header {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-height: 680px;
-  height: 100%;
+  min-height: 460px;
 }
 
 .network-section h2 {
@@ -628,7 +627,233 @@ header {
   overflow: hidden;
   min-height: 0;
   position: relative;
-  min-height: 560px;
+  min-height: 420px;
+}
+
+.monitor-section {
+  flex: 0 0 420px;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.monitor-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.monitor-section__header h2 {
+  font-size: 1.15em;
+  color: #1a73e8;
+  margin: 0;
+}
+
+.monitor-section__meta {
+  font-size: 0.78em;
+  color: #607d8b;
+}
+
+.monitor-section__description {
+  margin: 6px 0 10px;
+  color: #6b7280;
+  font-size: 0.82em;
+  line-height: 1.35;
+}
+
+.cluster-monitor-chart {
+  flex: 1;
+  min-height: 0;
+}
+
+.monitor-unified {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.monitor-unified__legend {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.monitor-legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75em;
+  color: #334155;
+  font-weight: 600;
+}
+
+.monitor-legend-chip::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.monitor-legend-chip--latency::before {
+  background: linear-gradient(180deg, #7ec8ff 0%, #2c8fff 100%);
+}
+
+.monitor-legend-chip--load::before {
+  background: linear-gradient(180deg, #8ce99a 0%, #2f9d5b 100%);
+}
+
+.monitor-unified__plot {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 58px 1fr 58px;
+  gap: 10px;
+}
+
+.monitor-axis {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.monitor-axis__title {
+  font-size: 0.68em;
+  color: #64748b;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.monitor-axis__ticks {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.monitor-axis__tick {
+  font-size: 0.66em;
+  color: #94a3b8;
+  line-height: 1;
+}
+
+.monitor-axis--right .monitor-axis__tick,
+.monitor-axis--right .monitor-axis__title {
+  text-align: right;
+}
+
+.monitor-plot-area {
+  position: relative;
+  min-height: 0;
+  border: 1px solid #d9e0ea;
+  border-radius: 8px;
+  background-image: linear-gradient(to top, rgba(148, 163, 184, 0.2) 1px, transparent 1px);
+  background-size: 100% 25%;
+  background-position: bottom;
+}
+
+.monitor-nodes {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+  padding: 12px 10px 34px;
+}
+
+.monitor-node {
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.monitor-node-bars {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 7px;
+}
+
+.monitor-bar-column {
+  width: min(18px, 32%);
+  max-width: 22px;
+  min-width: 12px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
+
+.monitor-bar {
+  width: 100%;
+  height: 0%;
+  border-radius: 4px 4px 2px 2px;
+  transition: height 700ms ease;
+}
+
+.monitor-bar--latency {
+  background: linear-gradient(180deg, #7ec8ff 0%, #2c8fff 100%);
+}
+
+.monitor-bar--load {
+  background: linear-gradient(180deg, #8ce99a 0%, #2f9d5b 100%);
+}
+
+.monitor-node-label {
+  margin-top: 8px;
+  font-size: 0.65em;
+  color: #475569;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.monitor-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.monitor-summary-item {
+  border: 1px solid #d9e0ea;
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: #f8fbff;
+  min-width: 0;
+}
+
+.monitor-summary-item__name {
+  font-size: 0.66em;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.monitor-summary-item__metrics {
+  margin-top: 3px;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: #1f2937;
 }
 
 .network-container::before,
@@ -669,6 +894,7 @@ header {
   --band-right: #7a90c6;
   --band-depth-x: 26px;
   --band-depth-y: 22px;
+  --band-width: 100%;
   
   /* 主要调整部分 */
   border-radius: 8px;
@@ -676,6 +902,8 @@ header {
   overflow: visible;
   border: none;
   box-shadow: none;
+  width: var(--band-width);
+  justify-self: center;
   
   /* 旋转角度调整：X、Y、Z轴 */
   transform: none;
@@ -732,6 +960,7 @@ header {
 }
 
 .topology-band--cloud {
+  --band-width: 100%;
   --band-top: #e4eeff;
   --band-bottom: #c6d9ff;
   --band-edge: rgba(90, 130, 220, 0.3);
@@ -740,6 +969,7 @@ header {
 }
 
 .topology-band--edge {
+  --band-width: 100%;
   --band-top: #ffeed6;
   --band-bottom: #ffd6aa;
   --band-edge: rgba(236, 140, 60, 0.3);
@@ -748,6 +978,7 @@ header {
 }
 
 .topology-band--terminal {
+  --band-width: 100%;
   --band-top: #e7f8d8;
   --band-bottom: #cdeab2;
   --band-edge: rgba(105, 160, 70, 0.3);
@@ -1250,6 +1481,42 @@ header {
   .legend-color {
     width: 14px;
     height: 14px;
+  }
+
+  .monitor-section {
+    flex-basis: 360px;
+  }
+
+  .monitor-unified__plot {
+    grid-template-columns: 44px 1fr 44px;
+    gap: 6px;
+  }
+
+  .monitor-nodes {
+    gap: 6px;
+    padding: 8px 6px 24px;
+  }
+
+  .monitor-bar-column {
+    width: min(14px, 35%);
+    min-width: 9px;
+  }
+
+  .monitor-node-label {
+    font-size: 0.6em;
+  }
+
+  .monitor-summary {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .monitor-summary-item__name {
+    font-size: 0.64em;
+  }
+
+  .monitor-summary-item__metrics {
+    font-size: 0.68em;
   }
 }
 

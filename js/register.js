@@ -18,6 +18,17 @@ document.addEventListener('DOMContentLoaded', function() {
   let selectionMode = false;
   let currentAgents = [];
   let currentView = 'registered';
+  const CLOUD_CLUSTER_NODE_ID = window.CLOUD_CLUSTER_NODE_ID || 'cloud-cluster-01';
+  const normalizeNodeId = typeof window.normalizeAgentNodeId === 'function'
+    ? window.normalizeAgentNodeId
+    : (nodeId, layer) => {
+        const raw = String(nodeId || '').trim();
+        if (raw === 'cloud-hz-03' || raw === 'cloud-bj-01' || raw === 'cloud-sh-01') {
+          return CLOUD_CLUSTER_NODE_ID;
+        }
+        if (!raw && layer === 'cloud') return CLOUD_CLUSTER_NODE_ID;
+        return raw;
+      };
 
   const seedAgents = [
     {
@@ -25,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
       name: 'VideoAgent',
       type: 'agent',
       layer: 'cloud',
-      node_id: 'cloud-bj-01',
+      node_id: CLOUD_CLUSTER_NODE_ID,
       status: 'active',
       category: 'perception',
       summary: '视频分析',
@@ -36,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
       name: 'RegistryAgent',
       type: 'agent',
       layer: 'cloud',
-      node_id: 'cloud-sh-01',
+      node_id: CLOUD_CLUSTER_NODE_ID,
       status: 'active',
       category: 'service',
       summary: '',
@@ -47,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
       name: 'DiscoveryAgent',
       type: 'agent',
       layer: 'cloud',
-      node_id: 'cloud-hz-03',
+      node_id: CLOUD_CLUSTER_NODE_ID,
       status: 'active',
       category: 'planning',
       summary: '',
@@ -96,6 +107,72 @@ document.addEventListener('DOMContentLoaded', function() {
       category: 'execution',
       summary: '应急报告自动化生成',
       tools: ['ReadFile', 'GetImagePaths', 'GenerateReport']
+    },
+    {
+      id: 'agent-edge-bj-ops-01',
+      name: 'EdgeOpsAgent',
+      type: 'agent',
+      layer: 'edge',
+      node_id: 'edge-bj-01',
+      status: 'active',
+      category: 'service',
+      summary: '边缘节点运行态诊断',
+      tools: ['NodeHealth', 'RuntimeTelemetry', 'FaultTriage']
+    },
+    {
+      id: 'agent-edge-bj-vision-02',
+      name: 'EdgeVisionAgent',
+      type: 'agent',
+      layer: 'edge',
+      node_id: 'edge-bj-01',
+      status: 'active',
+      category: 'perception',
+      summary: '视觉信号增强与异常识别',
+      tools: ['ImageEnhance', 'AnomalySpot', 'FusionTrack']
+    },
+    {
+      id: 'agent-edge-bj-stream-03',
+      name: 'StreamGuardAgent',
+      type: 'agent',
+      layer: 'edge',
+      node_id: 'edge-bj-02',
+      status: 'active',
+      category: 'service',
+      summary: '流媒体质量与时延控制',
+      tools: ['QoSGuard', 'LatencyMitigation', 'PacketDiagnostics']
+    },
+    {
+      id: 'agent-edge-sh-spatial-04',
+      name: 'SpatialLinkAgent',
+      type: 'agent',
+      layer: 'edge',
+      node_id: 'edge-sh-01',
+      status: 'active',
+      category: 'planning',
+      summary: '空间路由分析与评分',
+      tools: ['SpatialJoin', 'RouteScore', 'CorridorAnalysis']
+    },
+    {
+      id: 'agent-edge-gz-dispatch-05',
+      name: 'DispatchLinkAgent',
+      type: 'agent',
+      layer: 'edge',
+      node_id: 'edge-gz-01',
+      status: 'active',
+      category: 'execution',
+      summary: '现场调度编排与执行反馈',
+      tools: ['DispatchQueue', 'PriorityRoute', 'FeedbackMerge']
+    },
+    {
+      id: 'agent-cloud-governance-06',
+      name: 'ClusterGovernanceAgent',
+      type: 'agent',
+      layer: 'cloud',
+      node_id: CLOUD_CLUSTER_NODE_ID,
+      status: 'active',
+      category: 'service',
+      summary: '云集群治理与策略校验',
+      tools: ['ClusterPolicy', 'QuotaAudit', 'CrossRegionCheck']
     }
   ];
 
@@ -120,8 +197,8 @@ document.addEventListener('DOMContentLoaded', function() {
       name: 'LogSense-XA',
       type: 'agent',
       layer: 'cloud',
-      node_id: 'cloud-hz-03',
-      agentDns: 'acrg://org/service/LogSense-XA@cloud-hz-03',
+      node_id: CLOUD_CLUSTER_NODE_ID,
+      agentDns: `acrg://org/service/LogSense-XA@${CLOUD_CLUSTER_NODE_ID}`,
       endpoint: '10.200.2.44',
       description: '日志侧向解析与异常检测服务。',
       capabilities: ['LogProbe', 'AnomalyScan'],
@@ -215,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
       layer: selectedLayer || 'edge',
       description: document.getElementById('agentDescription').value.trim(),
       capabilities: document.getElementById('agentCapabilities').value.trim(),
-      nodeId: document.getElementById('agentNodeId').value,
+      nodeId: normalizeNodeId(document.getElementById('agentNodeId').value, selectedLayer || 'edge'),
       agentDns: document.getElementById('agentDns').value.trim(),
       endpoint: document.getElementById('agentEndpoint').value.trim(),
       autoStart: document.getElementById('agentAutoStart').checked
@@ -254,8 +331,8 @@ document.addEventListener('DOMContentLoaded', function() {
       name: agentData.name,
       type: agentData.type,
       layer: agentData.layer,
-      node_id: agentData.nodeId,
-      nodeLabel: agentData.nodeId,
+      node_id: normalizeNodeId(agentData.nodeId, agentData.layer),
+      nodeLabel: normalizeNodeId(agentData.nodeId, agentData.layer),
       isExtension: true,
       status: 'active',
       cpu: 50,
@@ -344,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (endpointInput) endpointInput.value = agent.endpoint || '';
 
-    const nodeValue = agent.node_id || agent.nodeId || '';
+    const nodeValue = normalizeNodeId(agent.node_id || agent.nodeId || agent.nodeLabel || '', agent.layer || '');
     if (nodeSelect && nodeValue) {
       ensureNodeOption(nodeValue, agent.layer || nodeSelect.selectedOptions[0]?.getAttribute('data-layer'));
       nodeSelect.value = nodeValue;
@@ -369,6 +446,28 @@ document.addEventListener('DOMContentLoaded', function() {
       option.setAttribute('data-layer', layer);
     }
     nodeSelect.appendChild(option);
+  }
+
+  function normalizeAgentRecord(agent) {
+    if (!agent || typeof agent !== 'object') return agent;
+    const layer = agent.layer || '';
+    const nodeValue = normalizeNodeId(agent.node_id || agent.nodeId || agent.nodeLabel, layer);
+    const normalized = { ...agent };
+    if (nodeValue) {
+      normalized.node_id = nodeValue;
+      normalized.nodeLabel = nodeValue;
+      normalized.nodeId = nodeValue;
+    }
+    if (String(normalized.layer || '').toLowerCase() === 'cloud') {
+      normalized.node_id = CLOUD_CLUSTER_NODE_ID;
+      normalized.nodeLabel = CLOUD_CLUSTER_NODE_ID;
+      normalized.nodeId = CLOUD_CLUSTER_NODE_ID;
+      if (typeof normalized.agentDns === 'string' && normalized.agentDns.includes('@')) {
+        const [prefix] = normalized.agentDns.split('@');
+        normalized.agentDns = `${prefix}@${CLOUD_CLUSTER_NODE_ID}`;
+      }
+    }
+    return normalized;
   }
 
   function setAgentView(view) {
@@ -419,7 +518,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-    const mergedAgents = mergeAgents(seedAgents, storedAgents);
+    const mergedAgents = mergeAgents(seedAgents, storedAgents).map(normalizeAgentRecord);
     const deletedIds = getDeletedAgentIds();
     const filteredAgents = mergedAgents.filter(agent => !deletedIds.has(agent.id));
     localStorage.setItem('registeredAgents', JSON.stringify(filteredAgents));
@@ -438,7 +537,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-    let mergedAgents = mergeAgents(seedDiscoveredAgents, storedAgents);
+    let mergedAgents = mergeAgents(seedDiscoveredAgents, storedAgents).map(normalizeAgentRecord);
     if (seedDiscoveredAgents.length) {
       const seedMap = new Map(seedDiscoveredAgents.map(agent => [agent.id, agent]));
       mergedAgents = mergedAgents.map(agent => {
@@ -446,12 +545,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!seed) return agent;
         return {
           ...agent,
-          node_id: seed.node_id,
+          node_id: normalizeNodeId(seed.node_id, seed.layer),
+          nodeLabel: normalizeNodeId(seed.node_id, seed.layer),
           agentDns: seed.agentDns,
           layer: seed.layer
         };
       });
     }
+    mergedAgents = mergedAgents.map(normalizeAgentRecord);
     const registeredIds = new Set((registeredList || []).map(agent => agent.id));
     const filteredAgents = mergedAgents.filter(agent => {
       if (!agent) return false;
@@ -464,12 +565,12 @@ document.addEventListener('DOMContentLoaded', function() {
   function mergeAgents(baseAgents, storedAgents) {
     const merged = new Map();
     baseAgents.forEach(agent => {
-      merged.set(agent.id, { ...agent });
+      merged.set(agent.id, normalizeAgentRecord({ ...agent }));
     });
     storedAgents.forEach(agent => {
       if (!agent || !agent.id) return;
       const base = merged.get(agent.id) || {};
-      merged.set(agent.id, { ...base, ...agent });
+      merged.set(agent.id, normalizeAgentRecord({ ...base, ...agent }));
     });
     return Array.from(merged.values());
   }
@@ -499,16 +600,17 @@ document.addEventListener('DOMContentLoaded', function() {
         name: agent.name,
         type: agent.type,
         layer: agent.layer,
-        node_id: agent.node_id,
+        node_id: normalizeNodeId(agent.node_id || agent.nodeLabel, agent.layer),
+        nodeLabel: normalizeNodeId(agent.node_id || agent.nodeLabel, agent.layer),
         status: agent.status || 'active',
         category,
         summary: agent.summary || '',
         tools: Array.isArray(agent.tools) ? agent.tools : [],
         capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : []
       });
-      localStorage.setItem('registeredAgents', JSON.stringify(mergedAgents));
+      localStorage.setItem('registeredAgents', JSON.stringify(mergedAgents.map(normalizeAgentRecord)));
     }
-    return mergedAgents;
+    return mergedAgents.map(normalizeAgentRecord);
   }
 
   function updateCountLabels(count) {
@@ -665,7 +767,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function formatAgentAddress(agent) {
     const name = agent.name || agent.id || 'agent';
-    const serverId = agent.node_id || 'unknown';
+    const serverId = normalizeNodeId(agent.node_id || agent.nodeId || agent.nodeLabel, agent.layer) || 'unknown';
     const category = resolveAgentCategory(agent);
     return `acrg://org/${category}/${name}@${serverId}`;
   }
@@ -838,14 +940,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!agent || !Array.isArray(window.agentDatabase)) return;
 
     const agentId = agent.id;
-    const nodeKey = agent.node_id || agent.nodeId || agent.nodeLabel;
+    const nodeKey = normalizeNodeId(agent.node_id || agent.nodeId || agent.nodeLabel, agent.layer || '');
     const targetIds = new Set([agentId]);
     const liveEntry = window.agentDatabase.find(item => item.id === agentId);
     const isExtension = liveEntry ? !!liveEntry.isExtension : false;
 
     if (!isExtension && nodeKey) {
       window.agentDatabase.forEach(item => {
-        const itemKey = item.node_id || item.nodeId || item.nodeLabel;
+        const itemKey = normalizeNodeId(item.node_id || item.nodeId || item.nodeLabel, item.layer || '');
         if (item.isExtension && itemKey === nodeKey) {
           targetIds.add(item.id);
         }

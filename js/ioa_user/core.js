@@ -7,16 +7,28 @@
  */
 
 (function () {
+    const CLOUD_CLUSTER_NODE_ID = "cloud-cluster-01";
+    const LEGACY_CLOUD_NODE_IDS = new Set(["cloud-hz-03", "cloud-bj-01", "cloud-sh-01"]);
+
+    function normalizeAgentNodeId(nodeId, fallbackLayer) {
+      const raw = String(nodeId || "").trim();
+      if (LEGACY_CLOUD_NODE_IDS.has(raw)) return CLOUD_CLUSTER_NODE_ID;
+      if (!raw && fallbackLayer === "cloud") return CLOUD_CLUSTER_NODE_ID;
+      return raw;
+    }
+
     // 模拟数据 - Agent列表（云边端三层架构）
     const agentDatabase = [
       {
         id: "agent-video",
         name: "VideoAgent",
         displayName: "VideoAgent",
-        nodeLabel: "cloud-hz-03",
+        nodeLabel: CLOUD_CLUSTER_NODE_ID,
+        node_id: CLOUD_CLUSTER_NODE_ID,
         type: "agent",
         status: "active",
         layer: "cloud",
+        isExtension: true,
         cpu: 65,
         memory: 72,
         capabilities: [
@@ -32,10 +44,12 @@
         id: "agent-registry",
         name: "RegistryAgent",
         displayName: "RegistryAgent",
-        nodeLabel: "cloud-bj-01",
+        nodeLabel: CLOUD_CLUSTER_NODE_ID,
+        node_id: CLOUD_CLUSTER_NODE_ID,
         type: "agent",
         status: "active",
         layer: "cloud",
+        isExtension: true,
         cpu: 54,
         memory: 61,
         capabilities: ["registry", "agent catalog", "service discovery"],
@@ -46,10 +60,12 @@
         id: "agent-discovery",
         name: "DiscoveryAgent",
         displayName: "DiscoveryAgent",
-        nodeLabel: "cloud-sh-01",
+        nodeLabel: CLOUD_CLUSTER_NODE_ID,
+        node_id: CLOUD_CLUSTER_NODE_ID,
         type: "agent",
         status: "active",
         layer: "cloud",
+        isExtension: true,
         cpu: 59,
         memory: 66,
         capabilities: ["semantic search", "routing", "capability matching"],
@@ -59,8 +75,9 @@
       {
         id: "agent-meteorology",
         name: "MeteorologyAgent",
-        displayName: "MetrologyAgent",
+        displayName: "MeteorologyAgent",
         nodeLabel: "edge-bj-01",
+        node_id: "edge-bj-01",
         type: "agent",
         status: "active",
         layer: "edge",
@@ -75,6 +92,7 @@
         name: "KeyframeAgent",
         displayName: "KeyframeAgent",
         nodeLabel: "edge-bj-02",
+        node_id: "edge-bj-02",
         type: "agent",
         status: "active",
         layer: "edge",
@@ -89,6 +107,7 @@
         name: "MapAgent",
         displayName: "MapAgent",
         nodeLabel: "edge-sh-01",
+        node_id: "edge-sh-01",
         type: "agent",
         status: "active",
         layer: "edge",
@@ -103,6 +122,7 @@
         name: "ReportAgent",
         displayName: "ReportAgent",
         nodeLabel: "edge-gz-01",
+        node_id: "edge-gz-01",
         type: "agent",
         status: "active",
         layer: "edge",
@@ -111,6 +131,108 @@
         capabilities: ["report generation", "data visualization", "comprehensive analysis", "export formatting"],
         description: "Edge-layer agent for generating structured reports from processed data",
         relevance: 0,
+      },
+      {
+        id: "agent-edge-bj-ops-01",
+        name: "EdgeOpsAgent",
+        displayName: "EdgeOpsAgent",
+        nodeLabel: "edge-bj-01",
+        node_id: "edge-bj-01",
+        type: "agent",
+        status: "active",
+        layer: "edge",
+        isExtension: true,
+        cpu: 46,
+        memory: 57,
+        capabilities: ["ops telemetry", "runtime diagnostics", "health triage"],
+        description: "Extension agent for edge operational telemetry analysis",
+        relevance: 0,
+        createdAt: 1001,
+      },
+      {
+        id: "agent-edge-bj-vision-02",
+        name: "EdgeVisionAgent",
+        displayName: "EdgeVisionAgent",
+        nodeLabel: "edge-bj-01",
+        node_id: "edge-bj-01",
+        type: "agent",
+        status: "active",
+        layer: "edge",
+        isExtension: true,
+        cpu: 51,
+        memory: 63,
+        capabilities: ["image enhancement", "anomaly spotting", "multi-view fusion"],
+        description: "Extension agent for edge visual signal enhancement",
+        relevance: 0,
+        createdAt: 1002,
+      },
+      {
+        id: "agent-edge-bj-stream-03",
+        name: "StreamGuardAgent",
+        displayName: "StreamGuardAgent",
+        nodeLabel: "edge-bj-02",
+        node_id: "edge-bj-02",
+        type: "agent",
+        status: "active",
+        layer: "edge",
+        isExtension: true,
+        cpu: 45,
+        memory: 55,
+        capabilities: ["stream QoS", "packet diagnostics", "latency mitigation"],
+        description: "Extension agent for stream quality and packet diagnostics",
+        relevance: 0,
+        createdAt: 1003,
+      },
+      {
+        id: "agent-edge-sh-spatial-04",
+        name: "SpatialLinkAgent",
+        displayName: "SpatialLinkAgent",
+        nodeLabel: "edge-sh-01",
+        node_id: "edge-sh-01",
+        type: "agent",
+        status: "active",
+        layer: "edge",
+        isExtension: true,
+        cpu: 49,
+        memory: 61,
+        capabilities: ["spatial joins", "route scoring", "corridor analysis"],
+        description: "Extension agent for spatial route intelligence",
+        relevance: 0,
+        createdAt: 1004,
+      },
+      {
+        id: "agent-edge-gz-dispatch-05",
+        name: "DispatchLinkAgent",
+        displayName: "DispatchLinkAgent",
+        nodeLabel: "edge-gz-01",
+        node_id: "edge-gz-01",
+        type: "agent",
+        status: "active",
+        layer: "edge",
+        isExtension: true,
+        cpu: 44,
+        memory: 53,
+        capabilities: ["dispatch orchestration", "priority routing", "feedback aggregation"],
+        description: "Extension agent for dispatch-side execution routing",
+        relevance: 0,
+        createdAt: 1005,
+      },
+      {
+        id: "agent-cloud-governance-06",
+        name: "ClusterGovernanceAgent",
+        displayName: "ClusterGovernanceAgent",
+        nodeLabel: CLOUD_CLUSTER_NODE_ID,
+        node_id: CLOUD_CLUSTER_NODE_ID,
+        type: "agent",
+        status: "active",
+        layer: "cloud",
+        isExtension: true,
+        cpu: 43,
+        memory: 56,
+        capabilities: ["cluster governance", "quota policy", "cross-region audit"],
+        description: "Extension agent for cloud-cluster governance and policy checks",
+        relevance: 0,
+        createdAt: 1006,
       },
     ];
   
@@ -177,20 +299,32 @@
           <rect x="18" y="48" width="28" height="6" rx="3" fill="#ffffff" stroke="#1b1b1b" stroke-width="3"/>
         </svg>
       `),
-      rack01: assetUrl("机柜01.svg"),
+      rack01: assetUrl("云端,云,云服务.svg"),
       agent01: assetUrl("Agent02.svg"),
       server01: assetUrl("server01.svg"),
     };
   
     const LAYER_IMAGES = {};
     const LAYER_ANCHORS = { cloud: [], edge: [], terminal: [] };
+
+    const TERMINAL_INFRA_IDS = [
+      "infra-terminal-phone-1",
+      "infra-terminal-desktop-1",
+      "infra-terminal-phone-2",
+      "infra-terminal-desktop-2",
+      "infra-terminal-phone-3",
+      "infra-terminal-desktop-3",
+    ];
   
     const INFRA_NODE_META = {
-      "infra-cloud-bot-left": { image: TOPOLOGY_ICONS.agent01, size: 22, label: "VideoAgent", labelOffset: 12, labelSize: 10 },
-      "infra-cloud-bot-mid": { image: TOPOLOGY_ICONS.agent01, size: 22, label: "RegistryAgent", labelOffset: 12, labelSize: 10 },
-      "infra-cloud-server": { image: TOPOLOGY_ICONS.agent01, size: 22, label: "DiscoveryAgent", labelOffset: 12, labelSize: 10 },
-      "infra-cloud-server-agent01": { image: TOPOLOGY_ICONS.agent01, size: 20, label: "" },
-  
+      [CLOUD_CLUSTER_NODE_ID]: {
+        image: TOPOLOGY_ICONS.rack01,
+        size: 30,
+        label: "Cloud Cluster",
+        labelOffset: 12,
+        labelSize: 11,
+      },
+
       "infra-edge-server-left": { image: TOPOLOGY_ICONS.server, size: 22, label: "Server", labelOffset: -12, labelSize: 9 },
       "infra-edge-server-right": { image: TOPOLOGY_ICONS.server, size: 22, label: "Server", labelOffset: -12, labelSize: 9 },
       "infra-edge-server-left-agent01": { image: TOPOLOGY_ICONS.agent01, size: 20, label: "" },
@@ -198,13 +332,13 @@
   
       "infra-edge-gateway-left": { image: TOPOLOGY_ICONS.gateway, size: 24, label: "Gateway", labelOffset: 12, labelSize: 9 },
       "infra-edge-gateway-right": { image: TOPOLOGY_ICONS.gateway, size: 24, label: "Gateway", labelOffset: 12, labelSize: 9 },
-  
-      "infra-terminal-user-left": { image: TOPOLOGY_ICONS.user, size: 22, label: "User" },
-      "infra-terminal-phone-left": { image: TOPOLOGY_ICONS.phone, size: 22, label: "Phone" },
-      "infra-terminal-user-right": { image: TOPOLOGY_ICONS.user, size: 22, label: "User" },
-      "infra-terminal-desktop-left": { image: TOPOLOGY_ICONS.desktop, size: 22, label: "Desktop" },
-      "infra-terminal-desktop-right": { image: TOPOLOGY_ICONS.desktop, size: 22, label: "Desktop" },
-      "infra-terminal-phone-right": { image: TOPOLOGY_ICONS.phone, size: 22, label: "Phone" },
+
+      "infra-terminal-phone-1": { image: TOPOLOGY_ICONS.phone, size: 22, label: "Phone" },
+      "infra-terminal-desktop-1": { image: TOPOLOGY_ICONS.desktop, size: 22, label: "Desktop" },
+      "infra-terminal-phone-2": { image: TOPOLOGY_ICONS.phone, size: 22, label: "Phone" },
+      "infra-terminal-desktop-2": { image: TOPOLOGY_ICONS.desktop, size: 22, label: "Desktop" },
+      "infra-terminal-phone-3": { image: TOPOLOGY_ICONS.phone, size: 22, label: "Phone" },
+      "infra-terminal-desktop-3": { image: TOPOLOGY_ICONS.desktop, size: 22, label: "Desktop" },
     };
   
     const LINK_COLORS = { primary: "#ff6d2d", secondary: "#ffb48f", highlight: "#ff3d00" };
@@ -234,6 +368,9 @@
     window.LAYER_ANCHORS = LAYER_ANCHORS;
   
     window.INFRA_NODE_META = INFRA_NODE_META;
+    window.CLOUD_CLUSTER_NODE_ID = CLOUD_CLUSTER_NODE_ID;
+    window.TERMINAL_INFRA_IDS = TERMINAL_INFRA_IDS;
+    window.normalizeAgentNodeId = normalizeAgentNodeId;
     window.LINK_COLORS = LINK_COLORS;
     window.IN_LAYER_COLOR = IN_LAYER_COLOR;
   

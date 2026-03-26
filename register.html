@@ -64,9 +64,7 @@
               <option value="edge-sh-01" data-layer="edge">edge-sh-01</option>
               <option value="edge-gz-01" data-layer="edge">edge-gz-01</option>
               <!-- Cloud Layer Nodes -->
-              <option value="cloud-hz-03" data-layer="cloud">cloud-hz-03</option>
-              <option value="cloud-bj-01" data-layer="cloud">cloud-bj-01</option>
-              <option value="cloud-sh-01" data-layer="cloud">cloud-sh-01</option>
+              <option value="cloud-cluster-01" data-layer="cloud">cloud-cluster-01</option>
             </select>
             <small class="form-hint">Select the node to register; the layer will be inferred automatically.</small>
           </div>
@@ -121,7 +119,11 @@
 
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <script src="js/ioa_user/core.js"></script>
-  <script src="js/ioa_user/topology.js"></script>
+  <script src="js/ioa_user/topology/constants.js"></script>
+  <script src="js/ioa_user/topology/layout.js"></script>
+  <script src="js/ioa_user/topology/edges.js"></script>
+  <script src="js/ioa_user/topology/interaction.js"></script>
+  <script src="js/ioa_user/topology/main.js"></script>
   <script src="js/register.js"></script>
 </body>
 

@@ -49,6 +49,14 @@
         <h2>Network Topology</h2>
         <div id="networkGraph" class="network-container"></div>
       </div>
+      <div class="monitor-section">
+        <div class="monitor-section__header">
+          <h2>Cluster Monitoring</h2>
+          <span id="clusterMonitorUpdatedAt" class="monitor-section__meta">--</span>
+        </div>
+        <p class="monitor-section__description">Real-time telemetry for topology nodes: latency and load.</p>
+        <div id="clusterMonitorChart" class="cluster-monitor-chart" aria-label="Cluster monitoring chart"></div>
+      </div>
     </div>
 
     <!-- 右侧：Discovery过程 -->
@@ -108,8 +116,13 @@
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     
   <script src="js/ioa_user/core.js"></script>
-  <script src="js/ioa_user/topology.js"></script>
+  <script src="js/ioa_user/topology/constants.js"></script>
+  <script src="js/ioa_user/topology/layout.js"></script>
+  <script src="js/ioa_user/topology/edges.js"></script>
+  <script src="js/ioa_user/topology/interaction.js"></script>
+  <script src="js/ioa_user/topology/main.js"></script>
   <script src="js/ioa_user/discovery.js"></script>
+  <script src="js/ioa_user/clusterMonitor.js"></script>
   <script src="js/ioa_user/chat.js"></script>
 </body>
 

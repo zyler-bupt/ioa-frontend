@@ -283,11 +283,23 @@
     function highlightSelectedAgent(agentName, options = {}) {
       const agent = window.agentDatabase?.find(
         (a) => a.name === agentName || a.displayName === agentName || a.id === agentName
+      ) || window.agentDatabase?.find(
+        (a) =>
+          String(a.name).toLowerCase() === String(agentName).toLowerCase() ||
+          String(a.displayName).toLowerCase() === String(agentName).toLowerCase() ||
+          String(a.id).toLowerCase() === String(agentName).toLowerCase()
       );
-      if (!agent) return;
+      if (!agent) {
+        window.pinTopologyAgent?.(agentName);
+        return;
+      }
   
       // 高亮拓扑
-      window.highlightNodeInNetwork?.(agent.id);
+      if (typeof window.pinTopologyAgent === "function") {
+        window.pinTopologyAgent(agent.id);
+      } else {
+        window.highlightNodeInNetwork?.(agent.id);
+      }
       if (!options.skipFlow) {
         window.triggerTopologyFlow?.(agent.id);
       }
@@ -304,10 +316,30 @@
     function loadNewAgents() {
       const newAgentsData = localStorage.getItem("newAgents");
       if (!newAgentsData) return;
-  
+
       try {
+        const normalizeNodeId =
+          typeof window.normalizeAgentNodeId === "function"
+            ? window.normalizeAgentNodeId
+            : (nodeId, layer) => {
+                const raw = String(nodeId || "").trim();
+                if (raw === "cloud-hz-03" || raw === "cloud-bj-01" || raw === "cloud-sh-01") {
+                  return "cloud-cluster-01";
+                }
+                if (!raw && layer === "cloud") return "cloud-cluster-01";
+                return raw;
+              };
         const newAgents = JSON.parse(newAgentsData);
         (newAgents || []).forEach((agent) => {
+          const normalizedNode = normalizeNodeId(
+            agent.node_id || agent.nodeId || agent.nodeLabel,
+            agent.layer || ""
+          );
+          if (normalizedNode) {
+            agent.node_id = normalizedNode;
+            agent.nodeId = normalizedNode;
+            agent.nodeLabel = normalizedNode;
+          }
           const exists = window.agentDatabase.some((a) => a.id === agent.id);
           if (!exists) {
             window.agentDatabase.push(agent);

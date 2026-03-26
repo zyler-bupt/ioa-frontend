@@ -505,6 +505,32 @@
           .join(" · ");
       }
 
+      function parseRunningAgentFromText(text) {
+        if (!text) return "";
+        const normalized = String(text).trim();
+        if (!normalized) return "";
+        if (normalized.startsWith("running_agent:")) {
+          return normalized.split(":").slice(1).join(":").trim();
+        }
+        if (normalized.startsWith("running_step:")) {
+          const parts = normalized.split(":");
+          return (parts[2] || "").trim();
+        }
+        return "";
+      }
+
+      function extractRunningAgentName(payload) {
+        if (!payload) return "";
+        if (typeof payload === "string") return parseRunningAgentFromText(payload);
+        const statusText = typeof payload.status === "string" ? payload.status : "";
+        const messageText = typeof payload.message === "string" ? payload.message : "";
+        return (
+          parseRunningAgentFromText(statusText) ||
+          parseRunningAgentFromText(messageText) ||
+          ""
+        );
+      }
+
       function showSpinnerRow() {
         progressQueue = progressQueue.then(() => {
           const container = ensureProgressContent();
@@ -612,6 +638,10 @@
             if (statusText) {
               appendProgressStep("状态", statusText, "status");
             }
+            const runningAgent = extractRunningAgentName(msg.data);
+            if (runningAgent && typeof window.highlightSelectedAgent === "function") {
+              window.highlightSelectedAgent(runningAgent, { skipFlow: true });
+            }
             return;
           }
 
@@ -642,6 +672,12 @@
                 msg.data?.agent?.selected ||
                 msg.data?.agent_name ||
                 "";
+              const uniqueStepAgents = Array.from(new Set(stepAgents.filter(Boolean)));
+              if (uniqueStepAgents.length && typeof window.highlightSelectedAgent === "function") {
+                uniqueStepAgents.forEach((name) => window.highlightSelectedAgent(name, { skipFlow: true }));
+              } else if (finalSelected && typeof window.highlightSelectedAgent === "function") {
+                window.highlightSelectedAgent(finalSelected, { skipFlow: true });
+              }
               if (stepAgents.length > 1) {
                 triggerFlow(stepAgents, { force: true });
               } else {
@@ -730,41 +766,24 @@
       const structuredImages = Array.isArray(data.structured?.images) ? data.structured.images : [];
       const allImages = [...answerImages, ...legacyImages, ...keyframe, ...structuredImages].filter(Boolean);
 
+      function dedupeImages(images) {
+        const seen = new Set();
+        const unique = [];
+        images.forEach((image) => {
+          const key = image?.data_uri || image?.url || image?.url_rel || image?.path || "";
+          if (!key || seen.has(key)) return;
+          seen.add(key);
+          unique.push(image);
+        });
+        return unique;
+      }
+
+      const uniqueImages = dedupeImages(allImages);
+
       const traceSteps =
         (Array.isArray(data.trace?.steps) && data.trace.steps) ||
         (Array.isArray(data.answer?.structured?.steps) && data.answer.structured.steps) ||
         [];
-
-      const selectedAgent =
-        data.agent?.selected ||
-        data.selected?.agent ||
-        data.selected?.agent_name ||
-        data.best_match?.agent_name ||
-        data.selected_agent?.agent_name ||
-        data.agent?.selected ||
-        data.agent_name ||
-        "";
-
-      const selectedCapability =
-        data.agent?.capability || data.selected?.capability || data.workflow_id || data.workflowId || "";
-      const confidence = data.agent?.confidence || data.selected?.confidence || {};
-      let finalPct = Number(confidence.final_pct);
-      if (!Number.isFinite(finalPct)) {
-        const finalScore = Number(confidence.final_score);
-        if (Number.isFinite(finalScore)) finalPct = finalScore * 100;
-      }
-      if (Number.isFinite(finalPct)) {
-        finalPct = Math.max(0, Math.min(100, finalPct));
-      }
-
-      function appendMetaLine(container, text) {
-        const line = document.createElement("div");
-        line.style.marginTop = "6px";
-        line.style.fontSize = "0.9em";
-        line.style.color = "#3b4b64";
-        line.textContent = text;
-        container.appendChild(line);
-      }
 
       function appendImageList(container, images, labelText) {
         if (!images.length) return;
@@ -877,7 +896,7 @@
         container.appendChild(list);
       }
 
-      if (answerText || allImages.length || answerAttachments.length || traceSteps.length || selectedAgent) {
+      if (answerText || uniqueImages.length || answerAttachments.length || traceSteps.length) {
         answerDiv = createAssistantMessage();
 
         const header = document.createElement("div");
@@ -887,25 +906,16 @@
         answerDiv.appendChild(header);
       }
 
-      if (answerDiv && selectedAgent) {
-        const capabilityText = selectedCapability ? `（${selectedCapability}）` : "";
-        appendMetaLine(answerDiv, `🤖 选择 Agent: ${selectedAgent}${capabilityText}`);
-      }
-
-      if (answerDiv && Number.isFinite(finalPct)) {
-        appendMetaLine(answerDiv, `🎯 匹配准确度: ${finalPct.toFixed(0)}%`);
-      }
-
       if (answerText && answerDiv) {
         appendStreamBlock(answerDiv, "📌 结果:", answerText, 60);
         hasAnswer = true;
       }
 
       if (answerDiv) {
-        appendImageList(answerDiv, allImages, allImages.length ? "🖼️ 图片:" : "");
+        appendImageList(answerDiv, uniqueImages, uniqueImages.length ? "🖼️ 图片:" : "");
         appendAttachmentList(answerDiv, answerAttachments, "📎 附件:");
         appendTraceSteps(answerDiv, traceSteps);
-        if (allImages.length || answerAttachments.length || traceSteps.length) {
+        if (uniqueImages.length || answerAttachments.length || traceSteps.length) {
           hasAnswer = true;
         }
       }
@@ -1018,6 +1028,7 @@
 
     if (typeof window.initializeStats === "function") window.initializeStats();
     if (typeof window.initializeNetworkGraph === "function") window.initializeNetworkGraph();
+    if (typeof window.initializeClusterMonitor === "function") window.initializeClusterMonitor();
     if (typeof window.initializeDiscoveryProcess === "function") window.initializeDiscoveryProcess();
 
     initializeChatSystem();

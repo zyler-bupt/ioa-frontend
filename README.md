@@ -70,7 +70,11 @@ Guardian_agent/
 │   ├── style.css          # 主样式（已更新 WebSocket 样式）
 │   └── register-style.css  # 注册页面样式
 ├── js/
-│   ├── chat.js            # 聊天/WebSocket 核心逻辑（已更新）
+│   ├── ioa_user/          # IOA 前端逻辑
+│   │   ├── chat.js        # 聊天/WebSocket 核心逻辑
+│   │   ├── core.js        # 数据与常量
+│   │   ├── topology.js    # 拓扑图
+│   │   └── discovery.js   # Discovery 列表
 │   ├── ioa.js             # IOA 主逻辑
 │   ├── dag.js             # DAG 图表渲染
 │   ├── camera.js          # 摄像头控制
@@ -158,7 +162,7 @@ Guardian_agent/
 
 ### 后端地址配置
 
-编辑 `js/chat.js` 中的 `initWebSocket()` 函数：
+编辑 `js/ioa_user/chat.js` 中的 `initWebSocket()` 函数：
 
 ```javascript
 function initWebSocket() {
