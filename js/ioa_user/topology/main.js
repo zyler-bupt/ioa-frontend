@@ -3,6 +3,35 @@
  * Topology bootstrap, dynamic add, and exports.
  */
 
+function getEdgePerspectiveScale(indexInLayer, totalAgents) {
+  if (!Number.isFinite(indexInLayer) || !Number.isFinite(totalAgents) || totalAgents <= 1) return 1;
+  if (totalAgents === 4) {
+    return indexInLayer === 0 || indexInLayer === 2 ? 0.9 : 1.12;
+  }
+  const depth = indexInLayer / Math.max(1, totalAgents - 1);
+  return 0.9 + depth * 0.22;
+}
+
+function getNodeVisualScale(layer, style, indexInLayer, totalAgents) {
+  if (layer !== "edge") {
+    return {
+      size: style.size,
+      borderWidth: style.borderWidth,
+      fontSize: 12,
+      shadowSize: style.shadowSize,
+    };
+  }
+
+  const scale = getEdgePerspectiveScale(indexInLayer, totalAgents);
+  const roundedSize = Math.round(style.size * scale * 10) / 10;
+  return {
+    size: roundedSize,
+    borderWidth: Math.max(1.4, Math.round(style.borderWidth * (0.95 + (scale - 1) * 0.35) * 100) / 100),
+    fontSize: Math.max(10, Math.min(13, Math.round(12 * (0.94 + (scale - 1) * 0.65)))),
+    shadowSize: Math.max(4, Math.round(style.shadowSize * (0.95 + (scale - 1) * 0.5) * 100) / 100),
+  };
+}
+
 function initializeNetworkGraph() {
   const container = document.getElementById("networkGraph");
   const layoutMetrics = getLayoutMetrics(container);
@@ -29,6 +58,7 @@ function initializeNetworkGraph() {
     const totalAgents = layerAgents.length;
   
     const position = getLayerPosition(layer, indexInLayer, totalAgents, layoutMetrics, container);
+    const visualScale = getNodeVisualScale(layer, style, indexInLayer, totalAgents);
   
     const nodeLabel = agent.nodeLabel || agent.name;
 
@@ -44,18 +74,18 @@ function initializeNetworkGraph() {
       },
       x: position.x,
       y: position.y,
-      size: style.size,
-      borderWidth: style.borderWidth,
+      size: visualScale.size,
+      borderWidth: visualScale.borderWidth,
       physics: false,
       font: {
-        size: 12,
+        size: visualScale.fontSize,
         color: "#1d3f8f",
         align: "center",
         vadjust: 8,
         strokeWidth: 3,
         strokeColor: "rgba(247, 249, 252, 0.9)",
       },
-      shadow: { enabled: true, color: style.shadowColor, size: style.shadowSize, x: 0, y: 5 },
+      shadow: { enabled: true, color: style.shadowColor, size: visualScale.shadowSize, x: 0, y: 5 },
       layer,
     };
   });
@@ -281,6 +311,7 @@ function addAgentToNetwork(agent) {
   const totalAgents = layerAgents.length;
 
   const position = resolveAgentPosition(container, window.networkInstance, agent, indexInLayer, totalAgents);
+  const visualScale = getNodeVisualScale(layer, style, indexInLayer, totalAgents);
 
   nodes.add({
     id: agent.id,
@@ -294,18 +325,18 @@ function addAgentToNetwork(agent) {
     },
     x: position.x,
     y: position.y,
-    size: style.size,
-    borderWidth: style.borderWidth,
+    size: visualScale.size,
+    borderWidth: visualScale.borderWidth,
     physics: false,
     font: {
-      size: 12,
+      size: visualScale.fontSize,
       color: baseColor,
       align: "center",
       vadjust: 8,
       strokeWidth: 3,
       strokeColor: "rgba(247, 249, 252, 0.9)",
     },
-    shadow: { enabled: true, color: style.shadowColor, size: style.shadowSize, x: 0, y: 4 },
+    shadow: { enabled: true, color: style.shadowColor, size: visualScale.shadowSize, x: 0, y: 4 },
     layer,
   });
 

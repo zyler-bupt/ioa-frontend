@@ -386,8 +386,10 @@ function applyTopologyLayout(container, nodes, network) {
       ordered.forEach((agent, index) => {
         const offset = getExtensionTreeOffset(index, ordered.length, metrics);
         const shouldShow = getExtensionVisibility(anchorId);
+        const extensionLabel = agent.displayName || agent.name || agent.id;
         extensionUpdates.push({
           id: agent.id,
+          label: extensionLabel,
           x: anchorPos.x + offset.x,
           y: anchorPos.y + offset.y,
           size: 14,
@@ -395,7 +397,14 @@ function applyTopologyLayout(container, nodes, network) {
           image: window.TOPOLOGY_ICONS.agent01 || window.TOPOLOGY_ICONS.agent,
           hidden: !shouldShow,
           extensionFor: anchorId,
-          font: { size: 9, vadjust: 8, color: "#1d3f8f" },
+          font: {
+            size: 10,
+            align: "center",
+            vadjust: 10,
+            color: "#1d3f8f",
+            strokeWidth: 3,
+            strokeColor: "rgba(247, 249, 252, 0.9)",
+          },
         });
       });
     });
