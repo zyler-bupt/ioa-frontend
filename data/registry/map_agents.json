@@ -1,0 +1,388 @@
+[
+    {
+      "name": "map_location_geocoding_cloud_gpu_fast_v1",
+      "display_name": "地址地名解析",
+      "agent_type": "map_agent",
+      "executor": "MapAgent",
+      "capability_type": "map_location_geocoding",
+      "category": "geo_spatial_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "将地址或地名解析为经纬度坐标与区域信息。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "location_query"
+      ],
+      "optional_slots": [
+        "coordinate_system",
+        "admin_level"
+      ],
+      "tools_involved": [
+        "GeoCoder"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "把这个地址转换成经纬度",
+        "地名解析为坐标",
+        "查询地址对应的行政区"
+      ],
+      "fallback_prompt": "请提供需要解析的地址或地名。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "map_location_geocoding_edge_cpu_balanced_v1",
+      "display_name": "地址地名解析",
+      "agent_type": "map_agent",
+      "executor": "MapAgent",
+      "capability_type": "map_location_geocoding",
+      "category": "geo_spatial_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "将地址或地名解析为经纬度坐标与区域信息。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "location_query"
+      ],
+      "optional_slots": [
+        "coordinate_system",
+        "admin_level"
+      ],
+      "tools_involved": [
+        "GeoCoder"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "把这个地址转换成经纬度",
+        "地名解析为坐标",
+        "查询地址对应的行政区"
+      ],
+      "fallback_prompt": "请提供需要解析的地址或地名。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "map_reverse_geocoding_cloud_gpu_fast_v1",
+      "display_name": "坐标反查地址",
+      "agent_type": "map_agent",
+      "executor": "MapAgent",
+      "capability_type": "map_reverse_geocoding",
+      "category": "geo_spatial_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "根据经纬度坐标反查地址与周边区域描述。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "latitude",
+        "longitude"
+      ],
+      "optional_slots": [
+        "coordinate_system",
+        "output_format"
+      ],
+      "tools_involved": [
+        "GeoCoder"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "用坐标反查详细地址",
+        "这个经纬度属于哪里",
+        "坐标转成行政区信息"
+      ],
+      "fallback_prompt": "请提供经纬度坐标。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "map_reverse_geocoding_edge_cpu_balanced_v1",
+      "display_name": "坐标反查地址",
+      "agent_type": "map_agent",
+      "executor": "MapAgent",
+      "capability_type": "map_reverse_geocoding",
+      "category": "geo_spatial_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "根据经纬度坐标反查地址与周边区域描述。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "latitude",
+        "longitude"
+      ],
+      "optional_slots": [
+        "coordinate_system",
+        "output_format"
+      ],
+      "tools_involved": [
+        "GeoCoder"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "用坐标反查详细地址",
+        "这个经纬度属于哪里",
+        "坐标转成行政区信息"
+      ],
+      "fallback_prompt": "请提供经纬度坐标。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "map_route_planning_cloud_gpu_fast_v1",
+      "display_name": "路径规划",
+      "agent_type": "map_agent",
+      "executor": "MapAgent",
+      "capability_type": "map_route_planning",
+      "category": "geo_spatial_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "根据起终点与出行方式生成可行路线方案。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "origin",
+        "destination"
+      ],
+      "optional_slots": [
+        "travel_mode",
+        "avoid_options",
+        "route_constraints"
+      ],
+      "tools_involved": [
+        "RoutePlanner"
+      ],
+      "relationship_type": "1toN_variant",
+      "example_queries": [
+        "从A到B规划路线",
+        "给我最快的路线方案",
+        "避开收费路段的导航路径"
+      ],
+      "fallback_prompt": "请提供起点和终点信息。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "map_route_planning_edge_cpu_balanced_v1",
+      "display_name": "路径规划",
+      "agent_type": "map_agent",
+      "executor": "MapAgent",
+      "capability_type": "map_route_planning",
+      "category": "geo_spatial_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "根据起终点与出行方式生成可行路线方案。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "origin",
+        "destination"
+      ],
+      "optional_slots": [
+        "travel_mode",
+        "avoid_options",
+        "route_constraints"
+      ],
+      "tools_involved": [
+        "RoutePlanner"
+      ],
+      "relationship_type": "1toN_variant",
+      "example_queries": [
+        "从A到B规划路线",
+        "给我最快的路线方案",
+        "避开收费路段的导航路径"
+      ],
+      "fallback_prompt": "请提供起点和终点信息。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "map_nearby_search_cloud_gpu_fast_v1",
+      "display_name": "周边POI检索",
+      "agent_type": "map_agent",
+      "executor": "MapAgent",
+      "capability_type": "map_nearby_search",
+      "category": "geo_spatial_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "在指定位置周边检索目标类型的兴趣点。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "center_point",
+        "poi_type"
+      ],
+      "optional_slots": [
+        "radius_km",
+        "limit",
+        "sort_by"
+      ],
+      "tools_involved": [
+        "PoiSearch"
+      ],
+      "relationship_type": "1toN_variant",
+      "example_queries": [
+        "查找附近的医院",
+        "周边2公里内的加油站",
+        "查询周边餐饮点"
+      ],
+      "fallback_prompt": "请提供中心点坐标或地址，并说明要查找的类型。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "map_nearby_search_edge_cpu_balanced_v1",
+      "display_name": "周边POI检索",
+      "agent_type": "map_agent",
+      "executor": "MapAgent",
+      "capability_type": "map_nearby_search",
+      "category": "geo_spatial_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "在指定位置周边检索目标类型的兴趣点。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "center_point",
+        "poi_type"
+      ],
+      "optional_slots": [
+        "radius_km",
+        "limit",
+        "sort_by"
+      ],
+      "tools_involved": [
+        "PoiSearch"
+      ],
+      "relationship_type": "1toN_variant",
+      "example_queries": [
+        "查找附近的医院",
+        "周边2公里内的加油站",
+        "查询周边餐饮点"
+      ],
+      "fallback_prompt": "请提供中心点坐标或地址，并说明要查找的类型。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "map_geofence_monitor_cloud_gpu_fast_v1",
+      "display_name": "地理围栏监测",
+      "agent_type": "map_agent",
+      "executor": "MapAgent",
+      "capability_type": "map_geofence_monitor",
+      "category": "geo_spatial_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "设置地理围栏并监测目标是否进入或离开指定区域。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "geofence_area",
+        "target_object"
+      ],
+      "optional_slots": [
+        "event_type",
+        "time_window"
+      ],
+      "tools_involved": [
+        "GeoFence"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "监测目标是否进入指定区域",
+        "设置围栏并提醒出入事件",
+        "检测车辆是否离开围栏"
+      ],
+      "fallback_prompt": "请提供围栏区域和监测目标信息。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "map_geofence_monitor_edge_cpu_balanced_v1",
+      "display_name": "地理围栏监测",
+      "agent_type": "map_agent",
+      "executor": "MapAgent",
+      "capability_type": "map_geofence_monitor",
+      "category": "geo_spatial_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "设置地理围栏并监测目标是否进入或离开指定区域。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "geofence_area",
+        "target_object"
+      ],
+      "optional_slots": [
+        "event_type",
+        "time_window"
+      ],
+      "tools_involved": [
+        "GeoFence"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "监测目标是否进入指定区域",
+        "设置围栏并提醒出入事件",
+        "检测车辆是否离开围栏"
+      ],
+      "fallback_prompt": "请提供围栏区域和监测目标信息。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "map_coverage_analysis_cloud_gpu_fast_v1",
+      "display_name": "覆盖范围分析",
+      "agent_type": "map_agent",
+      "executor": "MapAgent",
+      "capability_type": "map_coverage_analysis",
+      "category": "geo_spatial_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "评估服务点或设施在指定半径内的覆盖范围与盲区。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "center_point",
+        "coverage_radius_km"
+      ],
+      "optional_slots": [
+        "barriers",
+        "coverage_type"
+      ],
+      "tools_involved": [
+        "CoverageAnalyzer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "分析这个点的服务覆盖范围",
+        "评估半径3公里的覆盖区域",
+        "检查覆盖盲区"
+      ],
+      "fallback_prompt": "请提供中心点和覆盖半径信息。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "map_coverage_analysis_edge_cpu_balanced_v1",
+      "display_name": "覆盖范围分析",
+      "agent_type": "map_agent",
+      "executor": "MapAgent",
+      "capability_type": "map_coverage_analysis",
+      "category": "geo_spatial_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "评估服务点或设施在指定半径内的覆盖范围与盲区。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "center_point",
+        "coverage_radius_km"
+      ],
+      "optional_slots": [
+        "barriers",
+        "coverage_type"
+      ],
+      "tools_involved": [
+        "CoverageAnalyzer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "分析这个点的服务覆盖范围",
+        "评估半径3公里的覆盖区域",
+        "检查覆盖盲区"
+      ],
+      "fallback_prompt": "请提供中心点和覆盖半径信息。",
+      "mock": true,
+      "enabled_for_execution": false
+    }
+  ]

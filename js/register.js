@@ -2,7 +2,7 @@
  * Agent Registration Page
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
   const registerForm = document.getElementById('registerForm');
   const nodeSelect = document.getElementById('agentNodeId');
   const agentList = document.getElementById('agentList');
@@ -30,205 +30,71 @@ document.addEventListener('DOMContentLoaded', function() {
         return raw;
       };
 
-  const seedAgents = [
-    {
-      id: 'agent-video',
-      name: 'VideoAgent',
-      type: 'agent',
-      layer: 'cloud',
-      node_id: CLOUD_CLUSTER_NODE_ID,
-      status: 'active',
-      category: 'perception',
-      summary: '视频分析',
-      tools: ['VideoUnderstanding', 'KeyframeExtractor', 'ImageRecognition']
-    },
-    {
-      id: 'agent-registry',
-      name: 'RegistryAgent',
-      type: 'agent',
-      layer: 'cloud',
-      node_id: CLOUD_CLUSTER_NODE_ID,
-      status: 'active',
-      category: 'service',
-      summary: '',
-      tools: []
-    },
-    {
-      id: 'agent-discovery',
-      name: 'DiscoveryAgent',
-      type: 'agent',
-      layer: 'cloud',
-      node_id: CLOUD_CLUSTER_NODE_ID,
-      status: 'active',
-      category: 'planning',
-      summary: '',
-      tools: []
-    },
-    {
-      id: 'agent-meteorology',
-      name: 'MeteorologyAgent',
-      type: 'agent',
-      layer: 'edge',
-      node_id: 'edge-bj-01',
-      status: 'active',
-      category: 'perception',
-      summary: '气象风险评估',
-      tools: ['AnalyzeWeather', 'EvaluateRescueImpact', 'AnalyzeRescueImpact']
-    },
-    {
-      id: 'agent-keyframe',
-      name: 'KeyframeAgent',
-      type: 'agent',
-      layer: 'edge',
-      node_id: 'edge-bj-02',
-      status: 'active',
-      category: 'perception',
-      summary: '关键帧细节识别',
-      tools: ['KeyframeRecognition', 'ReadFile', 'GetImagePaths']
-    },
-    {
-      id: 'agent-map',
-      name: 'MapAgent',
-      type: 'agent',
-      layer: 'edge',
-      node_id: 'edge-sh-01',
-      status: 'active',
-      category: 'perception',
-      summary: '地理信息与路况检索',
-      tools: ['Map', 'FindNearestContact', 'Dial']
-    },
-    {
-      id: 'agent-report',
-      name: 'ReportAgent',
-      type: 'agent',
-      layer: 'edge',
-      node_id: 'edge-gz-01',
-      status: 'active',
-      category: 'execution',
-      summary: '应急报告自动化生成',
-      tools: ['ReadFile', 'GetImagePaths', 'GenerateReport']
-    },
-    {
-      id: 'agent-edge-bj-ops-01',
-      name: 'EdgeOpsAgent',
-      type: 'agent',
-      layer: 'edge',
-      node_id: 'edge-bj-01',
-      status: 'active',
-      category: 'service',
-      summary: '边缘节点运行态诊断',
-      tools: ['NodeHealth', 'RuntimeTelemetry', 'FaultTriage']
-    },
-    {
-      id: 'agent-edge-bj-vision-02',
-      name: 'EdgeVisionAgent',
-      type: 'agent',
-      layer: 'edge',
-      node_id: 'edge-bj-01',
-      status: 'active',
-      category: 'perception',
-      summary: '视觉信号增强与异常识别',
-      tools: ['ImageEnhance', 'AnomalySpot', 'FusionTrack']
-    },
-    {
-      id: 'agent-edge-bj-stream-03',
-      name: 'StreamGuardAgent',
-      type: 'agent',
-      layer: 'edge',
-      node_id: 'edge-bj-02',
-      status: 'active',
-      category: 'service',
-      summary: '流媒体质量与时延控制',
-      tools: ['QoSGuard', 'LatencyMitigation', 'PacketDiagnostics']
-    },
-    {
-      id: 'agent-edge-sh-spatial-04',
-      name: 'SpatialLinkAgent',
-      type: 'agent',
-      layer: 'edge',
-      node_id: 'edge-sh-01',
-      status: 'active',
-      category: 'planning',
-      summary: '空间路由分析与评分',
-      tools: ['SpatialJoin', 'RouteScore', 'CorridorAnalysis']
-    },
-    {
-      id: 'agent-edge-gz-dispatch-05',
-      name: 'DispatchLinkAgent',
-      type: 'agent',
-      layer: 'edge',
-      node_id: 'edge-gz-01',
-      status: 'active',
-      category: 'execution',
-      summary: '现场调度编排与执行反馈',
-      tools: ['DispatchQueue', 'PriorityRoute', 'FeedbackMerge']
-    },
-    {
-      id: 'agent-cloud-governance-06',
-      name: 'ClusterGovernanceAgent',
-      type: 'agent',
-      layer: 'cloud',
-      node_id: CLOUD_CLUSTER_NODE_ID,
-      status: 'active',
-      category: 'service',
-      summary: '云集群治理与策略校验',
-      tools: ['ClusterPolicy', 'QuotaAudit', 'CrossRegionCheck']
-    }
-  ];
+  const seedAgents = [];
+  const seedDiscoveredAgents = [];
+  let registeredAgents = [];
+  let discoveredAgents = [];
 
-  const seedDiscoveredAgents = [
-    {
-      id: 'disc-edge-nj-01',
-      name: 'EdgeSensor-NJ-01',
-      type: 'agent',
-      layer: 'edge',
-      node_id: 'edge-bj-01',
-      agentDns: 'acrg://org/perception/EdgeSensor-NJ-01@edge-bj-01',
-      endpoint: '10.200.1.120',
-      description: '边缘传感聚合节点，负责实时采集与上报。',
-      capabilities: ['TelemetryProbe', 'StreamObserver'],
-      status: 'discovered',
-      category: 'perception',
-      summary: '待注册：边缘传感聚合',
-      tools: ['TelemetryProbe', 'StreamObserver']
-    },
-    {
-      id: 'disc-cloud-xa-02',
-      name: 'LogSense-XA',
-      type: 'agent',
-      layer: 'cloud',
-      node_id: CLOUD_CLUSTER_NODE_ID,
-      agentDns: `acrg://org/service/LogSense-XA@${CLOUD_CLUSTER_NODE_ID}`,
-      endpoint: '10.200.2.44',
-      description: '日志侧向解析与异常检测服务。',
-      capabilities: ['LogProbe', 'AnomalyScan'],
-      status: 'discovered',
-      category: 'service',
-      summary: '待注册：日志侧向解析',
-      tools: ['LogProbe', 'AnomalyScan']
-    },
-    {
-      id: 'disc-terminal-sz-01',
-      name: 'DispatchTerminal-SZ',
-      type: 'agent',
-      layer: 'edge',
-      node_id: 'edge-gz-01',
-      agentDns: 'acrg://org/execution/DispatchTerminal-SZ@edge-gz-01',
-      endpoint: '10.200.3.16',
-      description: '现场调度终端，支持指令下发与执行回执。',
-      capabilities: ['DispatchQueue', 'CommandRelay'],
-      status: 'discovered',
-      category: 'execution',
-      summary: '待注册：现场调度终端',
-      tools: ['DispatchQueue', 'CommandRelay']
-    }
-  ];
+  function refreshSeedAgentsFromRegistry() {
+    seedAgents.length = 0;
+    const merged = new Map();
 
-  let registeredAgents = loadRegisteredAgents();
-  let discoveredAgents = loadDiscoveredAgents(registeredAgents);
-  setAgentView('registered');
-  if (typeof window.initializeNetworkGraph === 'function') {
-    window.initializeNetworkGraph();
+    const legacyAgents = Array.isArray(window.agentDatabase)
+      ? window.agentDatabase.filter((agent) => agent && agent.type === 'agent')
+      : [];
+    legacyAgents.forEach((agent) => {
+      if (!agent.id) return;
+      merged.set(agent.id, normalizeAgentRecord({
+        ...agent,
+        name: agent.name || agent.displayName || agent.id,
+        displayName: agent.displayName || agent.name || agent.id,
+        type: 'agent',
+        status: agent.status || 'active',
+      }));
+    });
+
+    const registryAgents = Array.isArray(window.registryAgents) ? window.registryAgents : [];
+    registryAgents.forEach((agent) => {
+      if (!agent || !agent.id) return;
+      merged.set(agent.id, normalizeAgentRecord({
+        ...agent,
+        type: 'agent',
+        layer: String(agent.layer || '').toLowerCase() === 'cloud' ? 'cloud' : 'edge',
+        node_id: normalizeNodeId(agent.node_id || agent.nodeId || agent.nodeLabel, agent.layer),
+        nodeLabel: normalizeNodeId(agent.node_id || agent.nodeId || agent.nodeLabel, agent.layer),
+        status: 'active'
+      }));
+    });
+
+    seedAgents.push(...merged.values());
+  }
+
+  function showRegistryLoadMessage(text) {
+    if (!agentList) return;
+    const host = agentList.parentElement;
+    if (!host) return;
+    let tip = document.getElementById('registryLoadMessage');
+    if (!text) {
+      if (tip) tip.remove();
+      return;
+    }
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.id = 'registryLoadMessage';
+      tip.className = 'agent-empty';
+      tip.style.marginBottom = '10px';
+      host.insertBefore(tip, agentList);
+    }
+    tip.textContent = `Registry load failed: ${text}`;
+  }
+
+  function initializePageState() {
+    registeredAgents = loadRegisteredAgents();
+    discoveredAgents = loadDiscoveredAgents(registeredAgents);
+    setAgentView('registered');
+    if (typeof window.initializeNetworkGraph === 'function') {
+      window.initializeNetworkGraph();
+    }
   }
 
   if (agentTabRegistered) {
@@ -271,6 +137,13 @@ document.addEventListener('DOMContentLoaded', function() {
       applyDiscoveredToForm(target);
     });
   }
+
+  if (typeof window.loadRegistryAgents === 'function') {
+    await window.loadRegistryAgents();
+  }
+  refreshSeedAgentsFromRegistry();
+  showRegistryLoadMessage(window.registryLoadError || '');
+  initializePageState();
 
   function parseToolList(rawValue) {
     return String(rawValue || '')
@@ -506,6 +379,17 @@ document.addEventListener('DOMContentLoaded', function() {
     renderAgentList(list, { mode: currentView });
   }
 
+  function getLocalNewAgents() {
+    const stored = localStorage.getItem('newAgents');
+    if (!stored) return [];
+    try {
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
   function loadRegisteredAgents() {
     const stored = localStorage.getItem('registeredAgents');
     let storedAgents = [];
@@ -518,7 +402,14 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-    const mergedAgents = mergeAgents(seedAgents, storedAgents).map(normalizeAgentRecord);
+    const seedIds = new Set(seedAgents.map(agent => agent.id));
+    const customIds = new Set(getLocalNewAgents().map(agent => agent && agent.id).filter(Boolean));
+    const compatibleStoredAgents = storedAgents.filter(agent => {
+      if (!agent || !agent.id) return false;
+      return seedIds.has(agent.id) || customIds.has(agent.id);
+    });
+
+    const mergedAgents = mergeAgents(seedAgents, compatibleStoredAgents).map(normalizeAgentRecord);
     const deletedIds = getDeletedAgentIds();
     const filteredAgents = mergedAgents.filter(agent => !deletedIds.has(agent.id));
     localStorage.setItem('registeredAgents', JSON.stringify(filteredAgents));
@@ -536,6 +427,9 @@ document.addEventListener('DOMContentLoaded', function() {
         storedAgents = [];
       }
     }
+    storedAgents = Array.isArray(storedAgents)
+      ? storedAgents.filter(agent => agent && agent.id && !String(agent.id).startsWith('disc-'))
+      : [];
 
     let mergedAgents = mergeAgents(seedDiscoveredAgents, storedAgents).map(normalizeAgentRecord);
     if (seedDiscoveredAgents.length) {
@@ -586,7 +480,13 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-    const mergedAgents = mergeAgents(seedAgents, storedAgents);
+    const seedIds = new Set(seedAgents.map(item => item.id));
+    const customIds = new Set(getLocalNewAgents().map(item => item && item.id).filter(Boolean));
+    const compatibleStoredAgents = storedAgents.filter(item => {
+      if (!item || !item.id) return false;
+      return seedIds.has(item.id) || customIds.has(item.id);
+    });
+    const mergedAgents = mergeAgents(seedAgents, compatibleStoredAgents);
     const deletedIds = getDeletedAgentIds();
     if (deletedIds.has(agent.id)) {
       deletedIds.delete(agent.id);
@@ -766,7 +666,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function formatAgentAddress(agent) {
-    const name = agent.name || agent.id || 'agent';
+    const rawName = agent.dnsName || agent.rawName || agent.name || agent.id || 'agent';
+    const name = String(rawName).replace(/[^A-Za-z0-9._-]/g, '_');
     const serverId = normalizeNodeId(agent.node_id || agent.nodeId || agent.nodeLabel, agent.layer) || 'unknown';
     const category = resolveAgentCategory(agent);
     return `acrg://org/${category}/${name}@${serverId}`;
@@ -943,6 +844,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const nodeKey = normalizeNodeId(agent.node_id || agent.nodeId || agent.nodeLabel, agent.layer || '');
     const targetIds = new Set([agentId]);
     const liveEntry = window.agentDatabase.find(item => item.id === agentId);
+    if (!liveEntry) return;
     const isExtension = liveEntry ? !!liveEntry.isExtension : false;
 
     if (!isExtension && nodeKey) {

@@ -1,0 +1,376 @@
+[
+    {
+      "name": "planning_task_decomposition_cloud_gpu_fast_v1",
+      "display_name": "任务拆解规划",
+      "agent_type": "planning_agent",
+      "executor": "ReportAgent",
+      "capability_type": "planning_task_decomposition",
+      "category": "workflow_planning_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "将任务目标拆分为可执行的步骤与子任务。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "task_goal"
+      ],
+      "optional_slots": [
+        "constraints",
+        "granularity"
+      ],
+      "tools_involved": [
+        "WorkflowPlanner"
+      ],
+      "relationship_type": "1toN_variant",
+      "example_queries": [
+        "把这个任务拆成步骤",
+        "给出任务拆解方案",
+        "生成可执行子任务列表"
+      ],
+      "fallback_prompt": "请提供任务目标与约束条件。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "planning_task_decomposition_edge_cpu_balanced_v1",
+      "display_name": "任务拆解规划",
+      "agent_type": "planning_agent",
+      "executor": "ReportAgent",
+      "capability_type": "planning_task_decomposition",
+      "category": "workflow_planning_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "将任务目标拆分为可执行的步骤与子任务。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "task_goal"
+      ],
+      "optional_slots": [
+        "constraints",
+        "granularity"
+      ],
+      "tools_involved": [
+        "WorkflowPlanner"
+      ],
+      "relationship_type": "1toN_variant",
+      "example_queries": [
+        "把这个任务拆成步骤",
+        "给出任务拆解方案",
+        "生成可执行子任务列表"
+      ],
+      "fallback_prompt": "请提供任务目标与约束条件。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "planning_step_dependency_cloud_gpu_fast_v1",
+      "display_name": "步骤依赖分析",
+      "agent_type": "planning_agent",
+      "executor": "ReportAgent",
+      "capability_type": "planning_step_dependency",
+      "category": "workflow_planning_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "分析步骤之间的依赖关系与关键路径。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "task_steps"
+      ],
+      "optional_slots": [
+        "dependency_rules",
+        "critical_path"
+      ],
+      "tools_involved": [
+        "DependencyAnalyzer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "分析步骤依赖关系",
+        "找出关键路径",
+        "给出步骤先后顺序"
+      ],
+      "fallback_prompt": "请提供任务步骤列表。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "planning_step_dependency_edge_cpu_balanced_v1",
+      "display_name": "步骤依赖分析",
+      "agent_type": "planning_agent",
+      "executor": "ReportAgent",
+      "capability_type": "planning_step_dependency",
+      "category": "workflow_planning_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "分析步骤之间的依赖关系与关键路径。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "task_steps"
+      ],
+      "optional_slots": [
+        "dependency_rules",
+        "critical_path"
+      ],
+      "tools_involved": [
+        "DependencyAnalyzer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "分析步骤依赖关系",
+        "找出关键路径",
+        "给出步骤先后顺序"
+      ],
+      "fallback_prompt": "请提供任务步骤列表。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "planning_resource_estimation_cloud_gpu_fast_v1",
+      "display_name": "资源需求估算",
+      "agent_type": "planning_agent",
+      "executor": "ReportAgent",
+      "capability_type": "planning_resource_estimation",
+      "category": "workflow_planning_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "估算完成任务所需的资源规模与配额。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "task_scope"
+      ],
+      "optional_slots": [
+        "resource_budget",
+        "assumptions"
+      ],
+      "tools_involved": [
+        "ResourceEstimator"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "估算任务需要多少资源",
+        "给出资源需求范围",
+        "评估资源配额"
+      ],
+      "fallback_prompt": "请提供任务范围与资源预期。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "planning_resource_estimation_edge_cpu_balanced_v1",
+      "display_name": "资源需求估算",
+      "agent_type": "planning_agent",
+      "executor": "ReportAgent",
+      "capability_type": "planning_resource_estimation",
+      "category": "workflow_planning_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "估算完成任务所需的资源规模与配额。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "task_scope"
+      ],
+      "optional_slots": [
+        "resource_budget",
+        "assumptions"
+      ],
+      "tools_involved": [
+        "ResourceEstimator"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "估算任务需要多少资源",
+        "给出资源需求范围",
+        "评估资源配额"
+      ],
+      "fallback_prompt": "请提供任务范围与资源预期。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "planning_fallback_strategy_cloud_gpu_fast_v1",
+      "display_name": "回退策略规划",
+      "agent_type": "planning_agent",
+      "executor": "ReportAgent",
+      "capability_type": "planning_fallback_strategy",
+      "category": "workflow_planning_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "针对可能的失败场景设计回退策略。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "failure_scenarios"
+      ],
+      "optional_slots": [
+        "preferred_actions",
+        "risk_tolerance"
+      ],
+      "tools_involved": [
+        "FallbackPlanner"
+      ],
+      "relationship_type": "1toN_variant",
+      "example_queries": [
+        "为失败情况制定回退方案",
+        "生成备用策略",
+        "给出容错处理建议"
+      ],
+      "fallback_prompt": "请提供可能的失败场景。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "planning_fallback_strategy_edge_cpu_balanced_v1",
+      "display_name": "回退策略规划",
+      "agent_type": "planning_agent",
+      "executor": "ReportAgent",
+      "capability_type": "planning_fallback_strategy",
+      "category": "workflow_planning_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "针对可能的失败场景设计回退策略。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "failure_scenarios"
+      ],
+      "optional_slots": [
+        "preferred_actions",
+        "risk_tolerance"
+      ],
+      "tools_involved": [
+        "FallbackPlanner"
+      ],
+      "relationship_type": "1toN_variant",
+      "example_queries": [
+        "为失败情况制定回退方案",
+        "生成备用策略",
+        "给出容错处理建议"
+      ],
+      "fallback_prompt": "请提供可能的失败场景。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "planning_timeline_scheduling_cloud_gpu_fast_v1",
+      "display_name": "流程时间线规划",
+      "agent_type": "planning_agent",
+      "executor": "ReportAgent",
+      "capability_type": "planning_timeline_scheduling",
+      "category": "workflow_planning_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "根据约束生成流程时间线与节奏安排。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "task_steps",
+        "time_constraints"
+      ],
+      "optional_slots": [
+        "priority_rules",
+        "buffer_policy"
+      ],
+      "tools_involved": [
+        "TimelinePlanner"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "规划任务时间线",
+        "生成执行节奏安排",
+        "给出时间约束下的计划"
+      ],
+      "fallback_prompt": "请提供步骤列表与时间约束。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "planning_timeline_scheduling_edge_cpu_balanced_v1",
+      "display_name": "流程时间线规划",
+      "agent_type": "planning_agent",
+      "executor": "ReportAgent",
+      "capability_type": "planning_timeline_scheduling",
+      "category": "workflow_planning_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "根据约束生成流程时间线与节奏安排。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "task_steps",
+        "time_constraints"
+      ],
+      "optional_slots": [
+        "priority_rules",
+        "buffer_policy"
+      ],
+      "tools_involved": [
+        "TimelinePlanner"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "规划任务时间线",
+        "生成执行节奏安排",
+        "给出时间约束下的计划"
+      ],
+      "fallback_prompt": "请提供步骤列表与时间约束。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "planning_quality_checklist_cloud_gpu_fast_v1",
+      "display_name": "质量检查清单",
+      "agent_type": "planning_agent",
+      "executor": "ReportAgent",
+      "capability_type": "planning_quality_checklist",
+      "category": "workflow_planning_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "生成任务执行的质量检查清单与验收项。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "task_type"
+      ],
+      "optional_slots": [
+        "standards",
+        "coverage_level"
+      ],
+      "tools_involved": [
+        "ChecklistBuilder"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "生成质量检查清单",
+        "给出验收项列表",
+        "输出质量检查要点"
+      ],
+      "fallback_prompt": "请提供任务类型或行业标准。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "planning_quality_checklist_edge_cpu_balanced_v1",
+      "display_name": "质量检查清单",
+      "agent_type": "planning_agent",
+      "executor": "ReportAgent",
+      "capability_type": "planning_quality_checklist",
+      "category": "workflow_planning_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "生成任务执行的质量检查清单与验收项。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "task_type"
+      ],
+      "optional_slots": [
+        "standards",
+        "coverage_level"
+      ],
+      "tools_involved": [
+        "ChecklistBuilder"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "生成质量检查清单",
+        "给出验收项列表",
+        "输出质量检查要点"
+      ],
+      "fallback_prompt": "请提供任务类型或行业标准。",
+      "mock": true,
+      "enabled_for_execution": false
+    }
+  ]

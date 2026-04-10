@@ -1,0 +1,378 @@
+[
+    {
+      "name": "execution_tool_chain_cloud_gpu_fast_v1",
+      "display_name": "工具链编排执行",
+      "agent_type": "execution_agent",
+      "executor": "ReportAgent",
+      "capability_type": "execution_tool_chain",
+      "category": "tool_execution_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "根据工具序列进行编排并输出执行流程。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "tool_sequence"
+      ],
+      "optional_slots": [
+        "parallelizable_steps",
+        "stop_on_error"
+      ],
+      "tools_involved": [
+        "ToolOrchestrator"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "编排工具链执行顺序",
+        "把这些工具串起来执行",
+        "生成工具链流程"
+      ],
+      "fallback_prompt": "请提供需要执行的工具序列。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "execution_tool_chain_edge_cpu_balanced_v1",
+      "display_name": "工具链编排执行",
+      "agent_type": "execution_agent",
+      "executor": "ReportAgent",
+      "capability_type": "execution_tool_chain",
+      "category": "tool_execution_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "根据工具序列进行编排并输出执行流程。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "tool_sequence"
+      ],
+      "optional_slots": [
+        "parallelizable_steps",
+        "stop_on_error"
+      ],
+      "tools_involved": [
+        "ToolOrchestrator"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "编排工具链执行顺序",
+        "把这些工具串起来执行",
+        "生成工具链流程"
+      ],
+      "fallback_prompt": "请提供需要执行的工具序列。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "execution_retry_strategy_cloud_gpu_fast_v1",
+      "display_name": "失败重试策略",
+      "agent_type": "execution_agent",
+      "executor": "ReportAgent",
+      "capability_type": "execution_retry_strategy",
+      "category": "tool_execution_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "制定任务失败后的重试策略与退避规则。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "task_id",
+        "retry_policy"
+      ],
+      "optional_slots": [
+        "max_retries",
+        "backoff_strategy"
+      ],
+      "tools_involved": [
+        "RetryManager"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "为任务制定重试策略",
+        "设置失败重试规则",
+        "配置退避策略"
+      ],
+      "fallback_prompt": "请提供任务ID与重试策略。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "execution_retry_strategy_edge_cpu_balanced_v1",
+      "display_name": "失败重试策略",
+      "agent_type": "execution_agent",
+      "executor": "ReportAgent",
+      "capability_type": "execution_retry_strategy",
+      "category": "tool_execution_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "制定任务失败后的重试策略与退避规则。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "task_id",
+        "retry_policy"
+      ],
+      "optional_slots": [
+        "max_retries",
+        "backoff_strategy"
+      ],
+      "tools_involved": [
+        "RetryManager"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "为任务制定重试策略",
+        "设置失败重试规则",
+        "配置退避策略"
+      ],
+      "fallback_prompt": "请提供任务ID与重试策略。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "execution_result_aggregation_cloud_gpu_fast_v1",
+      "display_name": "结果汇总整合",
+      "agent_type": "execution_agent",
+      "executor": "ReportAgent",
+      "capability_type": "execution_result_aggregation",
+      "category": "tool_execution_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "汇总多任务结果并输出统一结论或格式。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "task_results"
+      ],
+      "optional_slots": [
+        "aggregation_mode",
+        "output_format"
+      ],
+      "tools_involved": [
+        "ResultAggregator"
+      ],
+      "relationship_type": "Nto1",
+      "example_queries": [
+        "把多个结果汇总起来",
+        "合并任务执行结果",
+        "生成统一输出"
+      ],
+      "fallback_prompt": "请提供需要汇总的结果列表。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "execution_result_aggregation_edge_cpu_balanced_v1",
+      "display_name": "结果汇总整合",
+      "agent_type": "execution_agent",
+      "executor": "ReportAgent",
+      "capability_type": "execution_result_aggregation",
+      "category": "tool_execution_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "汇总多任务结果并输出统一结论或格式。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "task_results"
+      ],
+      "optional_slots": [
+        "aggregation_mode",
+        "output_format"
+      ],
+      "tools_involved": [
+        "ResultAggregator"
+      ],
+      "relationship_type": "Nto1",
+      "example_queries": [
+        "把多个结果汇总起来",
+        "合并任务执行结果",
+        "生成统一输出"
+      ],
+      "fallback_prompt": "请提供需要汇总的结果列表。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "execution_parameter_binding_cloud_gpu_fast_v1",
+      "display_name": "参数绑定与映射",
+      "agent_type": "execution_agent",
+      "executor": "ReportAgent",
+      "capability_type": "execution_parameter_binding",
+      "category": "tool_execution_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "将输入参数映射到工具或流程所需的参数结构。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "input_payload",
+        "tool_schema"
+      ],
+      "optional_slots": [
+        "mapping_rules",
+        "default_values"
+      ],
+      "tools_involved": [
+        "ParameterBinder"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "把输入参数绑定到工具参数",
+        "生成参数映射规则",
+        "将输入适配到执行器"
+      ],
+      "fallback_prompt": "请提供输入数据与目标工具参数结构。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "execution_parameter_binding_edge_cpu_balanced_v1",
+      "display_name": "参数绑定与映射",
+      "agent_type": "execution_agent",
+      "executor": "ReportAgent",
+      "capability_type": "execution_parameter_binding",
+      "category": "tool_execution_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "将输入参数映射到工具或流程所需的参数结构。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "input_payload",
+        "tool_schema"
+      ],
+      "optional_slots": [
+        "mapping_rules",
+        "default_values"
+      ],
+      "tools_involved": [
+        "ParameterBinder"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "把输入参数绑定到工具参数",
+        "生成参数映射规则",
+        "将输入适配到执行器"
+      ],
+      "fallback_prompt": "请提供输入数据与目标工具参数结构。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "execution_monitoring_alert_cloud_gpu_fast_v1",
+      "display_name": "执行监控告警",
+      "agent_type": "execution_agent",
+      "executor": "ReportAgent",
+      "capability_type": "execution_monitoring_alert",
+      "category": "tool_execution_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "监控执行过程并在异常或超时触发告警。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "execution_id"
+      ],
+      "optional_slots": [
+        "alert_thresholds",
+        "notification_channel"
+      ],
+      "tools_involved": [
+        "ExecutionMonitor"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "监控执行状态并告警",
+        "设置执行监控阈值",
+        "开启执行异常提醒"
+      ],
+      "fallback_prompt": "请提供执行ID与告警条件。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "execution_monitoring_alert_edge_cpu_balanced_v1",
+      "display_name": "执行监控告警",
+      "agent_type": "execution_agent",
+      "executor": "ReportAgent",
+      "capability_type": "execution_monitoring_alert",
+      "category": "tool_execution_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "监控执行过程并在异常或超时触发告警。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "execution_id"
+      ],
+      "optional_slots": [
+        "alert_thresholds",
+        "notification_channel"
+      ],
+      "tools_involved": [
+        "ExecutionMonitor"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "监控执行状态并告警",
+        "设置执行监控阈值",
+        "开启执行异常提醒"
+      ],
+      "fallback_prompt": "请提供执行ID与告警条件。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "execution_audit_trace_cloud_gpu_fast_v1",
+      "display_name": "执行审计追踪",
+      "agent_type": "execution_agent",
+      "executor": "ReportAgent",
+      "capability_type": "execution_audit_trace",
+      "category": "tool_execution_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "记录执行过程的审计链路与追踪信息。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "execution_id"
+      ],
+      "optional_slots": [
+        "trace_level",
+        "retention_days"
+      ],
+      "tools_involved": [
+        "TraceRecorder"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "开启执行审计追踪",
+        "导出执行链路记录",
+        "查看执行追踪信息"
+      ],
+      "fallback_prompt": "请提供执行ID。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "execution_audit_trace_edge_cpu_balanced_v1",
+      "display_name": "执行审计追踪",
+      "agent_type": "execution_agent",
+      "executor": "ReportAgent",
+      "capability_type": "execution_audit_trace",
+      "category": "tool_execution_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "记录执行过程的审计链路与追踪信息。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "execution_id"
+      ],
+      "optional_slots": [
+        "trace_level",
+        "retention_days"
+      ],
+      "tools_involved": [
+        "TraceRecorder"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "开启执行审计追踪",
+        "导出执行链路记录",
+        "查看执行追踪信息"
+      ],
+      "fallback_prompt": "请提供执行ID。",
+      "mock": true,
+      "enabled_for_execution": false
+    }
+  ]

@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://acrg.local/schemas/compute_topology/graph_snapshot.schema.json",
+  "title": "Compute Topology GraphSnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "generated_at",
+    "metric_windows",
+    "nodes",
+    "edges"
+  ],
+  "properties": {
+    "version": {
+      "const": "compute-topology/v1"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metric_windows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9]+(ms|s|m|h)$"
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    }
+  },
+  "$defs": {
+    "percent": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "layer",
+        "labels",
+        "capacity",
+        "metrics"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "compute",
+            "gateway",
+            "terminal",
+            "service"
+          ]
+        },
+        "layer": {
+          "type": "string",
+          "enum": [
+            "cloud",
+            "edge",
+            "terminal"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "up",
+            "degraded",
+            "down"
+          ]
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "name",
+            "region",
+            "zone"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "region": {
+              "type": "string"
+            },
+            "zone": {
+              "type": "string"
+            }
+          }
+        },
+        "capacity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "cpu_cores",
+            "gpu_count",
+            "memory_gb"
+          ],
+          "properties": {
+            "cpu_cores": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gpu_count": {
+              "type": "number",
+              "minimum": 0
+            },
+            "memory_gb": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ts",
+            "load_pct",
+            "cpu_pct",
+            "gpu_pct",
+            "mem_pct"
+          ],
+          "properties": {
+            "ts": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "load_pct": {
+              "$ref": "#/$defs/percent"
+            },
+            "cpu_pct": {
+              "$ref": "#/$defs/percent"
+            },
+            "gpu_pct": {
+              "$ref": "#/$defs/percent"
+            },
+            "mem_pct": {
+              "$ref": "#/$defs/percent"
+            }
+          }
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "source",
+        "target",
+        "relation",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relation": {
+          "type": "string",
+          "enum": [
+            "network_link",
+            "hosts",
+            "depends_on"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "up",
+            "degraded",
+            "down"
+          ]
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ts",
+            "latency_ms",
+            "bandwidth_mbps",
+            "utilization_pct",
+            "packet_loss_pct",
+            "jitter_ms"
+          ],
+          "properties": {
+            "ts": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "latency_ms": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "bandwidth_mbps": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "utilization_pct": {
+              "$ref": "#/$defs/percent"
+            },
+            "packet_loss_pct": {
+              "$ref": "#/$defs/percent"
+            },
+            "jitter_ms": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "relation": {
+                "const": "network_link"
+              }
+            },
+            "required": [
+              "relation"
+            ]
+          },
+          "then": {
+            "required": [
+              "metrics"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

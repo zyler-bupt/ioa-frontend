@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compute Topology Graph View</title>
+  <link rel="stylesheet" href="https://unpkg.com/vis-network/standalone/umd/vis-network.min.css" />
+  <style>
+    :root {
+      --bg: #eef2f7;
+      --panel: #ffffff;
+      --panel-soft: #f8fbff;
+      --line: #d4deea;
+      --line-strong: #bfccde;
+      --text: #0f172a;
+      --muted: #475569;
+      --soft: #64748b;
+      --cloud: #2f7be6;
+      --edge: #f39a12;
+      --terminal: #1dbf66;
+      --ok: #16a34a;
+      --warn: #d97706;
+      --bad: #dc2626;
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 14px;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "IBM Plex Sans", "Source Han Sans SC", "PingFang SC", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 85% 0%, rgba(47, 123, 230, 0.12), transparent 38%),
+        radial-gradient(circle at 0% 100%, rgba(29, 191, 102, 0.08), transparent 35%),
+        var(--bg);
+    }
+
+    .layout {
+      max-width: 1460px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 14px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .sidebar h1 {
+      margin: 2px 0 0;
+      font-size: 20px;
+      line-height: 1.2;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    details.group {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel-soft);
+      overflow: hidden;
+    }
+
+    details.group summary {
+      list-style: none;
+      padding: 10px 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      border-bottom: 1px solid transparent;
+      user-select: none;
+    }
+
+    details.group[open] summary {
+      border-bottom-color: var(--line);
+      background: #f1f6fd;
+    }
+
+    details.group summary::after {
+      content: "▾";
+      color: var(--soft);
+      font-size: 12px;
+    }
+
+    details.group:not([open]) summary::after {
+      content: "▸";
+    }
+
+    .group-body {
+      padding: 10px;
+      display: grid;
+      gap: 9px;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 11px;
+      color: var(--soft);
+      font-weight: 600;
+    }
+
+    .path-input {
+      width: 100%;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      padding: 9px 10px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .path-input:focus {
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.22);
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .btn {
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      padding: 9px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #f7fbff;
+      border-color: #b5c6dd;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      background: #fff;
+    }
+
+    .stat-key {
+      display: block;
+      font-size: 11px;
+      color: var(--soft);
+      line-height: 1.3;
+    }
+
+    .stat-val {
+      display: block;
+      margin-top: 3px;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .legend-list {
+      display: grid;
+      gap: 7px;
+      font-size: 12px;
+      color: #334155;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      flex: 0 0 auto;
+      display: inline-block;
+    }
+
+    .line {
+      width: 18px;
+      border-top: 2px solid #64748b;
+      flex: 0 0 auto;
+      display: inline-block;
+    }
+
+    .line.dotted {
+      border-top-style: dotted;
+    }
+
+    .line.dashed {
+      border-top-style: dashed;
+    }
+
+    .line-guide {
+      margin-top: 2px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--line);
+      display: grid;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--soft);
+      line-height: 1.4;
+    }
+
+    .selected-empty {
+      margin: 0;
+      font-size: 12px;
+      color: var(--soft);
+    }
+
+    .node-kv {
+      margin: 0;
+      display: grid;
+      grid-template-columns: 82px 1fr;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .node-k {
+      color: var(--soft);
+      font-weight: 600;
+    }
+
+    .node-v {
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    .canvas {
+      padding: 10px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .canvas-head {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #f8fbff;
+      padding: 10px 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .meta-path {
+      font-size: 12px;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .meta-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .badge {
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 11px;
+      color: var(--muted);
+      background: #fff;
+      line-height: 1.3;
+    }
+
+    .badge.status-ok {
+      border-color: rgba(22, 163, 74, 0.45);
+      color: #166534;
+      background: #ecfdf5;
+    }
+
+    .badge.status-err {
+      border-color: rgba(220, 38, 38, 0.45);
+      color: #991b1b;
+      background: #fef2f2;
+    }
+
+    .graph-wrap {
+      position: relative;
+      min-height: 640px;
+      height: calc(100vh - 86px);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.98));
+    }
+
+    .graph-grid {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+      background-size: 28px 28px;
+      opacity: 0.22;
+    }
+
+    #network {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+    }
+
+    @media (max-width: 1120px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+
+      .graph-wrap {
+        min-height: 540px;
+        height: 72vh;
+      }
+    }
+
+    @media (max-width: 540px) {
+      body {
+        padding: 10px;
+      }
+
+      .sidebar h1 {
+        font-size: 18px;
+      }
+
+      .stat-val {
+        font-size: 22px;
+      }
+
+      .graph-wrap {
+        min-height: 470px;
+        height: 64vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="layout">
+    <aside class="panel sidebar">
+      <div>
+        <h1>Compute Knowledge Graph</h1>
+        <p class="subtitle">图谱优先布局：偏自由力导向 + network_link 双向合并标签</p>
+      </div>
+
+      <details class="group" open>
+        <summary>Data Source</summary>
+        <div class="group-body">
+          <label>
+            <span class="field-label">Snapshot Path</span>
+            <input id="snapshotPath" class="path-input" type="text" value="/data/compute_topology/graph_snapshot.sample.json" />
+          </label>
+        </div>
+      </details>
+
+      <details class="group" open>
+        <summary>Controls</summary>
+        <div class="group-body">
+          <div class="actions">
+            <button id="reloadBtn" class="btn" type="button">Reload</button>
+            <button id="fitBtn" class="btn" type="button">Fit View</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="group" open>
+        <summary>Selected Node</summary>
+        <div id="selectedNode" class="group-body">
+          <p class="selected-empty">点击节点查看完整属性。</p>
+        </div>
+      </details>
+    </aside>
+
+    <section class="panel canvas">
+      <header class="canvas-head">
+        <div id="metaPath" class="meta-path">No snapshot loaded</div>
+        <div class="meta-badges">
+          <span id="statusBadge" class="badge">Idle</span>
+          <span id="versionBadge" class="badge">version: -</span>
+          <span id="timeBadge" class="badge">generated_at: -</span>
+        </div>
+      </header>
+
+      <div class="graph-wrap">
+        <div class="graph-grid" aria-hidden="true"></div>
+        <div id="network" role="img" aria-label="Compute knowledge graph"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <script>
+    (function () {
+      const defaultPath = "/data/compute_topology/graph_snapshot.sample.json";
+      const relationTypes = ["network_link", "hosts", "depends_on"];
+      const layerColor = { cloud: "#2f7be6", edge: "#f39a12", terminal: "#1dbf66" };
+      const kindShape = { compute: "dot", gateway: "diamond", terminal: "dot", service: "ellipse" };
+      const hiddenServiceIds = new Set(["cloud-cn-registry", "cloud-sh-01"]);
+      const extraSubnetGateways = [
+        {
+          id: "gw-subnet-north",
+          kind: "gateway",
+          layer: "edge",
+          status: "up",
+          labels: { name: "Subnet Gateway North", region: "cn-north", zone: "subnet-north" },
+          capacity: { cpu_cores: 20, gpu_count: 0, memory_gb: 48 },
+          metrics: { ts: null, load_pct: 26, cpu_pct: 24, gpu_pct: 0, mem_pct: 30 }
+        },
+        {
+          id: "gw-subnet-south",
+          kind: "gateway",
+          layer: "edge",
+          status: "up",
+          labels: { name: "Subnet Gateway South", region: "cn-east", zone: "subnet-south" },
+          capacity: { cpu_cores: 20, gpu_count: 0, memory_gb: 48 },
+          metrics: { ts: null, load_pct: 28, cpu_pct: 25, gpu_pct: 0, mem_pct: 31 }
+        }
+      ];
+
+      const inputEl = document.getElementById("snapshotPath");
+      const reloadBtn = document.getElementById("reloadBtn");
+      const fitBtn = document.getElementById("fitBtn");
+      const networkEl = document.getElementById("network");
+
+      const statusBadgeEl = document.getElementById("statusBadge");
+      const versionBadgeEl = document.getElementById("versionBadge");
+      const timeBadgeEl = document.getElementById("timeBadge");
+      const metaPathEl = document.getElementById("metaPath");
+      const selectedNodeEl = document.getElementById("selectedNode");
+
+      let network = null;
+      let currentSnapshot = null;
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function setStatus(label, type) {
+        statusBadgeEl.textContent = label;
+        statusBadgeEl.classList.remove("status-ok", "status-err");
+        if (type === "ok") statusBadgeEl.classList.add("status-ok");
+        if (type === "err") statusBadgeEl.classList.add("status-err");
+      }
+
+      function shorten(text, maxLen) {
+        if (!text) return "-";
+        if (text.length <= maxLen) return text;
+        return `${text.slice(0, maxLen - 1)}…`;
+      }
+
+      function metricText(value, suffix) {
+        if (value === null || value === undefined) return "-";
+        return `${value}${suffix || ""}`;
+      }
+
+      function latencyColor(latency) {
+        if (latency === null || latency === undefined) return "#dc2626";
+        if (latency <= 20) return "#16a34a";
+        if (latency <= 50) return "#d97706";
+        return "#dc2626";
+      }
+
+      function bandwidthWidth(bw) {
+        if (bw === null || bw === undefined) return 1.2;
+        if (bw >= 5000) return 2.1;
+        if (bw >= 1000) return 1.6;
+        return 1.2;
+      }
+
+      function hashRoundness(id) {
+        const s = String(id || "");
+        let h = 0;
+        for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+        const normalized = (h % 14) / 100;
+        return 0.12 + normalized;
+      }
+
+      function splitByLayer(nodes) {
+        const out = { cloud: [], edge: [], terminal: [] };
+        nodes.forEach((node) => {
+          const layer = node.layer || "edge";
+          if (!out[layer]) out[layer] = [];
+          out[layer].push(node);
+        });
+        return out;
+      }
+
+      function makeRingPositions(nodes, centerX, centerY, radius) {
+        const map = new Map();
+        if (!nodes.length) return map;
+        if (nodes.length === 1) {
+          map.set(nodes[0].id, { x: centerX, y: centerY });
+          return map;
+        }
+        nodes.forEach((node, idx) => {
+          const angle = (Math.PI * 2 * idx) / nodes.length - Math.PI / 2;
+          map.set(node.id, {
+            x: centerX + Math.cos(angle) * radius,
+            y: centerY + Math.sin(angle) * radius
+          });
+        });
+        return map;
+      }
+
+      function hashValue(text) {
+        const s = String(text || "");
+        let h = 0;
+        for (let i = 0; i < s.length; i += 1) h = (h * 33 + s.charCodeAt(i)) >>> 0;
+        return h;
+      }
+
+      function linkStatusFromNodes(nodeA, nodeB) {
+        const statuses = [nodeA?.status || "up", nodeB?.status || "up"];
+        if (statuses.includes("down")) return "down";
+        if (statuses.includes("degraded")) return "degraded";
+        return "up";
+      }
+
+      function buildSyntheticMetrics(tier, seed, ts) {
+        const h = hashValue(seed);
+        const pick = (min, span) => min + (h % span);
+        let latency = 16;
+        let bandwidth = 1200;
+        let utilization = 46;
+        let loss = 0.08;
+        let jitter = 1.8;
+        if (tier === "terminal") {
+          latency = pick(8, 10);
+          bandwidth = pick(220, 920);
+          utilization = pick(28, 30);
+          loss = 0.05 + ((h % 11) / 100);
+          jitter = 0.8 + ((h % 9) / 10);
+        } else if (tier === "edge") {
+          latency = pick(4, 9);
+          bandwidth = pick(1400, 2800);
+          utilization = pick(38, 28);
+          loss = 0.04 + ((h % 8) / 100);
+          jitter = 0.6 + ((h % 8) / 10);
+        } else if (tier === "cloud") {
+          latency = pick(14, 12);
+          bandwidth = pick(2200, 3400);
+          utilization = pick(42, 24);
+          loss = 0.06 + ((h % 10) / 100);
+          jitter = 1.0 + ((h % 10) / 10);
+        } else if (tier === "gateway") {
+          latency = pick(6, 10);
+          bandwidth = pick(1000, 1800);
+          utilization = pick(35, 26);
+          loss = 0.04 + ((h % 9) / 100);
+          jitter = 0.7 + ((h % 8) / 10);
+        }
+        return {
+          ts: ts || null,
+          latency_ms: latency,
+          bandwidth_mbps: bandwidth,
+          utilization_pct: Math.min(100, utilization),
+          packet_loss_pct: Number(loss.toFixed(2)),
+          jitter_ms: Number(jitter.toFixed(2))
+        };
+      }
+
+      function chooseSubnetGatewayId(node) {
+        const text = `${node?.id || ""} ${node?.labels?.region || ""} ${node?.labels?.zone || ""}`.toLowerCase();
+        if (text.includes("bj") || text.includes("beijing") || text.includes("north")) return "gw-subnet-north";
+        return "gw-subnet-south";
+      }
+
+      function buildGatewayCentricSnapshot(snapshot) {
+        const nodes = snapshot.nodes
+          .filter((node) => !hiddenServiceIds.has(node.id))
+          .map((node) => ({
+            ...node,
+            labels: { ...(node.labels || {}) },
+            capacity: { ...(node.capacity || {}) },
+            metrics: { ...(node.metrics || {}) }
+          }));
+
+        const nodeById = new Map(nodes.map((node) => [node.id, node]));
+        extraSubnetGateways.forEach((gateway) => {
+          if (nodeById.has(gateway.id)) return;
+          const payload = {
+            ...gateway,
+            labels: { ...gateway.labels },
+            capacity: { ...gateway.capacity },
+            metrics: { ...gateway.metrics, ts: snapshot.generated_at || null }
+          };
+          nodes.push(payload);
+          nodeById.set(payload.id, payload);
+        });
+
+        const edges = snapshot.edges
+          .filter((edge) => !hiddenServiceIds.has(edge.source) && !hiddenServiceIds.has(edge.target))
+          .map((edge) => ({
+            ...edge,
+            metrics: edge.metrics ? { ...edge.metrics } : edge.metrics
+          }));
+
+        const existingNetworkPairs = new Set(
+          edges
+            .filter((edge) => edge.relation === "network_link")
+            .map((edge) => pairKey(edge.source, edge.target))
+        );
+
+        function addBidirectionalNetworkLink(aId, bId, tier) {
+          const key = pairKey(aId, bId);
+          if (existingNetworkPairs.has(key)) return;
+          const nodeA = nodeById.get(aId);
+          const nodeB = nodeById.get(bId);
+          if (!nodeA || !nodeB) return;
+          const status = linkStatusFromNodes(nodeA, nodeB);
+          const ts = snapshot.generated_at || null;
+          const forwardId = `synthetic-network_link--${aId}--${bId}--ab`;
+          const reverseId = `synthetic-network_link--${aId}--${bId}--ba`;
+          edges.push({
+            id: forwardId,
+            source: aId,
+            target: bId,
+            relation: "network_link",
+            status,
+            metrics: buildSyntheticMetrics(tier, `${aId}->${bId}`, ts)
+          });
+          edges.push({
+            id: reverseId,
+            source: bId,
+            target: aId,
+            relation: "network_link",
+            status,
+            metrics: buildSyntheticMetrics(tier, `${bId}->${aId}`, ts)
+          });
+          existingNetworkPairs.add(key);
+        }
+
+        if (nodeById.has("gw-bj-01")) addBidirectionalNetworkLink("gw-bj-01", "gw-subnet-north", "gateway");
+        if (nodeById.has("gw-sh-01")) addBidirectionalNetworkLink("gw-sh-01", "gw-subnet-south", "gateway");
+        addBidirectionalNetworkLink("gw-subnet-north", "gw-subnet-south", "gateway");
+
+        nodes.forEach((node) => {
+          if (node.kind === "gateway") return;
+          const gatewayId = chooseSubnetGatewayId(node);
+          const tier = node.layer === "terminal" ? "terminal" : node.layer === "cloud" ? "cloud" : "edge";
+          addBidirectionalNetworkLink(node.id, gatewayId, tier);
+        });
+
+        return {
+          ...snapshot,
+          nodes,
+          edges
+        };
+      }
+
+      function buildSoftLayerSeed(snapshot) {
+        const width = Math.max(networkEl.clientWidth, 920);
+        const height = Math.max(networkEl.clientHeight, 620);
+
+        const cloudY = -height * 0.12;
+        const edgeY = 0;
+        const terminalY = height * 0.12;
+
+        const groups = splitByLayer(snapshot.nodes);
+        const cloudMap = makeRingPositions(groups.cloud || [], 0, cloudY, Math.max(110, width * 0.15));
+        const edgeMap = makeRingPositions(groups.edge || [], 0, edgeY, Math.max(140, width * 0.18));
+        const terminalMap = makeRingPositions(groups.terminal || [], 0, terminalY, Math.max(120, width * 0.16));
+
+        const seed = new Map([...cloudMap, ...edgeMap, ...terminalMap]);
+        snapshot.nodes.forEach((node) => {
+          if (!seed.has(node.id)) seed.set(node.id, { x: 0, y: 0 });
+        });
+
+        return seed;
+      }
+
+      function nodeTooltip(node) {
+        const m = node.metrics || {};
+        const c = node.capacity || {};
+        return [
+          `<strong>${escapeHtml(node.labels?.name || node.id)}</strong>`,
+          `id: ${escapeHtml(node.id)}`,
+          `kind: ${escapeHtml(node.kind)}`,
+          `layer: ${escapeHtml(node.layer)}`,
+          `status: ${escapeHtml(node.status || "up")}`,
+          `cpu_cores: ${metricText(c.cpu_cores)}`,
+          `gpu_count: ${metricText(c.gpu_count)}`,
+          `memory_gb: ${metricText(c.memory_gb)}`,
+          `load: ${metricText(m.load_pct, "%")}`,
+          `cpu: ${metricText(m.cpu_pct, "%")}`,
+          `gpu: ${metricText(m.gpu_pct, "%")}`,
+          `mem: ${metricText(m.mem_pct, "%")}`,
+          `ts: ${escapeHtml(m.ts || "-")}`
+        ].join("<br>");
+      }
+
+      function edgeTooltip(edge) {
+        const m = edge.metrics || {};
+        const lines = [
+          `<strong>${escapeHtml(edge.id)}</strong>`,
+          `relation: ${escapeHtml(edge.relation)}`,
+          `status: ${escapeHtml(edge.status)}`
+        ];
+        if (edge.relation === "network_link") {
+          lines.push(`pair: ${escapeHtml(edge.source)} ↔ ${escapeHtml(edge.target)}`);
+          lines.push(`display_label: ${escapeHtml(edge.display_label || "-")}`);
+          lines.push(`status_ab: ${escapeHtml(edge.status_ab || "-")}`);
+          lines.push(`status_ba: ${escapeHtml(edge.status_ba || "-")}`);
+          lines.push(`latency_ab_ms: ${metricText(m.ab_latency_ms)}`);
+          lines.push(`latency_ba_ms: ${metricText(m.ba_latency_ms)}`);
+          lines.push(`bandwidth_ab_mbps: ${metricText(m.ab_bandwidth_mbps)}`);
+          lines.push(`bandwidth_ba_mbps: ${metricText(m.ba_bandwidth_mbps)}`);
+          lines.push(`utilization_ab_pct: ${metricText(m.ab_utilization_pct, "%")}`);
+          lines.push(`utilization_ba_pct: ${metricText(m.ba_utilization_pct, "%")}`);
+          lines.push(`packet_loss_ab_pct: ${metricText(m.ab_packet_loss_pct, "%")}`);
+          lines.push(`packet_loss_ba_pct: ${metricText(m.ba_packet_loss_pct, "%")}`);
+          lines.push(`jitter_ab_ms: ${metricText(m.ab_jitter_ms)}`);
+          lines.push(`jitter_ba_ms: ${metricText(m.ba_jitter_ms)}`);
+          lines.push(`ts_ab: ${escapeHtml(m.ab_ts || "-")}`);
+          lines.push(`ts_ba: ${escapeHtml(m.ba_ts || "-")}`);
+        }
+        return lines.join("<br>");
+      }
+
+      function trimNumber(value, digits) {
+        if (value === null || value === undefined) return "-";
+        const num = Number(value);
+        if (!Number.isFinite(num)) return "-";
+        if (Number.isInteger(num)) return String(num);
+        return num.toFixed(typeof digits === "number" ? digits : 1).replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1");
+      }
+
+      function formatBandwidth(value) {
+        if (value === null || value === undefined) return "-";
+        const num = Number(value);
+        if (!Number.isFinite(num)) return "-";
+        if (num >= 1000) return `${trimNumber(num / 1000, 2)}Gbps`;
+        return `${trimNumber(num, 0)}Mbps`;
+      }
+
+      function formatLatency(value) {
+        if (value === null || value === undefined) return "-";
+        return `${trimNumber(value, 1)}ms`;
+      }
+
+      function mergeStatus(statusA, statusB) {
+        const statuses = [statusA, statusB].filter((s) => typeof s === "string" && s.length > 0);
+        if (statuses.includes("down")) return "down";
+        if (statuses.includes("degraded")) return "degraded";
+        return "up";
+      }
+
+      function pairKey(source, target) {
+        return [source, target].sort().join("||");
+      }
+
+      function numericOrNull(value) {
+        const num = Number(value);
+        return Number.isFinite(num) ? num : null;
+      }
+
+      function compareLinkQuality(a, b) {
+        const latA = numericOrNull(a.metrics?.latency_peak_ms);
+        const latB = numericOrNull(b.metrics?.latency_peak_ms);
+        const bwA = numericOrNull(a.metrics?.bandwidth_peak_mbps);
+        const bwB = numericOrNull(b.metrics?.bandwidth_peak_mbps);
+        const safeLatA = latA === null ? Number.POSITIVE_INFINITY : latA;
+        const safeLatB = latB === null ? Number.POSITIVE_INFINITY : latB;
+        if (safeLatA !== safeLatB) return safeLatA - safeLatB;
+        const safeBwA = bwA === null ? Number.NEGATIVE_INFINITY : bwA;
+        const safeBwB = bwB === null ? Number.NEGATIVE_INFINITY : bwB;
+        if (safeBwA !== safeBwB) return safeBwB - safeBwA;
+        return String(a.id).localeCompare(String(b.id));
+      }
+
+      function filterMergedNetworkLinks(mergedLinks, nodes) {
+        const gatewayIds = new Set(nodes.filter((node) => node.kind === "gateway").map((node) => node.id));
+        const nonGatewayIds = nodes.filter((node) => node.kind !== "gateway").map((node) => node.id);
+        const selected = new Set();
+
+        mergedLinks.forEach((edge) => {
+          const srcGateway = gatewayIds.has(edge.source);
+          const dstGateway = gatewayIds.has(edge.target);
+          if (srcGateway && dstGateway) selected.add(edge.id);
+        });
+
+        nonGatewayIds.forEach((nodeId) => {
+          const candidates = mergedLinks
+            .filter(
+              (edge) =>
+                (edge.source === nodeId || edge.target === nodeId) &&
+                (gatewayIds.has(edge.source) || gatewayIds.has(edge.target))
+            )
+            .sort(compareLinkQuality);
+          if (candidates[0]) selected.add(candidates[0].id);
+        });
+
+        Array.from(gatewayIds).forEach((gatewayId) => {
+          const candidates = mergedLinks
+            .filter((edge) => edge.source === gatewayId || edge.target === gatewayId)
+            .sort(compareLinkQuality);
+          let picked = 0;
+          for (const edge of candidates) {
+            if (selected.has(edge.id)) continue;
+            selected.add(edge.id);
+            picked += 1;
+            if (picked >= 5) break;
+          }
+        });
+
+        mergedLinks.forEach((edge) => {
+          if ((edge.status || "up") === "up") return;
+          if (gatewayIds.has(edge.source) || gatewayIds.has(edge.target)) selected.add(edge.id);
+        });
+
+        return mergedLinks.filter((edge) => selected.has(edge.id));
+      }
+
+      function createMergedNetworkLinks(edges) {
+        const pairMap = new Map();
+        edges.forEach((edge) => {
+          if (edge.relation !== "network_link") return;
+          const [fromId, toId] = [edge.source, edge.target].sort();
+          const key = pairKey(edge.source, edge.target);
+          if (!pairMap.has(key)) {
+            pairMap.set(key, {
+              id: `merged-network_link--${fromId}--${toId}`,
+              source: fromId,
+              target: toId,
+              relation: "network_link",
+              status_ab: null,
+              status_ba: null,
+              metrics: {
+                ab_latency_ms: null,
+                ba_latency_ms: null,
+                ab_bandwidth_mbps: null,
+                ba_bandwidth_mbps: null,
+                ab_utilization_pct: null,
+                ba_utilization_pct: null,
+                ab_packet_loss_pct: null,
+                ba_packet_loss_pct: null,
+                ab_jitter_ms: null,
+                ba_jitter_ms: null,
+                ab_ts: null,
+                ba_ts: null
+              }
+            });
+          }
+
+          const merged = pairMap.get(key);
+          const metrics = edge.metrics || {};
+          const isForward = edge.source === merged.source && edge.target === merged.target;
+          const prefix = isForward ? "ab" : "ba";
+          merged[`status_${prefix}`] = edge.status || "up";
+          merged.metrics[`${prefix}_latency_ms`] = metrics.latency_ms ?? null;
+          merged.metrics[`${prefix}_bandwidth_mbps`] = metrics.bandwidth_mbps ?? null;
+          merged.metrics[`${prefix}_utilization_pct`] = metrics.utilization_pct ?? null;
+          merged.metrics[`${prefix}_packet_loss_pct`] = metrics.packet_loss_pct ?? null;
+          merged.metrics[`${prefix}_jitter_ms`] = metrics.jitter_ms ?? null;
+          merged.metrics[`${prefix}_ts`] = metrics.ts || null;
+        });
+
+        return Array.from(pairMap.values()).map((edge) => {
+          const m = edge.metrics;
+          const latencies = [m.ab_latency_ms, m.ba_latency_ms].filter((v) => typeof v === "number" && Number.isFinite(v));
+          const bandwidths = [m.ab_bandwidth_mbps, m.ba_bandwidth_mbps].filter((v) => typeof v === "number" && Number.isFinite(v));
+          const status = mergeStatus(edge.status_ab, edge.status_ba);
+          const displayLabel = `${formatLatency(m.ab_latency_ms)}/${formatLatency(m.ba_latency_ms)} | ${formatBandwidth(m.ab_bandwidth_mbps)}/${formatBandwidth(m.ba_bandwidth_mbps)}`;
+          return {
+            id: edge.id,
+            source: edge.source,
+            target: edge.target,
+            relation: edge.relation,
+            status,
+            status_ab: edge.status_ab,
+            status_ba: edge.status_ba,
+            display_label: displayLabel,
+            metrics: {
+              ...m,
+              latency_peak_ms: latencies.length ? Math.max(...latencies) : null,
+              bandwidth_peak_mbps: bandwidths.length ? Math.max(...bandwidths) : null
+            }
+          };
+        });
+      }
+
+      function buildRenderableEdges(snapshot) {
+        const mergedNetworkLinks = createMergedNetworkLinks(snapshot.edges);
+        const filteredNetworkLinks = filterMergedNetworkLinks(mergedNetworkLinks, snapshot.nodes);
+        return filteredNetworkLinks;
+      }
+
+      function toVisNode(node, seedPos) {
+        const layer = node.layer || "edge";
+        const status = node.status || "up";
+        const bg = layerColor[layer] || "#64748b";
+        const border = status === "down" ? "#dc2626" : status === "degraded" ? "#d97706" : "#334155";
+        const baseSize = node.kind === "terminal" ? 24 : node.kind === "gateway" ? 30 : node.kind === "service" ? 27 : 28;
+
+        return {
+          id: node.id,
+          label: shorten(node.labels?.name || node.id, 18),
+          x: seedPos.x,
+          y: seedPos.y,
+          shape: kindShape[node.kind] || "dot",
+          size: baseSize,
+          color: {
+            background: bg,
+            border,
+            highlight: { background: bg, border: "#111827" }
+          },
+          borderWidth: status === "up" ? 1.2 : 2,
+          shadow: {
+            enabled: true,
+            color: "rgba(15, 23, 42, 0.18)",
+            size: 10,
+            x: 0,
+            y: 3
+          },
+          font: {
+            size: 14,
+            color: "#111827",
+            face: "IBM Plex Sans, Source Han Sans SC, PingFang SC, Segoe UI, sans-serif",
+            strokeWidth: 3,
+            strokeColor: "rgba(255,255,255,0.8)",
+            vadjust: 26
+          },
+          title: nodeTooltip(node)
+        };
+      }
+
+      function toVisEdge(edge) {
+        const latency = edge.metrics?.latency_peak_ms;
+        const bw = edge.metrics?.bandwidth_peak_mbps;
+        const color = latencyColor(latency);
+        const width = bandwidthWidth(bw);
+
+        return {
+          id: edge.id,
+          from: edge.source,
+          to: edge.target,
+          arrows: { to: { enabled: false } },
+          dashes: false,
+          width,
+          label: edge.display_label || "",
+          labelHighlightBold: false,
+          font: {
+            size: 10,
+            color: "rgba(15, 23, 42, 0.94)",
+            face: "IBM Plex Sans, Source Han Sans SC, PingFang SC, Segoe UI, sans-serif",
+            background: "rgba(255,255,255,0.68)",
+            strokeWidth: 2,
+            strokeColor: "rgba(255,255,255,0.85)",
+            align: "horizontal"
+          },
+          color: {
+            color,
+            highlight: color,
+            hover: color,
+            opacity: 0.9
+          },
+          smooth: {
+            enabled: true,
+            type: "curvedCW",
+            roundness: 0.04 + (hashRoundness(edge.id) % 0.05)
+          },
+          title: edgeTooltip(edge)
+        };
+      }
+
+      function setMeta(snapshot, sourcePath) {
+        metaPathEl.textContent = sourcePath;
+        versionBadgeEl.textContent = `version: ${snapshot.version || "-"}`;
+        timeBadgeEl.textContent = `generated_at: ${snapshot.generated_at || "-"}`;
+      }
+
+      function renderSelectedNode(node) {
+        if (!node) {
+          selectedNodeEl.innerHTML = '<p class="selected-empty">点击节点查看完整属性。</p>';
+          return;
+        }
+
+        const m = node.metrics || {};
+        selectedNodeEl.innerHTML = `
+          <p class="node-kv"><span class="node-k">name</span><span class="node-v">${escapeHtml(node.labels?.name || "-")}</span></p>
+          <p class="node-kv"><span class="node-k">id</span><span class="node-v">${escapeHtml(node.id)}</span></p>
+          <p class="node-kv"><span class="node-k">layer</span><span class="node-v">${escapeHtml(node.layer)}</span></p>
+          <p class="node-kv"><span class="node-k">kind</span><span class="node-v">${escapeHtml(node.kind)}</span></p>
+          <p class="node-kv"><span class="node-k">status</span><span class="node-v">${escapeHtml(node.status || "up")}</span></p>
+          <p class="node-kv"><span class="node-k">load</span><span class="node-v">${metricText(m.load_pct, "%")}</span></p>
+          <p class="node-kv"><span class="node-k">cpu</span><span class="node-v">${metricText(m.cpu_pct, "%")}</span></p>
+          <p class="node-kv"><span class="node-k">gpu</span><span class="node-v">${metricText(m.gpu_pct, "%")}</span></p>
+          <p class="node-kv"><span class="node-k">mem</span><span class="node-v">${metricText(m.mem_pct, "%")}</span></p>
+          <p class="node-kv"><span class="node-k">metric ts</span><span class="node-v">${escapeHtml(m.ts || "-")}</span></p>
+        `;
+      }
+
+      function destroyNetwork() {
+        if (network) {
+          network.destroy();
+          network = null;
+        }
+      }
+
+      function validateSnapshot(snapshot) {
+        if (!snapshot || typeof snapshot !== "object") {
+          throw new Error("Snapshot payload is empty");
+        }
+        if (!Array.isArray(snapshot.nodes) || !Array.isArray(snapshot.edges)) {
+          throw new Error("Snapshot format invalid: missing nodes or edges array");
+        }
+        const nodeSet = new Set(snapshot.nodes.map((n) => n.id));
+        const bad = snapshot.edges.find(
+          (e) => !nodeSet.has(e.source) || !nodeSet.has(e.target) || !relationTypes.includes(e.relation)
+        );
+        if (bad) throw new Error(`Edge invalid: ${bad.id || "unknown"}`);
+      }
+
+      function renderGraph(snapshot, prebuiltEdges) {
+        const seed = buildSoftLayerSeed(snapshot);
+        const visNodes = snapshot.nodes.map((node) => toVisNode(node, seed.get(node.id)));
+        const renderableEdges = Array.isArray(prebuiltEdges) ? prebuiltEdges : buildRenderableEdges(snapshot);
+        const visEdges = renderableEdges.map(toVisEdge);
+
+        destroyNetwork();
+
+        network = new vis.Network(
+          networkEl,
+          {
+            nodes: new vis.DataSet(visNodes),
+            edges: new vis.DataSet(visEdges)
+          },
+          {
+            autoResize: true,
+            layout: {
+              improvedLayout: true,
+              randomSeed: 22
+            },
+            physics: {
+              enabled: true,
+              solver: "forceAtlas2Based",
+              forceAtlas2Based: {
+                gravitationalConstant: -92,
+                centralGravity: 0.0022,
+                springLength: 182,
+                springConstant: 0.037,
+                damping: 0.8,
+                avoidOverlap: 0.94
+              },
+              stabilization: {
+                enabled: true,
+                iterations: 340,
+                fit: true
+              }
+            },
+            interaction: {
+              hover: true,
+              tooltipDelay: 100,
+              navigationButtons: true,
+              keyboard: true,
+              zoomView: true,
+              dragView: true,
+              dragNodes: true
+            },
+            edges: {
+              selectionWidth: 1.1,
+              hoverWidth: 0.35
+            }
+          }
+        );
+
+        network.once("stabilizationIterationsDone", function () {
+          if (!network) return;
+          network.setOptions({ physics: false });
+          network.fit({ animation: { duration: 260 } });
+          network.moveTo({ scale: 1.1, animation: { duration: 180 } });
+        });
+
+        network.on("click", function (params) {
+          if (!params.nodes.length) {
+            renderSelectedNode(null);
+            return;
+          }
+          const id = params.nodes[0];
+          const node = snapshot.nodes.find((n) => n.id === id);
+          renderSelectedNode(node || null);
+        });
+      }
+
+      async function loadAndRender() {
+        const sourcePath = inputEl.value.trim() || defaultPath;
+        setStatus("Loading", null);
+
+        try {
+          const response = await fetch(sourcePath, { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status} ${response.statusText}`);
+          }
+
+          const rawSnapshot = await response.json();
+          validateSnapshot(rawSnapshot);
+          const snapshot = buildGatewayCentricSnapshot(rawSnapshot);
+          const renderableEdges = buildRenderableEdges(snapshot);
+
+          currentSnapshot = snapshot;
+          setMeta(rawSnapshot, sourcePath);
+          renderSelectedNode(null);
+          renderGraph(snapshot, renderableEdges);
+          setStatus("Loaded", "ok");
+        } catch (error) {
+          destroyNetwork();
+          currentSnapshot = null;
+          metaPathEl.textContent = sourcePath;
+          versionBadgeEl.textContent = "version: -";
+          timeBadgeEl.textContent = "generated_at: -";
+          renderSelectedNode(null);
+          setStatus(`Error: ${error.message}`, "err");
+          console.error(error);
+        }
+      }
+
+      reloadBtn.addEventListener("click", loadAndRender);
+      fitBtn.addEventListener("click", function () {
+        if (network) {
+          network.fit({ animation: { duration: 220 } });
+          network.moveTo({ scale: 1.1, animation: { duration: 180 } });
+        }
+      });
+      inputEl.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") loadAndRender();
+      });
+
+      const queryPath = new URLSearchParams(window.location.search).get("snapshot");
+      if (queryPath) inputEl.value = queryPath;
+
+      window.addEventListener("resize", function () {
+        if (!currentSnapshot || !network) return;
+        network.fit({ animation: false });
+        network.moveTo({ scale: 1.08, animation: false });
+      });
+
+      loadAndRender();
+    })();
+  </script>
+</body>
+</html>

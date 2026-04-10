@@ -24,6 +24,47 @@ const EDGE_AGENT01_IDS = new Set(Object.values(EDGE_AGENT01_MAP));
 const PYRAMID_LAYER_WIDTH_RATIO = { cloud: 1, edge: 1, terminal: 1 };
 const extensionVisibilityByAnchor = new Map([[CLOUD_CLUSTER_NODE_ID, false]]);
 
+function readLocalNewAgents() {
+  const raw = localStorage.getItem("newAgents");
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function getStatsSourceAgents() {
+  const merged = new Map();
+  const list = [
+    ...(Array.isArray(window.agentDatabase) ? window.agentDatabase : []),
+    ...(Array.isArray(window.registryAgents) ? window.registryAgents : []),
+    ...(Array.isArray(window.runtimeRegisteredAgents) ? window.runtimeRegisteredAgents : []),
+    ...readLocalNewAgents(),
+  ];
+  list.forEach((agent) => {
+    if (!agent || !agent.id) return;
+    if (agent.type && agent.type !== "agent") return;
+    merged.set(agent.id, agent);
+  });
+  return Array.from(merged.values());
+}
+
+function getToolCount(agents) {
+  const tools = new Set();
+  (agents || []).forEach((agent) => {
+    const pool = Array.isArray(agent.tools) && agent.tools.length
+      ? agent.tools
+      : (Array.isArray(agent.capabilities) ? agent.capabilities : []);
+    pool.forEach((tool) => {
+      const value = String(tool || "").trim();
+      if (value) tools.add(value);
+    });
+  });
+  return tools.size;
+}
+
 function getLayerBandWidth(container, layer, metrics) {
   const bandMetrics = container ? getLayerBandMetrics(container, layer) : null;
   if (bandMetrics && bandMetrics.width > 0) return bandMetrics.width;
@@ -52,12 +93,12 @@ function setExtensionVisibility(anchorId, visible) {
 }
 
 function initializeStats() {
-  const agents = window.agentDatabase.filter((a) => a.type === "agent");
+  const agents = getStatsSourceAgents();
   const setStat = (id, value) => {
     const target = document.getElementById(id);
     if (target) target.textContent = value;
   };
-  setStat("totalNodes", window.agentDatabase.length);
+  setStat("totalNodes", agents.length);
   setStat("agentCount", agents.length);
-  setStat("toolCount", 16);
+  setStat("toolCount", getToolCount(agents));
 }

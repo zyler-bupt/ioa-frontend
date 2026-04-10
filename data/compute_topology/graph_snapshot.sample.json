@@ -1,0 +1,2297 @@
+{
+  "version": "compute-topology/v1",
+  "generated_at": "2026-03-27T12:00:00+08:00",
+  "metric_windows": [
+    "5s",
+    "1m",
+    "5m"
+  ],
+  "nodes": [
+    {
+      "id": "cloud-hz-03",
+      "kind": "compute",
+      "layer": "cloud",
+      "status": "up",
+      "labels": {
+        "name": "Cloud Compute HZ-03",
+        "region": "cn-east",
+        "zone": "hangzhou-a"
+      },
+      "capacity": {
+        "cpu_cores": 128,
+        "gpu_count": 8,
+        "memory_gb": 1024
+      },
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "load_pct": 63,
+        "cpu_pct": 61,
+        "gpu_pct": 68,
+        "mem_pct": 59
+      }
+    },
+    {
+      "id": "cloud-bj-01",
+      "kind": "compute",
+      "layer": "cloud",
+      "status": "up",
+      "labels": {
+        "name": "Cloud Compute BJ-01",
+        "region": "cn-north",
+        "zone": "beijing-b"
+      },
+      "capacity": {
+        "cpu_cores": 96,
+        "gpu_count": 4,
+        "memory_gb": 768
+      },
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "load_pct": 57,
+        "cpu_pct": 56,
+        "gpu_pct": 49,
+        "mem_pct": 60
+      }
+    },
+    {
+      "id": "cloud-sh-01",
+      "kind": "service",
+      "layer": "cloud",
+      "status": "up",
+      "labels": {
+        "name": "Discovery Service SH-01",
+        "region": "cn-east",
+        "zone": "shanghai-a"
+      },
+      "capacity": {
+        "cpu_cores": 48,
+        "gpu_count": 0,
+        "memory_gb": 256
+      },
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "load_pct": 42,
+        "cpu_pct": 44,
+        "gpu_pct": 0,
+        "mem_pct": 51
+      }
+    },
+    {
+      "id": "cloud-cn-registry",
+      "kind": "service",
+      "layer": "cloud",
+      "status": "up",
+      "labels": {
+        "name": "Global Registry",
+        "region": "cn-central",
+        "zone": "wuhan-a"
+      },
+      "capacity": {
+        "cpu_cores": 32,
+        "gpu_count": 0,
+        "memory_gb": 128
+      },
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "load_pct": 35,
+        "cpu_pct": 37,
+        "gpu_pct": 0,
+        "mem_pct": 40
+      }
+    },
+    {
+      "id": "edge-bj-01",
+      "kind": "compute",
+      "layer": "edge",
+      "status": "up",
+      "labels": {
+        "name": "Edge Compute BJ-01",
+        "region": "cn-north",
+        "zone": "beijing-edge-a"
+      },
+      "capacity": {
+        "cpu_cores": 32,
+        "gpu_count": 1,
+        "memory_gb": 128
+      },
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "load_pct": 71,
+        "cpu_pct": 69,
+        "gpu_pct": 77,
+        "mem_pct": 66
+      }
+    },
+    {
+      "id": "edge-bj-02",
+      "kind": "compute",
+      "layer": "edge",
+      "status": "degraded",
+      "labels": {
+        "name": "Edge Compute BJ-02",
+        "region": "cn-north",
+        "zone": "beijing-edge-b"
+      },
+      "capacity": {
+        "cpu_cores": 24,
+        "gpu_count": 1,
+        "memory_gb": 96
+      },
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "load_pct": 86,
+        "cpu_pct": 89,
+        "gpu_pct": 82,
+        "mem_pct": 79
+      }
+    },
+    {
+      "id": "edge-sh-01",
+      "kind": "compute",
+      "layer": "edge",
+      "status": "up",
+      "labels": {
+        "name": "Edge Compute SH-01",
+        "region": "cn-east",
+        "zone": "shanghai-edge-a"
+      },
+      "capacity": {
+        "cpu_cores": 28,
+        "gpu_count": 1,
+        "memory_gb": 96
+      },
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "load_pct": 64,
+        "cpu_pct": 61,
+        "gpu_pct": 66,
+        "mem_pct": 58
+      }
+    },
+    {
+      "id": "edge-gz-01",
+      "kind": "compute",
+      "layer": "edge",
+      "status": "down",
+      "labels": {
+        "name": "Edge Compute GZ-01",
+        "region": "cn-south",
+        "zone": "guangzhou-edge-a"
+      },
+      "capacity": {
+        "cpu_cores": 24,
+        "gpu_count": 1,
+        "memory_gb": 64
+      },
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "load_pct": null,
+        "cpu_pct": null,
+        "gpu_pct": null,
+        "mem_pct": null
+      }
+    },
+    {
+      "id": "gw-bj-01",
+      "kind": "gateway",
+      "layer": "edge",
+      "status": "up",
+      "labels": {
+        "name": "Gateway BJ-01",
+        "region": "cn-north",
+        "zone": "beijing-gw"
+      },
+      "capacity": {
+        "cpu_cores": 16,
+        "gpu_count": 0,
+        "memory_gb": 32
+      },
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "load_pct": 54,
+        "cpu_pct": 51,
+        "gpu_pct": 0,
+        "mem_pct": 49
+      }
+    },
+    {
+      "id": "gw-sh-01",
+      "kind": "gateway",
+      "layer": "edge",
+      "status": "up",
+      "labels": {
+        "name": "Gateway SH-01",
+        "region": "cn-east",
+        "zone": "shanghai-gw"
+      },
+      "capacity": {
+        "cpu_cores": 16,
+        "gpu_count": 0,
+        "memory_gb": 32
+      },
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "load_pct": 47,
+        "cpu_pct": 44,
+        "gpu_pct": 0,
+        "mem_pct": 46
+      }
+    },
+    {
+      "id": "terminal-phone-01",
+      "kind": "terminal",
+      "layer": "terminal",
+      "status": "up",
+      "labels": {
+        "name": "Terminal Phone 01",
+        "region": "cn-north",
+        "zone": "beijing-user"
+      },
+      "capacity": {
+        "cpu_cores": 8,
+        "gpu_count": 0,
+        "memory_gb": 6
+      },
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "load_pct": 33,
+        "cpu_pct": 31,
+        "gpu_pct": 0,
+        "mem_pct": 52
+      }
+    },
+    {
+      "id": "terminal-desktop-01",
+      "kind": "terminal",
+      "layer": "terminal",
+      "status": "up",
+      "labels": {
+        "name": "Terminal Desktop 01",
+        "region": "cn-east",
+        "zone": "shanghai-user"
+      },
+      "capacity": {
+        "cpu_cores": 12,
+        "gpu_count": 1,
+        "memory_gb": 16
+      },
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "load_pct": 38,
+        "cpu_pct": 35,
+        "gpu_pct": 19,
+        "mem_pct": 41
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-terminal-phone-01-gw-bj-01",
+      "source": "terminal-phone-01",
+      "target": "gw-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 12,
+        "bandwidth_mbps": 80,
+        "utilization_pct": 34,
+        "packet_loss_pct": 0.2,
+        "jitter_ms": 1.6
+      }
+    },
+    {
+      "id": "e-gw-bj-01-terminal-phone-01",
+      "source": "gw-bj-01",
+      "target": "terminal-phone-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 10,
+        "bandwidth_mbps": 120,
+        "utilization_pct": 28,
+        "packet_loss_pct": 0.1,
+        "jitter_ms": 1.2
+      }
+    },
+    {
+      "id": "e-terminal-desktop-01-gw-sh-01",
+      "source": "terminal-desktop-01",
+      "target": "gw-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 9,
+        "bandwidth_mbps": 300,
+        "utilization_pct": 25,
+        "packet_loss_pct": 0.05,
+        "jitter_ms": 0.9
+      }
+    },
+    {
+      "id": "e-gw-sh-01-terminal-desktop-01",
+      "source": "gw-sh-01",
+      "target": "terminal-desktop-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 8,
+        "bandwidth_mbps": 600,
+        "utilization_pct": 22,
+        "packet_loss_pct": 0.03,
+        "jitter_ms": 0.7
+      }
+    },
+    {
+      "id": "e-gw-bj-01-edge-bj-01",
+      "source": "gw-bj-01",
+      "target": "edge-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 5,
+        "bandwidth_mbps": 2000,
+        "utilization_pct": 49,
+        "packet_loss_pct": 0.02,
+        "jitter_ms": 0.4
+      }
+    },
+    {
+      "id": "e-edge-bj-01-gw-bj-01",
+      "source": "edge-bj-01",
+      "target": "gw-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 4,
+        "bandwidth_mbps": 2200,
+        "utilization_pct": 44,
+        "packet_loss_pct": 0.01,
+        "jitter_ms": 0.3
+      }
+    },
+    {
+      "id": "e-gw-bj-01-edge-bj-02",
+      "source": "gw-bj-01",
+      "target": "edge-bj-02",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 18,
+        "bandwidth_mbps": 900,
+        "utilization_pct": 86,
+        "packet_loss_pct": 1.1,
+        "jitter_ms": 3.2
+      }
+    },
+    {
+      "id": "e-edge-bj-02-gw-bj-01",
+      "source": "edge-bj-02",
+      "target": "gw-bj-01",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 16,
+        "bandwidth_mbps": 850,
+        "utilization_pct": 84,
+        "packet_loss_pct": 1.3,
+        "jitter_ms": 3.8
+      }
+    },
+    {
+      "id": "e-gw-sh-01-edge-sh-01",
+      "source": "gw-sh-01",
+      "target": "edge-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 6,
+        "bandwidth_mbps": 1800,
+        "utilization_pct": 51,
+        "packet_loss_pct": 0.03,
+        "jitter_ms": 0.6
+      }
+    },
+    {
+      "id": "e-edge-sh-01-gw-sh-01",
+      "source": "edge-sh-01",
+      "target": "gw-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 5,
+        "bandwidth_mbps": 1750,
+        "utilization_pct": 46,
+        "packet_loss_pct": 0.02,
+        "jitter_ms": 0.5
+      }
+    },
+    {
+      "id": "e-edge-bj-01-cloud-bj-01",
+      "source": "edge-bj-01",
+      "target": "cloud-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 22,
+        "bandwidth_mbps": 5000,
+        "utilization_pct": 63,
+        "packet_loss_pct": 0.08,
+        "jitter_ms": 1.4
+      }
+    },
+    {
+      "id": "e-cloud-bj-01-edge-bj-01",
+      "source": "cloud-bj-01",
+      "target": "edge-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 20,
+        "bandwidth_mbps": 5200,
+        "utilization_pct": 59,
+        "packet_loss_pct": 0.05,
+        "jitter_ms": 1.1
+      }
+    },
+    {
+      "id": "e-edge-bj-02-cloud-hz-03",
+      "source": "edge-bj-02",
+      "target": "cloud-hz-03",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 35,
+        "bandwidth_mbps": 2600,
+        "utilization_pct": 88,
+        "packet_loss_pct": 0.9,
+        "jitter_ms": 4.6
+      }
+    },
+    {
+      "id": "e-cloud-hz-03-edge-bj-02",
+      "source": "cloud-hz-03",
+      "target": "edge-bj-02",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 33,
+        "bandwidth_mbps": 2400,
+        "utilization_pct": 90,
+        "packet_loss_pct": 1.0,
+        "jitter_ms": 5.1
+      }
+    },
+    {
+      "id": "e-edge-sh-01-cloud-sh-01",
+      "source": "edge-sh-01",
+      "target": "cloud-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 18,
+        "bandwidth_mbps": 4200,
+        "utilization_pct": 58,
+        "packet_loss_pct": 0.05,
+        "jitter_ms": 1.2
+      }
+    },
+    {
+      "id": "e-cloud-sh-01-edge-sh-01",
+      "source": "cloud-sh-01",
+      "target": "edge-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 17,
+        "bandwidth_mbps": 4300,
+        "utilization_pct": 54,
+        "packet_loss_pct": 0.04,
+        "jitter_ms": 1.1
+      }
+    },
+    {
+      "id": "e-edge-gz-01-cloud-hz-03",
+      "source": "edge-gz-01",
+      "target": "cloud-hz-03",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 49,
+        "bandwidth_mbps": 3111,
+        "utilization_pct": 68,
+        "packet_loss_pct": 0.23,
+        "jitter_ms": 4.23
+      }
+    },
+    {
+      "id": "e-cloud-hz-03-edge-gz-01",
+      "source": "cloud-hz-03",
+      "target": "edge-gz-01",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 120,
+        "bandwidth_mbps": 300,
+        "utilization_pct": 95,
+        "packet_loss_pct": 8.5,
+        "jitter_ms": 18
+      }
+    },
+    {
+      "id": "e-cloud-bj-01-cloud-cn-registry-hosts",
+      "source": "cloud-bj-01",
+      "target": "cloud-cn-registry",
+      "relation": "hosts",
+      "status": "up"
+    },
+    {
+      "id": "e-cloud-sh-01-cloud-cn-registry-dep",
+      "source": "cloud-sh-01",
+      "target": "cloud-cn-registry",
+      "relation": "depends_on",
+      "status": "up"
+    },
+    {
+      "id": "e-edge-bj-01-cloud-cn-registry-dep",
+      "source": "edge-bj-01",
+      "target": "cloud-cn-registry",
+      "relation": "depends_on",
+      "status": "up"
+    },
+    {
+      "id": "e-edge-sh-01-cloud-cn-registry-dep",
+      "source": "edge-sh-01",
+      "target": "cloud-cn-registry",
+      "relation": "depends_on",
+      "status": "up"
+    },
+    {
+      "id": "e-auto-cloud-hz-03-cloud-bj-01",
+      "source": "cloud-hz-03",
+      "target": "cloud-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 18,
+        "bandwidth_mbps": 8189,
+        "utilization_pct": 62,
+        "packet_loss_pct": 0.09,
+        "jitter_ms": 1.89
+      }
+    },
+    {
+      "id": "e-auto-cloud-hz-03-cloud-sh-01",
+      "source": "cloud-hz-03",
+      "target": "cloud-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 12,
+        "bandwidth_mbps": 9152,
+        "utilization_pct": 58,
+        "packet_loss_pct": 0.07,
+        "jitter_ms": 0.96
+      }
+    },
+    {
+      "id": "e-auto-cloud-hz-03-cloud-cn-registry",
+      "source": "cloud-hz-03",
+      "target": "cloud-cn-registry",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 15,
+        "bandwidth_mbps": 8310,
+        "utilization_pct": 57,
+        "packet_loss_pct": 0.08,
+        "jitter_ms": 1.5
+      }
+    },
+    {
+      "id": "e-auto-cloud-hz-03-edge-bj-01",
+      "source": "cloud-hz-03",
+      "target": "edge-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 26,
+        "bandwidth_mbps": 4795,
+        "utilization_pct": 67,
+        "packet_loss_pct": 0.12,
+        "jitter_ms": 2.83
+      }
+    },
+    {
+      "id": "e-auto-cloud-hz-03-edge-sh-01",
+      "source": "cloud-hz-03",
+      "target": "edge-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 20,
+        "bandwidth_mbps": 5758,
+        "utilization_pct": 66,
+        "packet_loss_pct": 0.1,
+        "jitter_ms": 1.9
+      }
+    },
+    {
+      "id": "e-auto-cloud-hz-03-gw-bj-01",
+      "source": "cloud-hz-03",
+      "target": "gw-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 20,
+        "bandwidth_mbps": 2660,
+        "utilization_pct": 60,
+        "packet_loss_pct": 0.1,
+        "jitter_ms": 1.9
+      }
+    },
+    {
+      "id": "e-auto-cloud-hz-03-gw-sh-01",
+      "source": "cloud-hz-03",
+      "target": "gw-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 14,
+        "bandwidth_mbps": 3623,
+        "utilization_pct": 59,
+        "packet_loss_pct": 0.07,
+        "jitter_ms": 1.87
+      }
+    },
+    {
+      "id": "e-auto-cloud-bj-01-cloud-hz-03",
+      "source": "cloud-bj-01",
+      "target": "cloud-hz-03",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 18,
+        "bandwidth_mbps": 8189,
+        "utilization_pct": 60,
+        "packet_loss_pct": 0.09,
+        "jitter_ms": 1.89
+      }
+    },
+    {
+      "id": "e-auto-cloud-bj-01-cloud-sh-01",
+      "source": "cloud-bj-01",
+      "target": "cloud-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 19,
+        "bandwidth_mbps": 8172,
+        "utilization_pct": 56,
+        "packet_loss_pct": 0.09,
+        "jitter_ms": 1.52
+      }
+    },
+    {
+      "id": "e-auto-cloud-bj-01-cloud-cn-registry",
+      "source": "cloud-bj-01",
+      "target": "cloud-cn-registry",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 16,
+        "bandwidth_mbps": 8278,
+        "utilization_pct": 43,
+        "packet_loss_pct": 0.08,
+        "jitter_ms": 1.58
+      }
+    },
+    {
+      "id": "e-auto-cloud-bj-01-edge-bj-02",
+      "source": "cloud-bj-01",
+      "target": "edge-bj-02",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 23,
+        "bandwidth_mbps": 4996,
+        "utilization_pct": 81,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 1.84
+      }
+    },
+    {
+      "id": "e-auto-cloud-bj-01-edge-sh-01",
+      "source": "cloud-bj-01",
+      "target": "edge-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 27,
+        "bandwidth_mbps": 4778,
+        "utilization_pct": 65,
+        "packet_loss_pct": 0.12,
+        "jitter_ms": 2.46
+      }
+    },
+    {
+      "id": "e-auto-cloud-bj-01-gw-bj-01",
+      "source": "cloud-bj-01",
+      "target": "gw-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 15,
+        "bandwidth_mbps": 3576,
+        "utilization_pct": 58,
+        "packet_loss_pct": 0.08,
+        "jitter_ms": 1.5
+      }
+    },
+    {
+      "id": "e-auto-cloud-bj-01-gw-sh-01",
+      "source": "cloud-bj-01",
+      "target": "gw-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 21,
+        "bandwidth_mbps": 2643,
+        "utilization_pct": 57,
+        "packet_loss_pct": 0.1,
+        "jitter_ms": 2.43
+      }
+    },
+    {
+      "id": "e-auto-cloud-sh-01-cloud-hz-03",
+      "source": "cloud-sh-01",
+      "target": "cloud-hz-03",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 12,
+        "bandwidth_mbps": 9152,
+        "utilization_pct": 53,
+        "packet_loss_pct": 0.07,
+        "jitter_ms": 0.96
+      }
+    },
+    {
+      "id": "e-auto-cloud-sh-01-cloud-bj-01",
+      "source": "cloud-sh-01",
+      "target": "cloud-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 19,
+        "bandwidth_mbps": 8172,
+        "utilization_pct": 53,
+        "packet_loss_pct": 0.09,
+        "jitter_ms": 1.52
+      }
+    },
+    {
+      "id": "e-auto-cloud-sh-01-cloud-cn-registry",
+      "source": "cloud-sh-01",
+      "target": "cloud-cn-registry",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 16,
+        "bandwidth_mbps": 8293,
+        "utilization_pct": 35,
+        "packet_loss_pct": 0.08,
+        "jitter_ms": 2.03
+      }
+    },
+    {
+      "id": "e-auto-cloud-sh-01-edge-bj-01",
+      "source": "cloud-sh-01",
+      "target": "edge-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 27,
+        "bandwidth_mbps": 4778,
+        "utilization_pct": 58,
+        "packet_loss_pct": 0.12,
+        "jitter_ms": 2.46
+      }
+    },
+    {
+      "id": "e-auto-cloud-sh-01-edge-bj-02",
+      "source": "cloud-sh-01",
+      "target": "edge-bj-02",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 29,
+        "bandwidth_mbps": 4063,
+        "utilization_pct": 74,
+        "packet_loss_pct": 0.13,
+        "jitter_ms": 2.77
+      }
+    },
+    {
+      "id": "e-auto-cloud-sh-01-gw-bj-01",
+      "source": "cloud-sh-01",
+      "target": "gw-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 21,
+        "bandwidth_mbps": 2643,
+        "utilization_pct": 51,
+        "packet_loss_pct": 0.1,
+        "jitter_ms": 2.43
+      }
+    },
+    {
+      "id": "e-auto-cloud-sh-01-gw-sh-01",
+      "source": "cloud-sh-01",
+      "target": "gw-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 15,
+        "bandwidth_mbps": 3606,
+        "utilization_pct": 50,
+        "packet_loss_pct": 0.08,
+        "jitter_ms": 1.5
+      }
+    },
+    {
+      "id": "e-auto-cloud-cn-registry-cloud-hz-03",
+      "source": "cloud-cn-registry",
+      "target": "cloud-hz-03",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 15,
+        "bandwidth_mbps": 8310,
+        "utilization_pct": 51,
+        "packet_loss_pct": 0.08,
+        "jitter_ms": 1.5
+      }
+    },
+    {
+      "id": "e-auto-cloud-cn-registry-cloud-bj-01",
+      "source": "cloud-cn-registry",
+      "target": "cloud-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 16,
+        "bandwidth_mbps": 8278,
+        "utilization_pct": 37,
+        "packet_loss_pct": 0.08,
+        "jitter_ms": 1.58
+      }
+    },
+    {
+      "id": "e-auto-cloud-cn-registry-cloud-sh-01",
+      "source": "cloud-cn-registry",
+      "target": "cloud-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 16,
+        "bandwidth_mbps": 8293,
+        "utilization_pct": 34,
+        "packet_loss_pct": 0.08,
+        "jitter_ms": 2.03
+      }
+    },
+    {
+      "id": "e-auto-cloud-cn-registry-edge-bj-01",
+      "source": "cloud-cn-registry",
+      "target": "edge-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 24,
+        "bandwidth_mbps": 4884,
+        "utilization_pct": 43,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 2.52
+      }
+    },
+    {
+      "id": "e-auto-cloud-cn-registry-edge-bj-02",
+      "source": "cloud-cn-registry",
+      "target": "edge-bj-02",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 31,
+        "bandwidth_mbps": 4129,
+        "utilization_pct": 58,
+        "packet_loss_pct": 0.14,
+        "jitter_ms": 3.23
+      }
+    },
+    {
+      "id": "e-auto-cloud-cn-registry-edge-sh-01",
+      "source": "cloud-cn-registry",
+      "target": "edge-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 24,
+        "bandwidth_mbps": 4899,
+        "utilization_pct": 42,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 2.07
+      }
+    },
+    {
+      "id": "e-auto-cloud-cn-registry-gw-bj-01",
+      "source": "cloud-cn-registry",
+      "target": "gw-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 23,
+        "bandwidth_mbps": 2709,
+        "utilization_pct": 48,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 1.99
+      }
+    },
+    {
+      "id": "e-auto-cloud-cn-registry-gw-sh-01",
+      "source": "cloud-cn-registry",
+      "target": "gw-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 23,
+        "bandwidth_mbps": 2724,
+        "utilization_pct": 35,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 2.44
+      }
+    },
+    {
+      "id": "e-auto-edge-bj-01-cloud-hz-03",
+      "source": "edge-bj-01",
+      "target": "cloud-hz-03",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 26,
+        "bandwidth_mbps": 4795,
+        "utilization_pct": 69,
+        "packet_loss_pct": 0.12,
+        "jitter_ms": 2.83
+      }
+    },
+    {
+      "id": "e-auto-edge-bj-01-cloud-sh-01",
+      "source": "edge-bj-01",
+      "target": "cloud-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 27,
+        "bandwidth_mbps": 4778,
+        "utilization_pct": 65,
+        "packet_loss_pct": 0.12,
+        "jitter_ms": 2.46
+      }
+    },
+    {
+      "id": "e-auto-edge-bj-01-cloud-cn-registry",
+      "source": "edge-bj-01",
+      "target": "cloud-cn-registry",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 24,
+        "bandwidth_mbps": 4884,
+        "utilization_pct": 51,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 2.52
+      }
+    },
+    {
+      "id": "e-auto-edge-bj-01-edge-bj-02",
+      "source": "edge-bj-01",
+      "target": "edge-bj-02",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 13,
+        "bandwidth_mbps": 3346,
+        "utilization_pct": 90,
+        "packet_loss_pct": 0.67,
+        "jitter_ms": 1.34
+      }
+    },
+    {
+      "id": "e-auto-edge-bj-01-edge-sh-01",
+      "source": "edge-bj-01",
+      "target": "edge-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 17,
+        "bandwidth_mbps": 3128,
+        "utilization_pct": 73,
+        "packet_loss_pct": 0.09,
+        "jitter_ms": 1.96
+      }
+    },
+    {
+      "id": "e-auto-edge-bj-01-gw-sh-01",
+      "source": "edge-bj-01",
+      "target": "gw-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 12,
+        "bandwidth_mbps": 2185,
+        "utilization_pct": 66,
+        "packet_loss_pct": 0.07,
+        "jitter_ms": 1.11
+      }
+    },
+    {
+      "id": "e-auto-edge-bj-02-cloud-bj-01",
+      "source": "edge-bj-02",
+      "target": "cloud-bj-01",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 23,
+        "bandwidth_mbps": 4996,
+        "utilization_pct": 88,
+        "packet_loss_pct": 0.71,
+        "jitter_ms": 1.84
+      }
+    },
+    {
+      "id": "e-auto-edge-bj-02-cloud-sh-01",
+      "source": "edge-bj-02",
+      "target": "cloud-sh-01",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 29,
+        "bandwidth_mbps": 4063,
+        "utilization_pct": 84,
+        "packet_loss_pct": 0.13,
+        "jitter_ms": 2.77
+      }
+    },
+    {
+      "id": "e-auto-edge-bj-02-cloud-cn-registry",
+      "source": "edge-bj-02",
+      "target": "cloud-cn-registry",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 31,
+        "bandwidth_mbps": 4129,
+        "utilization_pct": 71,
+        "packet_loss_pct": 0.14,
+        "jitter_ms": 3.23
+      }
+    },
+    {
+      "id": "e-auto-edge-bj-02-edge-bj-01",
+      "source": "edge-bj-02",
+      "target": "edge-bj-01",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 13,
+        "bandwidth_mbps": 3346,
+        "utilization_pct": 93,
+        "packet_loss_pct": 0.67,
+        "jitter_ms": 1.34
+      }
+    },
+    {
+      "id": "e-auto-edge-bj-02-edge-sh-01",
+      "source": "edge-bj-02",
+      "target": "edge-sh-01",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 19,
+        "bandwidth_mbps": 2413,
+        "utilization_pct": 93,
+        "packet_loss_pct": 0.69,
+        "jitter_ms": 2.27
+      }
+    },
+    {
+      "id": "e-auto-edge-bj-02-gw-sh-01",
+      "source": "edge-bj-02",
+      "target": "gw-sh-01",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 19,
+        "bandwidth_mbps": 1430,
+        "utilization_pct": 85,
+        "packet_loss_pct": 0.09,
+        "jitter_ms": 1.82
+      }
+    },
+    {
+      "id": "e-auto-edge-sh-01-cloud-hz-03",
+      "source": "edge-sh-01",
+      "target": "cloud-hz-03",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 20,
+        "bandwidth_mbps": 5758,
+        "utilization_pct": 67,
+        "packet_loss_pct": 0.1,
+        "jitter_ms": 1.9
+      }
+    },
+    {
+      "id": "e-auto-edge-sh-01-cloud-bj-01",
+      "source": "edge-sh-01",
+      "target": "cloud-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 27,
+        "bandwidth_mbps": 4778,
+        "utilization_pct": 66,
+        "packet_loss_pct": 0.12,
+        "jitter_ms": 2.46
+      }
+    },
+    {
+      "id": "e-auto-edge-sh-01-cloud-cn-registry",
+      "source": "edge-sh-01",
+      "target": "cloud-cn-registry",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 24,
+        "bandwidth_mbps": 4899,
+        "utilization_pct": 49,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 2.07
+      }
+    },
+    {
+      "id": "e-auto-edge-sh-01-edge-bj-01",
+      "source": "edge-sh-01",
+      "target": "edge-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 17,
+        "bandwidth_mbps": 3128,
+        "utilization_pct": 72,
+        "packet_loss_pct": 0.09,
+        "jitter_ms": 1.96
+      }
+    },
+    {
+      "id": "e-auto-edge-sh-01-edge-bj-02",
+      "source": "edge-sh-01",
+      "target": "edge-bj-02",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 19,
+        "bandwidth_mbps": 2413,
+        "utilization_pct": 87,
+        "packet_loss_pct": 0.69,
+        "jitter_ms": 2.27
+      }
+    },
+    {
+      "id": "e-auto-edge-sh-01-gw-bj-01",
+      "source": "edge-sh-01",
+      "target": "gw-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 12,
+        "bandwidth_mbps": 2185,
+        "utilization_pct": 64,
+        "packet_loss_pct": 0.07,
+        "jitter_ms": 1.11
+      }
+    },
+    {
+      "id": "e-auto-gw-bj-01-cloud-hz-03",
+      "source": "gw-bj-01",
+      "target": "cloud-hz-03",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 20,
+        "bandwidth_mbps": 2660,
+        "utilization_pct": 57,
+        "packet_loss_pct": 0.1,
+        "jitter_ms": 1.9
+      }
+    },
+    {
+      "id": "e-auto-gw-bj-01-cloud-bj-01",
+      "source": "gw-bj-01",
+      "target": "cloud-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 15,
+        "bandwidth_mbps": 3576,
+        "utilization_pct": 57,
+        "packet_loss_pct": 0.08,
+        "jitter_ms": 1.5
+      }
+    },
+    {
+      "id": "e-auto-gw-bj-01-cloud-sh-01",
+      "source": "gw-bj-01",
+      "target": "cloud-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 21,
+        "bandwidth_mbps": 2643,
+        "utilization_pct": 53,
+        "packet_loss_pct": 0.1,
+        "jitter_ms": 2.43
+      }
+    },
+    {
+      "id": "e-auto-gw-bj-01-cloud-cn-registry",
+      "source": "gw-bj-01",
+      "target": "cloud-cn-registry",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 23,
+        "bandwidth_mbps": 2709,
+        "utilization_pct": 53,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 1.99
+      }
+    },
+    {
+      "id": "e-auto-gw-bj-01-edge-sh-01",
+      "source": "gw-bj-01",
+      "target": "edge-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 12,
+        "bandwidth_mbps": 2185,
+        "utilization_pct": 62,
+        "packet_loss_pct": 0.07,
+        "jitter_ms": 1.11
+      }
+    },
+    {
+      "id": "e-auto-gw-bj-01-gw-sh-01",
+      "source": "gw-bj-01",
+      "target": "gw-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 19,
+        "bandwidth_mbps": 1846,
+        "utilization_pct": 54,
+        "packet_loss_pct": 0.09,
+        "jitter_ms": 2.12
+      }
+    },
+    {
+      "id": "e-auto-gw-sh-01-cloud-hz-03",
+      "source": "gw-sh-01",
+      "target": "cloud-hz-03",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 14,
+        "bandwidth_mbps": 3623,
+        "utilization_pct": 55,
+        "packet_loss_pct": 0.07,
+        "jitter_ms": 1.87
+      }
+    },
+    {
+      "id": "e-auto-gw-sh-01-cloud-bj-01",
+      "source": "gw-sh-01",
+      "target": "cloud-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 21,
+        "bandwidth_mbps": 2643,
+        "utilization_pct": 55,
+        "packet_loss_pct": 0.1,
+        "jitter_ms": 2.43
+      }
+    },
+    {
+      "id": "e-auto-gw-sh-01-cloud-sh-01",
+      "source": "gw-sh-01",
+      "target": "cloud-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 15,
+        "bandwidth_mbps": 3606,
+        "utilization_pct": 51,
+        "packet_loss_pct": 0.08,
+        "jitter_ms": 1.5
+      }
+    },
+    {
+      "id": "e-auto-gw-sh-01-cloud-cn-registry",
+      "source": "gw-sh-01",
+      "target": "cloud-cn-registry",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 23,
+        "bandwidth_mbps": 2724,
+        "utilization_pct": 37,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 2.44
+      }
+    },
+    {
+      "id": "e-auto-gw-sh-01-edge-bj-01",
+      "source": "gw-sh-01",
+      "target": "edge-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 12,
+        "bandwidth_mbps": 2185,
+        "utilization_pct": 60,
+        "packet_loss_pct": 0.07,
+        "jitter_ms": 1.11
+      }
+    },
+    {
+      "id": "e-auto-gw-sh-01-edge-bj-02",
+      "source": "gw-sh-01",
+      "target": "edge-bj-02",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 19,
+        "bandwidth_mbps": 1430,
+        "utilization_pct": 76,
+        "packet_loss_pct": 0.09,
+        "jitter_ms": 1.82
+      }
+    },
+    {
+      "id": "e-auto-gw-sh-01-gw-bj-01",
+      "source": "gw-sh-01",
+      "target": "gw-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 19,
+        "bandwidth_mbps": 1846,
+        "utilization_pct": 53,
+        "packet_loss_pct": 0.09,
+        "jitter_ms": 2.12
+      }
+    },
+    {
+      "id": "e-auto-full-cloud-hz-03-terminal-phone-01",
+      "source": "cloud-hz-03",
+      "target": "terminal-phone-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 39,
+        "bandwidth_mbps": 369,
+        "utilization_pct": 47,
+        "packet_loss_pct": 0.19,
+        "jitter_ms": 3.21
+      }
+    },
+    {
+      "id": "e-auto-full-cloud-hz-03-terminal-desktop-01",
+      "source": "cloud-hz-03",
+      "target": "terminal-desktop-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 34,
+        "bandwidth_mbps": 568,
+        "utilization_pct": 54,
+        "packet_loss_pct": 0.17,
+        "jitter_ms": 2.86
+      }
+    },
+    {
+      "id": "e-auto-full-cloud-bj-01-edge-gz-01",
+      "source": "cloud-bj-01",
+      "target": "edge-gz-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 49,
+        "bandwidth_mbps": 3087,
+        "utilization_pct": 64,
+        "packet_loss_pct": 0.23,
+        "jitter_ms": 3.75
+      }
+    },
+    {
+      "id": "e-auto-full-cloud-bj-01-terminal-phone-01",
+      "source": "cloud-bj-01",
+      "target": "terminal-phone-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 32,
+        "bandwidth_mbps": 1234,
+        "utilization_pct": 42,
+        "packet_loss_pct": 0.16,
+        "jitter_ms": 2.24
+      }
+    },
+    {
+      "id": "e-auto-full-cloud-bj-01-terminal-desktop-01",
+      "source": "cloud-bj-01",
+      "target": "terminal-desktop-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 41,
+        "bandwidth_mbps": 120,
+        "utilization_pct": 48,
+        "packet_loss_pct": 0.19,
+        "jitter_ms": 2.87
+      }
+    },
+    {
+      "id": "e-auto-full-cloud-sh-01-edge-gz-01",
+      "source": "cloud-sh-01",
+      "target": "edge-gz-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 52,
+        "bandwidth_mbps": 3081,
+        "utilization_pct": 59,
+        "packet_loss_pct": 0.24,
+        "jitter_ms": 4.12
+      }
+    },
+    {
+      "id": "e-auto-full-cloud-sh-01-terminal-phone-01",
+      "source": "cloud-sh-01",
+      "target": "terminal-phone-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 42,
+        "bandwidth_mbps": 339,
+        "utilization_pct": 37,
+        "packet_loss_pct": 0.2,
+        "jitter_ms": 3.1
+      }
+    },
+    {
+      "id": "e-auto-full-cloud-sh-01-terminal-desktop-01",
+      "source": "cloud-sh-01",
+      "target": "terminal-desktop-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 31,
+        "bandwidth_mbps": 580,
+        "utilization_pct": 43,
+        "packet_loss_pct": 0.15,
+        "jitter_ms": 2.33
+      }
+    },
+    {
+      "id": "e-auto-full-cloud-cn-registry-edge-gz-01",
+      "source": "cloud-cn-registry",
+      "target": "edge-gz-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 48,
+        "bandwidth_mbps": 3891,
+        "utilization_pct": 56,
+        "packet_loss_pct": 0.22,
+        "jitter_ms": 3.52
+      }
+    },
+    {
+      "id": "e-auto-full-cloud-cn-registry-terminal-phone-01",
+      "source": "cloud-cn-registry",
+      "target": "terminal-phone-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 38,
+        "bandwidth_mbps": 249,
+        "utilization_pct": 34,
+        "packet_loss_pct": 0.18,
+        "jitter_ms": 3.62
+      }
+    },
+    {
+      "id": "e-auto-full-cloud-cn-registry-terminal-desktop-01",
+      "source": "cloud-cn-registry",
+      "target": "terminal-desktop-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 40,
+        "bandwidth_mbps": 120,
+        "utilization_pct": 40,
+        "packet_loss_pct": 0.19,
+        "jitter_ms": 3.76
+      }
+    },
+    {
+      "id": "e-auto-full-edge-bj-01-edge-gz-01",
+      "source": "edge-bj-01",
+      "target": "edge-gz-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 41,
+        "bandwidth_mbps": 2413,
+        "utilization_pct": 74,
+        "packet_loss_pct": 0.19,
+        "jitter_ms": 3.67
+      }
+    },
+    {
+      "id": "e-auto-full-edge-bj-01-terminal-phone-01",
+      "source": "edge-bj-01",
+      "target": "terminal-phone-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 20,
+        "bandwidth_mbps": 1348,
+        "utilization_pct": 52,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 1.88
+      }
+    },
+    {
+      "id": "e-auto-full-edge-bj-01-terminal-desktop-01",
+      "source": "edge-bj-01",
+      "target": "terminal-desktop-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 23,
+        "bandwidth_mbps": 120,
+        "utilization_pct": 58,
+        "packet_loss_pct": 0.12,
+        "jitter_ms": 2.09
+      }
+    },
+    {
+      "id": "e-auto-full-edge-bj-02-edge-gz-01",
+      "source": "edge-bj-02",
+      "target": "edge-gz-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 42,
+        "bandwidth_mbps": 2407,
+        "utilization_pct": 84,
+        "packet_loss_pct": 0.2,
+        "jitter_ms": 3.9
+      }
+    },
+    {
+      "id": "e-auto-full-edge-bj-02-terminal-phone-01",
+      "source": "edge-bj-02",
+      "target": "terminal-phone-01",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 28,
+        "bandwidth_mbps": 643,
+        "utilization_pct": 69,
+        "packet_loss_pct": 0.14,
+        "jitter_ms": 2.6
+      }
+    },
+    {
+      "id": "e-auto-full-edge-bj-02-terminal-desktop-01",
+      "source": "edge-bj-02",
+      "target": "terminal-desktop-01",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 31,
+        "bandwidth_mbps": 120,
+        "utilization_pct": 75,
+        "packet_loss_pct": 0.15,
+        "jitter_ms": 2.81
+      }
+    },
+    {
+      "id": "e-auto-full-edge-sh-01-edge-gz-01",
+      "source": "edge-sh-01",
+      "target": "edge-gz-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 38,
+        "bandwidth_mbps": 2449,
+        "utilization_pct": 74,
+        "packet_loss_pct": 0.18,
+        "jitter_ms": 3.62
+      }
+    },
+    {
+      "id": "e-auto-full-edge-sh-01-terminal-phone-01",
+      "source": "edge-sh-01",
+      "target": "terminal-phone-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 24,
+        "bandwidth_mbps": 495,
+        "utilization_pct": 52,
+        "packet_loss_pct": 0.13,
+        "jitter_ms": 2.32
+      }
+    },
+    {
+      "id": "e-auto-full-edge-sh-01-terminal-desktop-01",
+      "source": "edge-sh-01",
+      "target": "terminal-desktop-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 19,
+        "bandwidth_mbps": 694,
+        "utilization_pct": 58,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 1.97
+      }
+    },
+    {
+      "id": "e-auto-full-edge-gz-01-cloud-bj-01",
+      "source": "edge-gz-01",
+      "target": "cloud-bj-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 49,
+        "bandwidth_mbps": 3087,
+        "utilization_pct": 63,
+        "packet_loss_pct": 0.23,
+        "jitter_ms": 3.75
+      }
+    },
+    {
+      "id": "e-auto-full-edge-gz-01-cloud-sh-01",
+      "source": "edge-gz-01",
+      "target": "cloud-sh-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 52,
+        "bandwidth_mbps": 3081,
+        "utilization_pct": 61,
+        "packet_loss_pct": 0.24,
+        "jitter_ms": 4.12
+      }
+    },
+    {
+      "id": "e-auto-full-edge-gz-01-cloud-cn-registry",
+      "source": "edge-gz-01",
+      "target": "cloud-cn-registry",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 48,
+        "bandwidth_mbps": 3891,
+        "utilization_pct": 59,
+        "packet_loss_pct": 0.22,
+        "jitter_ms": 3.52
+      }
+    },
+    {
+      "id": "e-auto-full-edge-gz-01-edge-bj-01",
+      "source": "edge-gz-01",
+      "target": "edge-bj-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 41,
+        "bandwidth_mbps": 2413,
+        "utilization_pct": 71,
+        "packet_loss_pct": 0.19,
+        "jitter_ms": 3.67
+      }
+    },
+    {
+      "id": "e-auto-full-edge-gz-01-edge-bj-02",
+      "source": "edge-gz-01",
+      "target": "edge-bj-02",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 42,
+        "bandwidth_mbps": 2407,
+        "utilization_pct": 78,
+        "packet_loss_pct": 0.2,
+        "jitter_ms": 3.9
+      }
+    },
+    {
+      "id": "e-auto-full-edge-gz-01-edge-sh-01",
+      "source": "edge-gz-01",
+      "target": "edge-sh-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 38,
+        "bandwidth_mbps": 2449,
+        "utilization_pct": 72,
+        "packet_loss_pct": 0.18,
+        "jitter_ms": 3.62
+      }
+    },
+    {
+      "id": "e-auto-full-edge-gz-01-gw-bj-01",
+      "source": "edge-gz-01",
+      "target": "gw-bj-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 36,
+        "bandwidth_mbps": 1565,
+        "utilization_pct": 68,
+        "packet_loss_pct": 0.17,
+        "jitter_ms": 3.16
+      }
+    },
+    {
+      "id": "e-auto-full-edge-gz-01-gw-sh-01",
+      "source": "edge-gz-01",
+      "target": "gw-sh-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 39,
+        "bandwidth_mbps": 1559,
+        "utilization_pct": 58,
+        "packet_loss_pct": 0.19,
+        "jitter_ms": 3.53
+      }
+    },
+    {
+      "id": "e-auto-full-edge-gz-01-terminal-phone-01",
+      "source": "edge-gz-01",
+      "target": "terminal-phone-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 46,
+        "bandwidth_mbps": 120,
+        "utilization_pct": 52,
+        "packet_loss_pct": 0.21,
+        "jitter_ms": 3.7
+      }
+    },
+    {
+      "id": "e-auto-full-edge-gz-01-terminal-desktop-01",
+      "source": "edge-gz-01",
+      "target": "terminal-desktop-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 48,
+        "bandwidth_mbps": 120,
+        "utilization_pct": 58,
+        "packet_loss_pct": 0.22,
+        "jitter_ms": 3.84
+      }
+    },
+    {
+      "id": "e-auto-full-gw-bj-01-edge-gz-01",
+      "source": "gw-bj-01",
+      "target": "edge-gz-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 36,
+        "bandwidth_mbps": 1565,
+        "utilization_pct": 68,
+        "packet_loss_pct": 0.17,
+        "jitter_ms": 3.16
+      }
+    },
+    {
+      "id": "e-auto-full-gw-bj-01-terminal-desktop-01",
+      "source": "gw-bj-01",
+      "target": "terminal-desktop-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 20,
+        "bandwidth_mbps": 669,
+        "utilization_pct": 52,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 1.72
+      }
+    },
+    {
+      "id": "e-auto-full-gw-sh-01-edge-gz-01",
+      "source": "gw-sh-01",
+      "target": "edge-gz-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 39,
+        "bandwidth_mbps": 1559,
+        "utilization_pct": 57,
+        "packet_loss_pct": 0.19,
+        "jitter_ms": 3.53
+      }
+    },
+    {
+      "id": "e-auto-full-gw-sh-01-terminal-phone-01",
+      "source": "gw-sh-01",
+      "target": "terminal-phone-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 21,
+        "bandwidth_mbps": 453,
+        "utilization_pct": 46,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 1.95
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-phone-01-cloud-hz-03",
+      "source": "terminal-phone-01",
+      "target": "cloud-hz-03",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 39,
+        "bandwidth_mbps": 369,
+        "utilization_pct": 43,
+        "packet_loss_pct": 0.19,
+        "jitter_ms": 3.21
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-phone-01-cloud-bj-01",
+      "source": "terminal-phone-01",
+      "target": "cloud-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 32,
+        "bandwidth_mbps": 1234,
+        "utilization_pct": 38,
+        "packet_loss_pct": 0.16,
+        "jitter_ms": 2.24
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-phone-01-cloud-sh-01",
+      "source": "terminal-phone-01",
+      "target": "cloud-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 42,
+        "bandwidth_mbps": 339,
+        "utilization_pct": 36,
+        "packet_loss_pct": 0.2,
+        "jitter_ms": 3.1
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-phone-01-cloud-cn-registry",
+      "source": "terminal-phone-01",
+      "target": "cloud-cn-registry",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 38,
+        "bandwidth_mbps": 249,
+        "utilization_pct": 34,
+        "packet_loss_pct": 0.18,
+        "jitter_ms": 3.62
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-phone-01-edge-bj-01",
+      "source": "terminal-phone-01",
+      "target": "edge-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 20,
+        "bandwidth_mbps": 1348,
+        "utilization_pct": 46,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 1.88
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-phone-01-edge-bj-02",
+      "source": "terminal-phone-01",
+      "target": "edge-bj-02",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 28,
+        "bandwidth_mbps": 643,
+        "utilization_pct": 60,
+        "packet_loss_pct": 0.14,
+        "jitter_ms": 2.6
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-phone-01-edge-sh-01",
+      "source": "terminal-phone-01",
+      "target": "edge-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 24,
+        "bandwidth_mbps": 495,
+        "utilization_pct": 47,
+        "packet_loss_pct": 0.13,
+        "jitter_ms": 2.32
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-phone-01-edge-gz-01",
+      "source": "terminal-phone-01",
+      "target": "edge-gz-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 46,
+        "bandwidth_mbps": 120,
+        "utilization_pct": 49,
+        "packet_loss_pct": 0.21,
+        "jitter_ms": 3.7
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-phone-01-gw-sh-01",
+      "source": "terminal-phone-01",
+      "target": "gw-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 21,
+        "bandwidth_mbps": 453,
+        "utilization_pct": 44,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 1.95
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-phone-01-terminal-desktop-01",
+      "source": "terminal-phone-01",
+      "target": "terminal-desktop-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 29,
+        "bandwidth_mbps": 398,
+        "utilization_pct": 33,
+        "packet_loss_pct": 0.15,
+        "jitter_ms": 2.19
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-desktop-01-cloud-hz-03",
+      "source": "terminal-desktop-01",
+      "target": "cloud-hz-03",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 34,
+        "bandwidth_mbps": 568,
+        "utilization_pct": 50,
+        "packet_loss_pct": 0.17,
+        "jitter_ms": 2.86
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-desktop-01-cloud-bj-01",
+      "source": "terminal-desktop-01",
+      "target": "cloud-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 41,
+        "bandwidth_mbps": 120,
+        "utilization_pct": 45,
+        "packet_loss_pct": 0.19,
+        "jitter_ms": 2.87
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-desktop-01-cloud-sh-01",
+      "source": "terminal-desktop-01",
+      "target": "cloud-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 31,
+        "bandwidth_mbps": 580,
+        "utilization_pct": 43,
+        "packet_loss_pct": 0.15,
+        "jitter_ms": 2.33
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-desktop-01-cloud-cn-registry",
+      "source": "terminal-desktop-01",
+      "target": "cloud-cn-registry",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 40,
+        "bandwidth_mbps": 120,
+        "utilization_pct": 41,
+        "packet_loss_pct": 0.19,
+        "jitter_ms": 3.76
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-desktop-01-edge-bj-01",
+      "source": "terminal-desktop-01",
+      "target": "edge-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 23,
+        "bandwidth_mbps": 120,
+        "utilization_pct": 53,
+        "packet_loss_pct": 0.12,
+        "jitter_ms": 2.09
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-desktop-01-edge-bj-02",
+      "source": "terminal-desktop-01",
+      "target": "edge-bj-02",
+      "relation": "network_link",
+      "status": "degraded",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 31,
+        "bandwidth_mbps": 120,
+        "utilization_pct": 67,
+        "packet_loss_pct": 0.15,
+        "jitter_ms": 2.81
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-desktop-01-edge-sh-01",
+      "source": "terminal-desktop-01",
+      "target": "edge-sh-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 19,
+        "bandwidth_mbps": 694,
+        "utilization_pct": 54,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 1.97
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-desktop-01-edge-gz-01",
+      "source": "terminal-desktop-01",
+      "target": "edge-gz-01",
+      "relation": "network_link",
+      "status": "down",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 48,
+        "bandwidth_mbps": 120,
+        "utilization_pct": 56,
+        "packet_loss_pct": 0.22,
+        "jitter_ms": 3.84
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-desktop-01-gw-bj-01",
+      "source": "terminal-desktop-01",
+      "target": "gw-bj-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 20,
+        "bandwidth_mbps": 669,
+        "utilization_pct": 50,
+        "packet_loss_pct": 0.11,
+        "jitter_ms": 1.72
+      }
+    },
+    {
+      "id": "e-auto-full-terminal-desktop-01-terminal-phone-01",
+      "source": "terminal-desktop-01",
+      "target": "terminal-phone-01",
+      "relation": "network_link",
+      "status": "up",
+      "metrics": {
+        "ts": "2026-03-27T11:59:55+08:00",
+        "latency_ms": 29,
+        "bandwidth_mbps": 398,
+        "utilization_pct": 34,
+        "packet_loss_pct": 0.15,
+        "jitter_ms": 2.19
+      }
+    }
+  ]
+}

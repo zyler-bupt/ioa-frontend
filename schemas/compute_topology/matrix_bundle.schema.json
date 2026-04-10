@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://acrg.local/schemas/compute_topology/matrix_bundle.schema.json",
+  "title": "Compute Topology MatrixBundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "generated_at",
+    "source_snapshot_version",
+    "source_snapshot_generated_at",
+    "node_index",
+    "adjacency_matrix",
+    "latency_matrix",
+    "bandwidth_matrix",
+    "node_load_vector"
+  ],
+  "properties": {
+    "version": {
+      "const": "compute-topology-matrix/v1"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_snapshot_version": {
+      "const": "compute-topology/v1"
+    },
+    "source_snapshot_generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "node_index": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "adjacency_matrix": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "enum": [0, 1]
+        }
+      }
+    },
+    "latency_matrix": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "bandwidth_matrix": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "node_load_vector": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  }
+}

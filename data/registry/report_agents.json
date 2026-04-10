@@ -1,0 +1,380 @@
+[
+    {
+      "name": "report_incident_summary_cloud_gpu_fast_v1",
+      "display_name": "事件摘要报告",
+      "agent_type": "report_agent",
+      "executor": "ReportAgent",
+      "capability_type": "report_incident_summary",
+      "category": "report_generation_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "围绕事件核心信息生成结构化摘要报告。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "incident_description"
+      ],
+      "optional_slots": [
+        "evidence_list",
+        "tone"
+      ],
+      "tools_involved": [
+        "ReportComposer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "把事件描述整理成摘要报告",
+        "生成简短的事件报告",
+        "输出事件要点摘要"
+      ],
+      "fallback_prompt": "请提供事件描述与关键事实。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "report_incident_summary_edge_cpu_balanced_v1",
+      "display_name": "事件摘要报告",
+      "agent_type": "report_agent",
+      "executor": "ReportAgent",
+      "capability_type": "report_incident_summary",
+      "category": "report_generation_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "围绕事件核心信息生成结构化摘要报告。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "incident_description"
+      ],
+      "optional_slots": [
+        "evidence_list",
+        "tone"
+      ],
+      "tools_involved": [
+        "ReportComposer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "把事件描述整理成摘要报告",
+        "生成简短的事件报告",
+        "输出事件要点摘要"
+      ],
+      "fallback_prompt": "请提供事件描述与关键事实。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "report_evidence_compilation_cloud_gpu_fast_v1",
+      "display_name": "证据汇编报告",
+      "agent_type": "report_agent",
+      "executor": "ReportAgent",
+      "capability_type": "report_evidence_compilation",
+      "category": "report_generation_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "整理多条证据并汇编为可引用的报告文本。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "evidence_items"
+      ],
+      "optional_slots": [
+        "format",
+        "ordering_rules"
+      ],
+      "tools_involved": [
+        "EvidenceFormatter",
+        "ReportComposer"
+      ],
+      "relationship_type": "Nto1",
+      "example_queries": [
+        "把这些证据汇总成报告",
+        "整理证据材料并输出报告",
+        "生成证据清单型报告"
+      ],
+      "fallback_prompt": "请提供证据列表或证据条目。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "report_evidence_compilation_edge_cpu_balanced_v1",
+      "display_name": "证据汇编报告",
+      "agent_type": "report_agent",
+      "executor": "ReportAgent",
+      "capability_type": "report_evidence_compilation",
+      "category": "report_generation_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "整理多条证据并汇编为可引用的报告文本。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "evidence_items"
+      ],
+      "optional_slots": [
+        "format",
+        "ordering_rules"
+      ],
+      "tools_involved": [
+        "EvidenceFormatter",
+        "ReportComposer"
+      ],
+      "relationship_type": "Nto1",
+      "example_queries": [
+        "把这些证据汇总成报告",
+        "整理证据材料并输出报告",
+        "生成证据清单型报告"
+      ],
+      "fallback_prompt": "请提供证据列表或证据条目。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "report_timeline_brief_cloud_gpu_fast_v1",
+      "display_name": "时间线简报",
+      "agent_type": "report_agent",
+      "executor": "ReportAgent",
+      "capability_type": "report_timeline_brief",
+      "category": "report_generation_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "根据事件时间线生成简报式汇总文本。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "event_timeline"
+      ],
+      "optional_slots": [
+        "detail_level",
+        "time_range"
+      ],
+      "tools_involved": [
+        "TimelineFormatter"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "按时间线生成简报",
+        "把事件过程整理成时间线报告",
+        "输出关键阶段时间线"
+      ],
+      "fallback_prompt": "请提供事件时间线数据。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "report_timeline_brief_edge_cpu_balanced_v1",
+      "display_name": "时间线简报",
+      "agent_type": "report_agent",
+      "executor": "ReportAgent",
+      "capability_type": "report_timeline_brief",
+      "category": "report_generation_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "根据事件时间线生成简报式汇总文本。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "event_timeline"
+      ],
+      "optional_slots": [
+        "detail_level",
+        "time_range"
+      ],
+      "tools_involved": [
+        "TimelineFormatter"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "按时间线生成简报",
+        "把事件过程整理成时间线报告",
+        "输出关键阶段时间线"
+      ],
+      "fallback_prompt": "请提供事件时间线数据。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "report_risk_assessment_cloud_gpu_fast_v1",
+      "display_name": "风险评估报告",
+      "agent_type": "report_agent",
+      "executor": "ReportAgent",
+      "capability_type": "report_risk_assessment",
+      "category": "report_generation_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "基于风险因子输出评估结论与建议。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "risk_factors"
+      ],
+      "optional_slots": [
+        "mitigation_suggestions",
+        "risk_scale"
+      ],
+      "tools_involved": [
+        "RiskNarrator",
+        "ReportComposer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "生成风险评估报告",
+        "输出风险等级与建议",
+        "评估风险并给出结论"
+      ],
+      "fallback_prompt": "请提供风险因子或评估依据。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "report_risk_assessment_edge_cpu_balanced_v1",
+      "display_name": "风险评估报告",
+      "agent_type": "report_agent",
+      "executor": "ReportAgent",
+      "capability_type": "report_risk_assessment",
+      "category": "report_generation_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "基于风险因子输出评估结论与建议。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "risk_factors"
+      ],
+      "optional_slots": [
+        "mitigation_suggestions",
+        "risk_scale"
+      ],
+      "tools_involved": [
+        "RiskNarrator",
+        "ReportComposer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "生成风险评估报告",
+        "输出风险等级与建议",
+        "评估风险并给出结论"
+      ],
+      "fallback_prompt": "请提供风险因子或评估依据。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "report_action_recommendation_cloud_gpu_fast_v1",
+      "display_name": "处置建议报告",
+      "agent_type": "report_agent",
+      "executor": "ReportAgent",
+      "capability_type": "report_action_recommendation",
+      "category": "report_generation_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "基于现状总结生成处置建议与行动方案。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "situation_summary"
+      ],
+      "optional_slots": [
+        "constraints",
+        "priority_level"
+      ],
+      "tools_involved": [
+        "RecommendationWriter"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "给出处理建议并形成报告",
+        "输出行动方案建议",
+        "根据现状生成处置建议"
+      ],
+      "fallback_prompt": "请提供当前情况摘要与约束条件。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "report_action_recommendation_edge_cpu_balanced_v1",
+      "display_name": "处置建议报告",
+      "agent_type": "report_agent",
+      "executor": "ReportAgent",
+      "capability_type": "report_action_recommendation",
+      "category": "report_generation_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "基于现状总结生成处置建议与行动方案。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "situation_summary"
+      ],
+      "optional_slots": [
+        "constraints",
+        "priority_level"
+      ],
+      "tools_involved": [
+        "RecommendationWriter"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "给出处理建议并形成报告",
+        "输出行动方案建议",
+        "根据现状生成处置建议"
+      ],
+      "fallback_prompt": "请提供当前情况摘要与约束条件。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "report_multi_source_digest_cloud_gpu_fast_v1",
+      "display_name": "多源摘要汇总",
+      "agent_type": "report_agent",
+      "executor": "ReportAgent",
+      "capability_type": "report_multi_source_digest",
+      "category": "report_generation_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "融合多来源摘要并形成统一汇总报告。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "source_summaries"
+      ],
+      "optional_slots": [
+        "focus_aspect",
+        "format"
+      ],
+      "tools_involved": [
+        "SummaryMerger",
+        "ReportComposer"
+      ],
+      "relationship_type": "Nto1",
+      "example_queries": [
+        "汇总多个来源的摘要",
+        "把多份信息整合成一份报告",
+        "融合多源结论输出总览"
+      ],
+      "fallback_prompt": "请提供多来源摘要内容。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "report_multi_source_digest_edge_cpu_balanced_v1",
+      "display_name": "多源摘要汇总",
+      "agent_type": "report_agent",
+      "executor": "ReportAgent",
+      "capability_type": "report_multi_source_digest",
+      "category": "report_generation_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "融合多来源摘要并形成统一汇总报告。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "source_summaries"
+      ],
+      "optional_slots": [
+        "focus_aspect",
+        "format"
+      ],
+      "tools_involved": [
+        "SummaryMerger",
+        "ReportComposer"
+      ],
+      "relationship_type": "Nto1",
+      "example_queries": [
+        "汇总多个来源的摘要",
+        "把多份信息整合成一份报告",
+        "融合多源结论输出总览"
+      ],
+      "fallback_prompt": "请提供多来源摘要内容。",
+      "mock": true,
+      "enabled_for_execution": false
+    }
+  ]

@@ -1,0 +1,382 @@
+[
+    {
+      "name": "meteorology_nowcast_overview_cloud_gpu_fast_v1",
+      "display_name": "天气实况概览",
+      "agent_type": "meteorology_agent",
+      "executor": "MeteorologyAgent",
+      "capability_type": "meteorology_nowcast_overview",
+      "category": "risk_assessment_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "提供指定地点的当前天气实况与关键指标。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "location"
+      ],
+      "optional_slots": [
+        "time_zone",
+        "data_source"
+      ],
+      "tools_involved": [
+        "WeatherNowcast"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "现在的天气情况怎么样",
+        "给出当前位置的实时天气",
+        "查看当前温度和风力"
+      ],
+      "fallback_prompt": "请提供需要查询的地点。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "meteorology_nowcast_overview_edge_cpu_balanced_v1",
+      "display_name": "天气实况概览",
+      "agent_type": "meteorology_agent",
+      "executor": "MeteorologyAgent",
+      "capability_type": "meteorology_nowcast_overview",
+      "category": "risk_assessment_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "提供指定地点的当前天气实况与关键指标。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "location"
+      ],
+      "optional_slots": [
+        "time_zone",
+        "data_source"
+      ],
+      "tools_involved": [
+        "WeatherNowcast"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "现在的天气情况怎么样",
+        "给出当前位置的实时天气",
+        "查看当前温度和风力"
+      ],
+      "fallback_prompt": "请提供需要查询的地点。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "meteorology_forecast_digest_cloud_gpu_fast_v1",
+      "display_name": "天气预报摘要",
+      "agent_type": "meteorology_agent",
+      "executor": "MeteorologyAgent",
+      "capability_type": "meteorology_forecast_digest",
+      "category": "risk_assessment_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "生成未来多天的天气趋势与要点摘要。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "location",
+        "forecast_days"
+      ],
+      "optional_slots": [
+        "focus_metric",
+        "detail_level"
+      ],
+      "tools_involved": [
+        "WeatherForecast"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "给我未来三天的天气摘要",
+        "这周天气趋势如何",
+        "预报未来五天的降雨情况"
+      ],
+      "fallback_prompt": "请提供地点和需要的预报天数。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "meteorology_forecast_digest_edge_cpu_balanced_v1",
+      "display_name": "天气预报摘要",
+      "agent_type": "meteorology_agent",
+      "executor": "MeteorologyAgent",
+      "capability_type": "meteorology_forecast_digest",
+      "category": "risk_assessment_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "生成未来多天的天气趋势与要点摘要。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "location",
+        "forecast_days"
+      ],
+      "optional_slots": [
+        "focus_metric",
+        "detail_level"
+      ],
+      "tools_involved": [
+        "WeatherForecast"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "给我未来三天的天气摘要",
+        "这周天气趋势如何",
+        "预报未来五天的降雨情况"
+      ],
+      "fallback_prompt": "请提供地点和需要的预报天数。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "meteorology_precipitation_risk_cloud_gpu_fast_v1",
+      "display_name": "降水风险评估",
+      "agent_type": "meteorology_agent",
+      "executor": "MeteorologyAgent",
+      "capability_type": "meteorology_precipitation_risk",
+      "category": "risk_assessment_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "评估指定时间段的降水概率与风险等级。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "location",
+        "time_range"
+      ],
+      "optional_slots": [
+        "risk_threshold",
+        "precip_type"
+      ],
+      "tools_involved": [
+        "PrecipitationAnalyzer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "今晚是否有降雨风险",
+        "评估明天的降水风险等级",
+        "这段时间会下大雨吗"
+      ],
+      "fallback_prompt": "请提供地点与时间范围。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "meteorology_precipitation_risk_edge_cpu_balanced_v1",
+      "display_name": "降水风险评估",
+      "agent_type": "meteorology_agent",
+      "executor": "MeteorologyAgent",
+      "capability_type": "meteorology_precipitation_risk",
+      "category": "risk_assessment_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "评估指定时间段的降水概率与风险等级。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "location",
+        "time_range"
+      ],
+      "optional_slots": [
+        "risk_threshold",
+        "precip_type"
+      ],
+      "tools_involved": [
+        "PrecipitationAnalyzer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "今晚是否有降雨风险",
+        "评估明天的降水风险等级",
+        "这段时间会下大雨吗"
+      ],
+      "fallback_prompt": "请提供地点与时间范围。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "meteorology_wind_impact_cloud_gpu_fast_v1",
+      "display_name": "风力影响评估",
+      "agent_type": "meteorology_agent",
+      "executor": "MeteorologyAgent",
+      "capability_type": "meteorology_wind_impact",
+      "category": "risk_assessment_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "分析风力对指定资产或任务的影响程度。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "location",
+        "asset_type"
+      ],
+      "optional_slots": [
+        "wind_threshold",
+        "direction_focus"
+      ],
+      "tools_involved": [
+        "WindAnalyzer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "评估大风对无人机任务的影响",
+        "风力是否会影响户外作业",
+        "分析风速风险"
+      ],
+      "fallback_prompt": "请提供地点和受影响的资产类型。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "meteorology_wind_impact_edge_cpu_balanced_v1",
+      "display_name": "风力影响评估",
+      "agent_type": "meteorology_agent",
+      "executor": "MeteorologyAgent",
+      "capability_type": "meteorology_wind_impact",
+      "category": "risk_assessment_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "分析风力对指定资产或任务的影响程度。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "location",
+        "asset_type"
+      ],
+      "optional_slots": [
+        "wind_threshold",
+        "direction_focus"
+      ],
+      "tools_involved": [
+        "WindAnalyzer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "评估大风对无人机任务的影响",
+        "风力是否会影响户外作业",
+        "分析风速风险"
+      ],
+      "fallback_prompt": "请提供地点和受影响的资产类型。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "meteorology_visibility_alert_cloud_gpu_fast_v1",
+      "display_name": "能见度预警",
+      "agent_type": "meteorology_agent",
+      "executor": "MeteorologyAgent",
+      "capability_type": "meteorology_visibility_alert",
+      "category": "risk_assessment_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "判断能见度变化并给出预警提示。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "location",
+        "time_range"
+      ],
+      "optional_slots": [
+        "visibility_threshold"
+      ],
+      "tools_involved": [
+        "VisibilityAnalyzer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "评估明早能见度风险",
+        "是否有大雾预警",
+        "给出能见度变化提示"
+      ],
+      "fallback_prompt": "请提供地点与时间范围。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "meteorology_visibility_alert_edge_cpu_balanced_v1",
+      "display_name": "能见度预警",
+      "agent_type": "meteorology_agent",
+      "executor": "MeteorologyAgent",
+      "capability_type": "meteorology_visibility_alert",
+      "category": "risk_assessment_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "判断能见度变化并给出预警提示。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "location",
+        "time_range"
+      ],
+      "optional_slots": [
+        "visibility_threshold"
+      ],
+      "tools_involved": [
+        "VisibilityAnalyzer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "评估明早能见度风险",
+        "是否有大雾预警",
+        "给出能见度变化提示"
+      ],
+      "fallback_prompt": "请提供地点与时间范围。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "meteorology_severe_weather_alert_cloud_gpu_fast_v1",
+      "display_name": "极端天气预警",
+      "agent_type": "meteorology_agent",
+      "executor": "MeteorologyAgent",
+      "capability_type": "meteorology_severe_weather_alert",
+      "category": "risk_assessment_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "识别暴雨、雷暴等极端天气并生成预警信息。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "location",
+        "alert_type"
+      ],
+      "optional_slots": [
+        "thresholds",
+        "lead_time_hours"
+      ],
+      "tools_involved": [
+        "WeatherAlert"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "是否有雷暴预警",
+        "生成暴雨天气预警",
+        "提醒我极端天气风险"
+      ],
+      "fallback_prompt": "请提供地点和预警类型。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "meteorology_severe_weather_alert_edge_cpu_balanced_v1",
+      "display_name": "极端天气预警",
+      "agent_type": "meteorology_agent",
+      "executor": "MeteorologyAgent",
+      "capability_type": "meteorology_severe_weather_alert",
+      "category": "risk_assessment_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "识别暴雨、雷暴等极端天气并生成预警信息。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "location",
+        "alert_type"
+      ],
+      "optional_slots": [
+        "thresholds",
+        "lead_time_hours"
+      ],
+      "tools_involved": [
+        "WeatherAlert"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "是否有雷暴预警",
+        "生成暴雨天气预警",
+        "提醒我极端天气风险"
+      ],
+      "fallback_prompt": "请提供地点和预警类型。",
+      "mock": true,
+      "enabled_for_execution": false
+    }
+  ]

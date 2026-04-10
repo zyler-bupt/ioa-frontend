@@ -1,0 +1,378 @@
+[
+    {
+      "name": "fusion_multimodal_summary_cloud_gpu_fast_v1",
+      "display_name": "多模态统一摘要",
+      "agent_type": "fusion_agent",
+      "executor": "ReportAgent",
+      "capability_type": "fusion_multimodal_summary",
+      "category": "multimodal_fusion_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "融合多模态输入生成统一摘要与结论。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "multimodal_inputs"
+      ],
+      "optional_slots": [
+        "summary_style",
+        "focus_aspect"
+      ],
+      "tools_involved": [
+        "FusionSummarizer"
+      ],
+      "relationship_type": "1toN_variant",
+      "example_queries": [
+        "整合视频和文本给出摘要",
+        "融合多模态内容生成总结",
+        "输出统一结论与摘要"
+      ],
+      "fallback_prompt": "请提供需要融合的多模态输入。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "fusion_multimodal_summary_edge_cpu_balanced_v1",
+      "display_name": "多模态统一摘要",
+      "agent_type": "fusion_agent",
+      "executor": "ReportAgent",
+      "capability_type": "fusion_multimodal_summary",
+      "category": "multimodal_fusion_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "融合多模态输入生成统一摘要与结论。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "multimodal_inputs"
+      ],
+      "optional_slots": [
+        "summary_style",
+        "focus_aspect"
+      ],
+      "tools_involved": [
+        "FusionSummarizer"
+      ],
+      "relationship_type": "1toN_variant",
+      "example_queries": [
+        "整合视频和文本给出摘要",
+        "融合多模态内容生成总结",
+        "输出统一结论与摘要"
+      ],
+      "fallback_prompt": "请提供需要融合的多模态输入。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "fusion_text_video_alignment_cloud_gpu_fast_v1",
+      "display_name": "文本-视频对齐",
+      "agent_type": "fusion_agent",
+      "executor": "ReportAgent",
+      "capability_type": "fusion_text_video_alignment",
+      "category": "multimodal_fusion_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "对齐文本描述与视频片段，标注对应关系。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "video_source",
+        "text_source"
+      ],
+      "optional_slots": [
+        "alignment_focus",
+        "time_range"
+      ],
+      "tools_involved": [
+        "MultimodalAligner"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "把文字说明对齐到视频片段",
+        "文本和视频内容是否一致",
+        "标注文本对应的时间段"
+      ],
+      "fallback_prompt": "请提供视频与文本内容。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "fusion_text_video_alignment_edge_cpu_balanced_v1",
+      "display_name": "文本-视频对齐",
+      "agent_type": "fusion_agent",
+      "executor": "ReportAgent",
+      "capability_type": "fusion_text_video_alignment",
+      "category": "multimodal_fusion_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "对齐文本描述与视频片段，标注对应关系。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "video_source",
+        "text_source"
+      ],
+      "optional_slots": [
+        "alignment_focus",
+        "time_range"
+      ],
+      "tools_involved": [
+        "MultimodalAligner"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "把文字说明对齐到视频片段",
+        "文本和视频内容是否一致",
+        "标注文本对应的时间段"
+      ],
+      "fallback_prompt": "请提供视频与文本内容。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "fusion_image_audio_crosscheck_cloud_gpu_fast_v1",
+      "display_name": "图像-音频互证",
+      "agent_type": "fusion_agent",
+      "executor": "ReportAgent",
+      "capability_type": "fusion_image_audio_crosscheck",
+      "category": "multimodal_fusion_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "对图像与音频证据进行交叉验证与一致性判断。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "image_source",
+        "audio_source"
+      ],
+      "optional_slots": [
+        "evidence_focus",
+        "confidence_threshold"
+      ],
+      "tools_involved": [
+        "CrossModalVerifier"
+      ],
+      "relationship_type": "Nto1",
+      "example_queries": [
+        "核对图像与音频是否一致",
+        "图像内容能否被音频佐证",
+        "做一次跨模态互证"
+      ],
+      "fallback_prompt": "请提供图像与音频材料。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "fusion_image_audio_crosscheck_edge_cpu_balanced_v1",
+      "display_name": "图像-音频互证",
+      "agent_type": "fusion_agent",
+      "executor": "ReportAgent",
+      "capability_type": "fusion_image_audio_crosscheck",
+      "category": "multimodal_fusion_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "对图像与音频证据进行交叉验证与一致性判断。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "image_source",
+        "audio_source"
+      ],
+      "optional_slots": [
+        "evidence_focus",
+        "confidence_threshold"
+      ],
+      "tools_involved": [
+        "CrossModalVerifier"
+      ],
+      "relationship_type": "Nto1",
+      "example_queries": [
+        "核对图像与音频是否一致",
+        "图像内容能否被音频佐证",
+        "做一次跨模态互证"
+      ],
+      "fallback_prompt": "请提供图像与音频材料。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "fusion_event_consistency_check_cloud_gpu_fast_v1",
+      "display_name": "事件一致性校验",
+      "agent_type": "fusion_agent",
+      "executor": "ReportAgent",
+      "capability_type": "fusion_event_consistency_check",
+      "category": "multimodal_fusion_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "核验多来源事件描述的一致性与冲突点。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "event_descriptions"
+      ],
+      "optional_slots": [
+        "conflict_policy",
+        "confidence_threshold"
+      ],
+      "tools_involved": [
+        "ConsistencyChecker"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "检查多方描述是否一致",
+        "找出事件描述的冲突点",
+        "评估一致性程度"
+      ],
+      "fallback_prompt": "请提供多来源事件描述。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "fusion_event_consistency_check_edge_cpu_balanced_v1",
+      "display_name": "事件一致性校验",
+      "agent_type": "fusion_agent",
+      "executor": "ReportAgent",
+      "capability_type": "fusion_event_consistency_check",
+      "category": "multimodal_fusion_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "核验多来源事件描述的一致性与冲突点。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "event_descriptions"
+      ],
+      "optional_slots": [
+        "conflict_policy",
+        "confidence_threshold"
+      ],
+      "tools_involved": [
+        "ConsistencyChecker"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "检查多方描述是否一致",
+        "找出事件描述的冲突点",
+        "评估一致性程度"
+      ],
+      "fallback_prompt": "请提供多来源事件描述。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "fusion_evidence_reasoning_cloud_gpu_fast_v1",
+      "display_name": "证据链推理",
+      "agent_type": "fusion_agent",
+      "executor": "ReportAgent",
+      "capability_type": "fusion_evidence_reasoning",
+      "category": "multimodal_fusion_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "基于多条证据推理事件关系与因果链。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "evidence_items"
+      ],
+      "optional_slots": [
+        "reasoning_depth",
+        "hypothesis"
+      ],
+      "tools_involved": [
+        "EvidenceReasoner"
+      ],
+      "relationship_type": "1toN_variant",
+      "example_queries": [
+        "根据证据推理事件关系",
+        "形成证据链结论",
+        "推理可能的因果链"
+      ],
+      "fallback_prompt": "请提供证据条目与推理目标。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "fusion_evidence_reasoning_edge_cpu_balanced_v1",
+      "display_name": "证据链推理",
+      "agent_type": "fusion_agent",
+      "executor": "ReportAgent",
+      "capability_type": "fusion_evidence_reasoning",
+      "category": "multimodal_fusion_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "基于多条证据推理事件关系与因果链。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "evidence_items"
+      ],
+      "optional_slots": [
+        "reasoning_depth",
+        "hypothesis"
+      ],
+      "tools_involved": [
+        "EvidenceReasoner"
+      ],
+      "relationship_type": "1toN_variant",
+      "example_queries": [
+        "根据证据推理事件关系",
+        "形成证据链结论",
+        "推理可能的因果链"
+      ],
+      "fallback_prompt": "请提供证据条目与推理目标。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "fusion_entity_resolution_cloud_gpu_fast_v1",
+      "display_name": "实体对齐消歧",
+      "agent_type": "fusion_agent",
+      "executor": "ReportAgent",
+      "capability_type": "fusion_entity_resolution",
+      "category": "multimodal_fusion_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "对多来源实体进行对齐与消歧，输出统一实体视图。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "entity_mentions"
+      ],
+      "optional_slots": [
+        "linking_rules",
+        "context_scope"
+      ],
+      "tools_involved": [
+        "EntityResolver"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "把多份资料里的同一实体对齐",
+        "解决实体名称歧义",
+        "输出统一的实体列表"
+      ],
+      "fallback_prompt": "请提供实体提及列表与上下文。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "fusion_entity_resolution_edge_cpu_balanced_v1",
+      "display_name": "实体对齐消歧",
+      "agent_type": "fusion_agent",
+      "executor": "ReportAgent",
+      "capability_type": "fusion_entity_resolution",
+      "category": "multimodal_fusion_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "对多来源实体进行对齐与消歧，输出统一实体视图。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "entity_mentions"
+      ],
+      "optional_slots": [
+        "linking_rules",
+        "context_scope"
+      ],
+      "tools_involved": [
+        "EntityResolver"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "把多份资料里的同一实体对齐",
+        "解决实体名称歧义",
+        "输出统一的实体列表"
+      ],
+      "fallback_prompt": "请提供实体提及列表与上下文。",
+      "mock": true,
+      "enabled_for_execution": false
+    }
+  ]

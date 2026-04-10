@@ -22,6 +22,7 @@
       filterStatus: "active",
       currentRequest: "",
     };
+    window.runtimeRegisteredAgents = window.runtimeRegisteredAgents || [];
   
     // ========== 工具函数：百分比解析 ==========
     function _parsePercentLike(v) {
@@ -89,11 +90,75 @@
     if (level === "yellow") return "#f59e0b";
     return "#22c55e";
   }
+
+  function getStoredNewAgents() {
+    const raw = localStorage.getItem("newAgents");
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function getDiscoverySourceAgents() {
+    const base = [
+      ...(Array.isArray(window.agentDatabase) ? window.agentDatabase.filter((a) => a && a.type === "agent") : []),
+      ...(Array.isArray(window.registryAgents) ? window.registryAgents : []),
+    ];
+    const extras = [
+      ...getStoredNewAgents(),
+      ...(Array.isArray(window.runtimeRegisteredAgents) ? window.runtimeRegisteredAgents : []),
+    ];
+    const merged = new Map();
+    base.forEach((agent) => {
+      if (agent && agent.id) merged.set(agent.id, agent);
+    });
+    extras.forEach((agent) => {
+      if (agent && agent.id) merged.set(agent.id, agent);
+    });
+    return Array.from(merged.values());
+  }
+
+  function renderDiscoveryMessage(text) {
+    const discoveryList = document.getElementById("discoveryList");
+    if (!discoveryList) return;
+    const parent = discoveryList.parentElement;
+    if (!parent) return;
+
+    let node = document.getElementById("discoveryLoadMessage");
+    if (!text) {
+      if (node) node.remove();
+      return;
+    }
+
+    if (!node) {
+      node = document.createElement("div");
+      node.id = "discoveryLoadMessage";
+      node.style.padding = "10px 12px";
+      node.style.borderRadius = "8px";
+      node.style.marginBottom = "10px";
+      node.style.background = "rgba(239, 68, 68, 0.08)";
+      node.style.border = "1px solid rgba(239, 68, 68, 0.25)";
+      node.style.color = "#b42318";
+      node.style.fontSize = "12px";
+      parent.insertBefore(node, discoveryList);
+    }
+
+    node.textContent = `Registry load failed: ${text}`;
+  }
   
     // ========== 初始化 ==========
     function initializeDiscoveryProcess() {
-      // 默认渲染全部 agentDatabase
-      renderDiscoveryList(window.agentDatabase || []);
+      if (window.registryLoadError) {
+        renderDiscoveryMessage(window.registryLoadError);
+        renderDiscoveryList(getDiscoverySourceAgents());
+      } else {
+        renderDiscoveryMessage("");
+        renderDiscoveryList(getDiscoverySourceAgents());
+      }
+      window.initializeStats?.();
       updateSelectedAgentsList();
     }
   
@@ -104,6 +169,14 @@
   
       discoveryList.innerHTML = "";
       const list = Array.isArray(agents) ? agents : [];
+
+      if (!list.length) {
+        const empty = document.createElement("div");
+        empty.className = "agent-card";
+        empty.textContent = "No agents available from registry.";
+        discoveryList.appendChild(empty);
+        return;
+      }
   
       list.forEach((agent) => {
         const card = document.createElement("div");
@@ -227,7 +300,11 @@
   
         const matchLabel = matchPercent.toFixed(2).replace(/\.00$/, "");
         const agentName = item.agent_name || item.name || item.workflow_id || "";
-        const hit = window.agentDatabase?.find(
+        const lookupPool = [
+          ...(Array.isArray(window.registryAgents) ? window.registryAgents : []),
+          ...(Array.isArray(window.agentDatabase) ? window.agentDatabase : []),
+        ];
+        const hit = lookupPool.find(
           (a) => a.name === agentName || a.displayName === agentName || a.id === agentName
         );
         const displayName = hit?.displayName || hit?.name || agentName;
@@ -330,6 +407,7 @@
                 return raw;
               };
         const newAgents = JSON.parse(newAgentsData);
+        window.runtimeRegisteredAgents = Array.isArray(newAgents) ? newAgents : [];
         (newAgents || []).forEach((agent) => {
           const normalizedNode = normalizeNodeId(
             agent.node_id || agent.nodeId || agent.nodeLabel,
@@ -357,8 +435,14 @@
         // 清掉缓存
         localStorage.removeItem("newAgents");
   
-        // 重新渲染 Discovery
-        renderDiscoveryList(window.agentDatabase);
+        // 重新渲染 Discovery（仅列表数据，不注入拓扑基线）
+        if (window.registryLoadError) {
+          renderDiscoveryMessage(window.registryLoadError);
+          renderDiscoveryList([]);
+        } else {
+          renderDiscoveryMessage("");
+          renderDiscoveryList(getDiscoverySourceAgents());
+        }
   
         console.log("Loaded", newAgents.length, "new agents from localStorage");
       } catch (e) {

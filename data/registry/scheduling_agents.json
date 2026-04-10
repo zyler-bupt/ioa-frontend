@@ -1,0 +1,380 @@
+[
+    {
+      "name": "scheduling_resource_match_cloud_gpu_fast_v1",
+      "display_name": "资源匹配建议",
+      "agent_type": "scheduling_agent",
+      "executor": "ReportAgent",
+      "capability_type": "scheduling_resource_match",
+      "category": "resource_scheduling_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "匹配任务需求与可用资源并给出建议。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "capability_type",
+        "resource_constraints"
+      ],
+      "optional_slots": [
+        "priority",
+        "region_preference"
+      ],
+      "tools_involved": [
+        "ResourceMatcher"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "给出资源匹配方案",
+        "根据需求推荐资源",
+        "选择合适的部署资源"
+      ],
+      "fallback_prompt": "请提供能力类型与资源约束条件。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "scheduling_resource_match_edge_cpu_balanced_v1",
+      "display_name": "资源匹配建议",
+      "agent_type": "scheduling_agent",
+      "executor": "ReportAgent",
+      "capability_type": "scheduling_resource_match",
+      "category": "resource_scheduling_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "匹配任务需求与可用资源并给出建议。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "capability_type",
+        "resource_constraints"
+      ],
+      "optional_slots": [
+        "priority",
+        "region_preference"
+      ],
+      "tools_involved": [
+        "ResourceMatcher"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "给出资源匹配方案",
+        "根据需求推荐资源",
+        "选择合适的部署资源"
+      ],
+      "fallback_prompt": "请提供能力类型与资源约束条件。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "scheduling_deployment_decision_cloud_gpu_fast_v1",
+      "display_name": "部署决策推荐",
+      "agent_type": "scheduling_agent",
+      "executor": "ReportAgent",
+      "capability_type": "scheduling_deployment_decision",
+      "category": "resource_scheduling_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "根据时延与成本要求给出部署决策建议。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "latency_requirement",
+        "cost_limit"
+      ],
+      "optional_slots": [
+        "data_residency",
+        "availability_target"
+      ],
+      "tools_involved": [
+        "DeploymentAdvisor"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "推荐云端还是边缘部署",
+        "根据成本和时延做部署决策",
+        "给出部署建议"
+      ],
+      "fallback_prompt": "请提供时延需求与成本限制。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "scheduling_deployment_decision_edge_cpu_balanced_v1",
+      "display_name": "部署决策推荐",
+      "agent_type": "scheduling_agent",
+      "executor": "ReportAgent",
+      "capability_type": "scheduling_deployment_decision",
+      "category": "resource_scheduling_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "根据时延与成本要求给出部署决策建议。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "latency_requirement",
+        "cost_limit"
+      ],
+      "optional_slots": [
+        "data_residency",
+        "availability_target"
+      ],
+      "tools_involved": [
+        "DeploymentAdvisor"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "推荐云端还是边缘部署",
+        "根据成本和时延做部署决策",
+        "给出部署建议"
+      ],
+      "fallback_prompt": "请提供时延需求与成本限制。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "scheduling_load_balancing_cloud_gpu_fast_v1",
+      "display_name": "负载均衡规划",
+      "agent_type": "scheduling_agent",
+      "executor": "ReportAgent",
+      "capability_type": "scheduling_load_balancing",
+      "category": "resource_scheduling_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "分析当前负载并给出均衡策略建议。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "current_loads"
+      ],
+      "optional_slots": [
+        "balance_strategy",
+        "target_utilization"
+      ],
+      "tools_involved": [
+        "LoadBalancer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "生成负载均衡方案",
+        "优化资源负载分配",
+        "给出均衡策略建议"
+      ],
+      "fallback_prompt": "请提供当前负载数据。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "scheduling_load_balancing_edge_cpu_balanced_v1",
+      "display_name": "负载均衡规划",
+      "agent_type": "scheduling_agent",
+      "executor": "ReportAgent",
+      "capability_type": "scheduling_load_balancing",
+      "category": "resource_scheduling_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "分析当前负载并给出均衡策略建议。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "current_loads"
+      ],
+      "optional_slots": [
+        "balance_strategy",
+        "target_utilization"
+      ],
+      "tools_involved": [
+        "LoadBalancer"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "生成负载均衡方案",
+        "优化资源负载分配",
+        "给出均衡策略建议"
+      ],
+      "fallback_prompt": "请提供当前负载数据。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "scheduling_queue_priority_cloud_gpu_fast_v1",
+      "display_name": "队列优先级排序",
+      "agent_type": "scheduling_agent",
+      "executor": "ReportAgent",
+      "capability_type": "scheduling_queue_priority",
+      "category": "resource_scheduling_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "根据SLA或优先级规则对任务队列进行排序。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "task_queue"
+      ],
+      "optional_slots": [
+        "sla_policy",
+        "deadline"
+      ],
+      "tools_involved": [
+        "PriorityScheduler"
+      ],
+      "relationship_type": "Nto1",
+      "example_queries": [
+        "给任务队列排序",
+        "按照SLA设置优先级",
+        "生成队列执行顺序"
+      ],
+      "fallback_prompt": "请提供任务队列与优先级规则。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "scheduling_queue_priority_edge_cpu_balanced_v1",
+      "display_name": "队列优先级排序",
+      "agent_type": "scheduling_agent",
+      "executor": "ReportAgent",
+      "capability_type": "scheduling_queue_priority",
+      "category": "resource_scheduling_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "根据SLA或优先级规则对任务队列进行排序。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "task_queue"
+      ],
+      "optional_slots": [
+        "sla_policy",
+        "deadline"
+      ],
+      "tools_involved": [
+        "PriorityScheduler"
+      ],
+      "relationship_type": "Nto1",
+      "example_queries": [
+        "给任务队列排序",
+        "按照SLA设置优先级",
+        "生成队列执行顺序"
+      ],
+      "fallback_prompt": "请提供任务队列与优先级规则。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "scheduling_capacity_forecast_cloud_gpu_fast_v1",
+      "display_name": "容量预估预测",
+      "agent_type": "scheduling_agent",
+      "executor": "ReportAgent",
+      "capability_type": "scheduling_capacity_forecast",
+      "category": "resource_scheduling_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "基于历史负载预测未来资源容量需求。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "historical_usage"
+      ],
+      "optional_slots": [
+        "forecast_horizon",
+        "confidence_level"
+      ],
+      "tools_involved": [
+        "CapacityForecaster"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "预测未来资源需求",
+        "给出容量预估",
+        "生成未来负载预测"
+      ],
+      "fallback_prompt": "请提供历史使用数据。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "scheduling_capacity_forecast_edge_cpu_balanced_v1",
+      "display_name": "容量预估预测",
+      "agent_type": "scheduling_agent",
+      "executor": "ReportAgent",
+      "capability_type": "scheduling_capacity_forecast",
+      "category": "resource_scheduling_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "基于历史负载预测未来资源容量需求。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "historical_usage"
+      ],
+      "optional_slots": [
+        "forecast_horizon",
+        "confidence_level"
+      ],
+      "tools_involved": [
+        "CapacityForecaster"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "预测未来资源需求",
+        "给出容量预估",
+        "生成未来负载预测"
+      ],
+      "fallback_prompt": "请提供历史使用数据。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "scheduling_execution_window_cloud_gpu_fast_v1",
+      "display_name": "执行窗口建议",
+      "agent_type": "scheduling_agent",
+      "executor": "ReportAgent",
+      "capability_type": "scheduling_execution_window",
+      "category": "resource_scheduling_agent",
+      "deployment": "cloud",
+      "resource": "gpu",
+      "profile": "fast",
+      "description": "根据可用窗口与任务时长推荐执行时间段。适合云端高性能快速响应场景。",
+      "required_slots": [
+        "task_duration",
+        "available_windows"
+      ],
+      "optional_slots": [
+        "blackout_periods",
+        "time_zone"
+      ],
+      "tools_involved": [
+        "WindowPlanner"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "推荐最合适的执行时间",
+        "给出可执行时间窗口",
+        "安排任务执行时段"
+      ],
+      "fallback_prompt": "请提供任务时长和可用窗口信息。",
+      "mock": true,
+      "enabled_for_execution": false
+    },
+    {
+      "name": "scheduling_execution_window_edge_cpu_balanced_v1",
+      "display_name": "执行窗口建议",
+      "agent_type": "scheduling_agent",
+      "executor": "ReportAgent",
+      "capability_type": "scheduling_execution_window",
+      "category": "resource_scheduling_agent",
+      "deployment": "edge",
+      "resource": "cpu",
+      "profile": "balanced",
+      "description": "根据可用窗口与任务时长推荐执行时间段。适合边缘侧中等负载与成本平衡场景。",
+      "required_slots": [
+        "task_duration",
+        "available_windows"
+      ],
+      "optional_slots": [
+        "blackout_periods",
+        "time_zone"
+      ],
+      "tools_involved": [
+        "WindowPlanner"
+      ],
+      "relationship_type": "1to1",
+      "example_queries": [
+        "推荐最合适的执行时间",
+        "给出可执行时间窗口",
+        "安排任务执行时段"
+      ],
+      "fallback_prompt": "请提供任务时长和可用窗口信息。",
+      "mock": true,
+      "enabled_for_execution": false
+    }
+  ]

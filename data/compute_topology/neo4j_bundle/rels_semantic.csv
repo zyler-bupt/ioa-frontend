@@ -1,0 +1,5 @@
+edge_id,from_id,to_id,relation,status
+e-cloud-bj-01-cloud-cn-registry-hosts,cloud-bj-01,cloud-cn-registry,hosts,up
+e-cloud-sh-01-cloud-cn-registry-dep,cloud-sh-01,cloud-cn-registry,depends_on,up
+e-edge-bj-01-cloud-cn-registry-dep,edge-bj-01,cloud-cn-registry,depends_on,up
+e-edge-sh-01-cloud-cn-registry-dep,edge-sh-01,cloud-cn-registry,depends_on,up

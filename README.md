@@ -310,7 +310,7 @@ function initWebSocket() {
 - 代码行数: 1000+
 - 函数数量: 30+
 - CSS 类: 50+
-- 文档文件: 5
+- 文档文件: 7+
 - 支持浏览器: 4+
 - 响应时间: < 100ms
 
@@ -327,9 +327,41 @@ function initWebSocket() {
 
 感谢所有使用和反馈的用户！
 
+## 🕸️ 算力网络图数据化（GraphSnapshot + MatrixBundle）
+
+仓库已提供云边端算力拓扑的结构化数据样例与派生矩阵：
+
+- `data/compute_topology/graph_snapshot.sample.json`
+- `data/compute_topology/matrix_bundle.sample.json`
+- `schemas/compute_topology/graph_snapshot.schema.json`
+- `schemas/compute_topology/matrix_bundle.schema.json`
+- `scripts/compute_topology/build_matrix_bundle.js`
+- `scripts/compute_topology/validate_topology_data.js`
+- `scripts/compute_topology/export_neo4j_bundle.js`
+- `docs/compute_topology_neo4j.md`
+
+常用命令：
+
+```bash
+# 从 GraphSnapshot 生成 MatrixBundle
+node scripts/compute_topology/build_matrix_bundle.js \
+  data/compute_topology/graph_snapshot.sample.json \
+  data/compute_topology/matrix_bundle.sample.json
+
+# 一致性校验（结构、指标、矩阵）
+node scripts/compute_topology/validate_topology_data.js \
+  data/compute_topology/graph_snapshot.sample.json \
+  data/compute_topology/matrix_bundle.sample.json
+
+# 导出 Neo4j 导入包（CSV + Cypher）
+node scripts/compute_topology/export_neo4j_bundle.js \
+  data/compute_topology/graph_snapshot.sample.json \
+  data/compute_topology/neo4j_bundle
+```
+
 ---
 
-**最后更新**: 2026-01-13  
+**最后更新**: 2026-03-27  
 **版本**: 1.0  
 **状态**: ✅ 生产就绪
 

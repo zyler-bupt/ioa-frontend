@@ -1023,9 +1023,12 @@
   }
 
   // ====== 总入口：放到 chat.js 里统一启动 ======
-  document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("DOMContentLoaded", async function () {
     console.log("IOA Application Initializing...");
 
+    if (typeof window.loadRegistryAgents === "function") {
+      await window.loadRegistryAgents();
+    }
     if (typeof window.initializeStats === "function") window.initializeStats();
     if (typeof window.initializeNetworkGraph === "function") window.initializeNetworkGraph();
     if (typeof window.initializeClusterMonitor === "function") window.initializeClusterMonitor();

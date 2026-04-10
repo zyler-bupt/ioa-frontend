@@ -1,0 +1,100 @@
+[
+    {
+      "category": "video_understanding_agent",
+      "display_name": "视频理解",
+      "agent_type": "video_agent",
+      "executor": "VideoAgent",
+      "description": "对视频做全局语义分析、事件识别、片段总结。"
+    },
+    {
+      "category": "image_understanding_agent",
+      "display_name": "图像理解",
+      "agent_type": "keyframe_agent",
+      "executor": "KeyframeAgent",
+      "description": "对单帧或多帧图像进行目标、场景、状态识别与结构化提取。"
+    },
+    {
+      "category": "audio_understanding_agent",
+      "display_name": "音频理解",
+      "agent_type": "audio_agent",
+      "executor": "ReportAgent",
+      "description": "对音频内容进行转写摘要、关键词提取、告警音识别和问答分析。"
+    },
+    {
+      "category": "multimodal_fusion_agent",
+      "display_name": "多模态融合",
+      "agent_type": "fusion_agent",
+      "executor": "ReportAgent",
+      "description": "融合视频、图像、文本等多模态输入，输出统一结论与证据说明。"
+    },
+    {
+      "category": "knowledge_retrieval_agent",
+      "display_name": "知识检索",
+      "agent_type": "retrieval_agent",
+      "executor": "ReportAgent",
+      "description": "从知识库、能力库或外部检索系统中召回候选知识与证据。"
+    },
+    {
+      "category": "geo_spatial_agent",
+      "display_name": "地理空间分析",
+      "agent_type": "map_agent",
+      "executor": "MapAgent",
+      "description": "进行地理位置检索、路径规划、周边资源搜索与空间可达性分析。"
+    },
+    {
+      "category": "risk_assessment_agent",
+      "display_name": "风险评估",
+      "agent_type": "risk_agent",
+      "executor": "MeteorologyAgent",
+      "description": "基于环境、任务或事件上下文，输出风险等级、风险因子与缓解建议。"
+    },
+    {
+      "category": "anomaly_detection_agent",
+      "display_name": "异常检测",
+      "agent_type": "anomaly_agent",
+      "executor": "VideoAgent",
+      "description": "检测视觉、行为、环境或音频中的异常线索并进行标注。"
+    },
+    {
+      "category": "workflow_planning_agent",
+      "display_name": "流程规划",
+      "agent_type": "planning_agent",
+      "executor": "ReportAgent",
+      "description": "将复杂任务拆解为多步骤工作流，并给出推荐执行顺序与回退路径。"
+    },
+    {
+      "category": "resource_scheduling_agent",
+      "display_name": "资源调度",
+      "agent_type": "scheduling_agent",
+      "executor": "ReportAgent",
+      "description": "根据 deployment、resource、profile 等元数据给出执行资源与部署策略建议。"
+    },
+    {
+      "category": "tool_execution_agent",
+      "display_name": "工具执行编排",
+      "agent_type": "execution_agent",
+      "executor": "ReportAgent",
+      "description": "组织工具链的顺序执行、并行执行、失败重试与结果归并。"
+    },
+    {
+      "category": "report_generation_agent",
+      "display_name": "报告生成",
+      "agent_type": "report_agent",
+      "executor": "ReportAgent",
+      "description": "生成结构化报告、简报、图文证据报告和多步骤流程总报告。"
+    },
+    {
+      "category": "alert_notification_agent",
+      "display_name": "告警通知",
+      "agent_type": "alert_agent",
+      "executor": "MapAgent",
+      "description": "根据触发事件生成告警通知内容，并联动发送与分发渠道。"
+    },
+    {
+      "category": "compliance_audit_agent",
+      "display_name": "合规审计",
+      "agent_type": "audit_agent",
+      "executor": "ReportAgent",
+      "description": "对报告、流程、证据链和策略符合性进行检查，并生成整改建议。"
+    }
+  ]
