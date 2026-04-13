@@ -130,49 +130,40 @@ function buildTopologyEdges(edgeSet, nodes) {
     });
   };
   
-  if (edgeAgents.length === 4) {
-    const [topLeft, bottomLeft, topRight, bottomRight] = edgeAgents;
-    const backbonePairs = [
-      [topLeft, topRight],
-      [bottomLeft, bottomRight],
-    ];
-    const secondaryPairs = [
-      [topLeft, bottomLeft],
-      [topRight, bottomRight],
-    ];
+  if (edgeAgents.length >= 4) {
+    const cols = Math.ceil(edgeAgents.length / 2);
+    const row0 = edgeAgents.slice(0, cols);
+    const row1 = edgeAgents.slice(cols);
 
-    backbonePairs.forEach(([from, to]) => {
-      addEdge(from.id, to.id, {
-        color: styles.backbone.edgeColor,
-        width: styles.backbone.width,
-        dashes: styles.backbone.dashes,
-        smooth: false,
+    // Horizontal backbone: connect adjacent agents in each row
+    [row0, row1].forEach((row) => {
+      row.slice(0, -1).forEach((agent, index) => {
+        addEdge(agent.id, row[index + 1].id, {
+          color: styles.backbone.edgeColor,
+          width: styles.backbone.width,
+          dashes: styles.backbone.dashes,
+          smooth: false,
+        });
       });
     });
 
-    secondaryPairs.forEach(([from, to]) => {
-      addEdge(from.id, to.id, {
-        color: styles.secondary.edgeColor,
-        width: styles.secondary.width,
-        dashes: styles.secondary.dashes,
-        smooth: false,
-      });
-    });
-  } else if (edgeAgents.length > 2) {
-    edgeAgents.slice(0, -1).forEach((agent, index) => {
-      addEdge(agent.id, edgeAgents[index + 1].id, {
-        color: styles.backbone.edgeColor,
-        width: styles.backbone.width,
-        dashes: styles.backbone.dashes,
-        smooth: false,
-      });
+    // Vertical secondary: connect agents in same column across rows
+    row1.forEach((agent, col) => {
+      if (col < row0.length) {
+        addEdge(row0[col].id, agent.id, {
+          color: styles.secondary.edgeColor,
+          width: styles.secondary.width,
+          dashes: styles.secondary.dashes,
+          smooth: false,
+        });
+      }
     });
   } else if (edgeAgents.length > 1) {
     edgeAgents.slice(0, -1).forEach((agent, index) => {
       addEdge(agent.id, edgeAgents[index + 1].id, {
-        color: styles.secondary.edgeColor,
-        width: styles.secondary.width,
-        dashes: styles.secondary.dashes,
+        color: styles.backbone.edgeColor,
+        width: styles.backbone.width,
+        dashes: styles.backbone.dashes,
         smooth: false,
       });
     });
@@ -182,13 +173,18 @@ function buildTopologyEdges(edgeSet, nodes) {
   // Cloud-to-edge direct links intentionally omitted.
 
   if (edgeAgents.length >= 4) {
-    const [topLeft, bottomLeft, topRight, bottomRight] = edgeAgents;
-    [
-      ["infra-edge-gateway-left", topLeft],
-      ["infra-edge-gateway-left", bottomLeft],
-      ["infra-edge-gateway-right", topRight],
-      ["infra-edge-gateway-right", bottomRight],
-    ].forEach(([gatewayId, agent], index) => {
+    const cols = Math.ceil(edgeAgents.length / 2);
+    const row0 = edgeAgents.slice(0, cols);
+    const row1 = edgeAgents.slice(cols);
+    // Left gateway connects to leftmost agents in each row
+    // Right gateway connects to rightmost agents in each row
+    const gatewayPairs = [
+      ["infra-edge-gateway-left", row0[0]],
+      ["infra-edge-gateway-left", row1[0]],
+      ["infra-edge-gateway-right", row0[row0.length - 1]],
+      ["infra-edge-gateway-right", row1.length ? row1[row1.length - 1] : row0[row0.length - 1]],
+    ].filter(([_, agent]) => agent);
+    gatewayPairs.forEach(([gatewayId, agent], index) => {
       addEdge(gatewayId, agent.id, {
         color: styles.backbone.edgeColor,
         width: styles.backbone.width,
@@ -213,9 +209,15 @@ function buildTopologyEdges(edgeSet, nodes) {
   }
 
   const gateways = ["infra-edge-gateway-left", "infra-edge-gateway-right"];
-  const clusterLinks = gateways
-    .filter((gatewayId) => !nodes || nodes.get(gatewayId))
-    .map((gatewayId) => ({ from: CLOUD_CLUSTER_NODE_ID, to: gatewayId }));
+  const clusterIds = window.CLOUD_CLUSTER_NODE_IDS || [CLOUD_CLUSTER_NODE_ID];
+  const clusterLinks = [];
+  clusterIds.forEach((clusterId) => {
+    gateways
+      .filter((gatewayId) => !nodes || nodes.get(gatewayId))
+      .forEach((gatewayId) => {
+        clusterLinks.push({ from: clusterId, to: gatewayId });
+      });
+  });
   clusterLinks.forEach((link, index) => {
     addEdge(link.from, link.to, {
       color: styles.backbone.cloudColor,

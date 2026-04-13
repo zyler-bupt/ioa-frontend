@@ -19,10 +19,18 @@ const EDGE_AGENT01_MAP = {
   "agent-keyframe": "edge-agent-keyframe-agent01",
   "agent-map": "edge-agent-map-agent01",
   "agent-report": "edge-agent-report-agent01",
+  "agent-traffic": "edge-agent-traffic-agent01",
+  "agent-sensor": "edge-agent-sensor-agent01",
+  "agent-nlp": "edge-agent-nlp-agent01",
+  "agent-audio": "edge-agent-audio-agent01",
 };
 const EDGE_AGENT01_IDS = new Set(Object.values(EDGE_AGENT01_MAP));
 const PYRAMID_LAYER_WIDTH_RATIO = { cloud: 1, edge: 1, terminal: 1 };
-const extensionVisibilityByAnchor = new Map([[CLOUD_CLUSTER_NODE_ID, false]]);
+const extensionVisibilityByAnchor = new Map([
+  [CLOUD_CLUSTER_NODE_ID, false],
+  ["cloud-cluster-02", false],
+  ["cloud-cluster-03", false],
+]);
 
 function readLocalNewAgents() {
   const raw = localStorage.getItem("newAgents");

@@ -5,8 +5,10 @@
 
 function getEdgePerspectiveScale(indexInLayer, totalAgents) {
   if (!Number.isFinite(indexInLayer) || !Number.isFinite(totalAgents) || totalAgents <= 1) return 1;
-  if (totalAgents === 4) {
-    return indexInLayer === 0 || indexInLayer === 2 ? 0.9 : 1.12;
+  if (totalAgents >= 4) {
+    const cols = Math.ceil(totalAgents / 2);
+    const row = Math.floor(indexInLayer / cols);
+    return row === 0 ? 0.92 : 1.1;
   }
   const depth = indexInLayer / Math.max(1, totalAgents - 1);
   return 0.9 + depth * 0.22;
@@ -167,7 +169,10 @@ function initializeNetworkGraph() {
   addNetworkLegend();
   alignNetworkView(network);
   applyTopologyLayout(container, nodes, network);
-  toggleExtensionGroup(nodes, edgeSet, CLOUD_CLUSTER_NODE_ID, getExtensionVisibility(CLOUD_CLUSTER_NODE_ID));
+  const clusterIds = window.CLOUD_CLUSTER_NODE_IDS || [CLOUD_CLUSTER_NODE_ID];
+  clusterIds.forEach((clusterId) => {
+    toggleExtensionGroup(nodes, edgeSet, clusterId, getExtensionVisibility(clusterId));
+  });
   observeTopologyLayout(container, network);
   requestAnimationFrame(() => syncTopologyLayout(container, network));
   startEdgeFlowAnimation(edgeSet);

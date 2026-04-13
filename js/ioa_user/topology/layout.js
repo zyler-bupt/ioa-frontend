@@ -95,20 +95,16 @@ function getLayerPosition(layer, indexInLayer, totalAgents, metrics, container =
   const layerBandWidth = getLayerBandWidth(container, layer, metrics);
   const layerAvailableWidth = getLayerAvailableWidth(container, layer, metrics);
   
-  if (layer === "edge" && totalAgents === 4) {
-    const span = Math.max(160, Math.min(layerAvailableWidth * 0.78, layerAvailableWidth - 26));
+  if (layer === "edge" && totalAgents >= 4) {
+    const cols = Math.ceil(totalAgents / 2);
+    const span = Math.max(160, Math.min(layerAvailableWidth * 0.85, layerAvailableWidth - 26));
     const rowGap = Math.max(64, Math.min(110, getLayerRowMetrics(metrics).rowHeight * 0.45));
-    const shift = span * 0.06;
-    const leftX = -span / 2;
-    const rightX = span / 2;
-    const positions = [
-      { x: leftX, y: -rowGap / 2 },
-      { x: leftX + shift, y: rowGap / 2 },
-      { x: rightX - shift, y: -rowGap / 2 },
-      { x: rightX, y: rowGap / 2 },
-    ];
-    const fallback = positions[indexInLayer] ?? { x: 0, y: 0 };
-    return { x: fallback.x, y: fallback.y + (layerY.edge ?? 0) };
+    const row = Math.floor(indexInLayer / cols);
+    const col = indexInLayer % cols;
+    const colSpacing = cols > 1 ? span / (cols - 1) : 0;
+    const x = -span / 2 + col * colSpacing;
+    const y = (row === 0 ? -rowGap / 2 : rowGap / 2);
+    return { x, y: y + (layerY.edge ?? 0) };
   }
   
   if (layer === "cloud" && totalAgents === 3) {
@@ -208,10 +204,17 @@ function toggleExtensionGroup(nodes, edges, anchorId, forceVisible) {
 function getInfraNodesLayout(metrics, container = null) {
   const { rowHeight } = getLayerRowMetrics(metrics);
   const rowCenters = getLayerRowCenters(metrics);
-  const edgePositions = [0, 1, 2, 3].map((index) =>
-    getLayerPosition("edge", index, 4, metrics, container)
+  const edgeBaseCount = (window.agentDatabase || []).filter(
+    (a) => (a.layer === "edge") && !a.isExtension
+  ).length || 8;
+  const edgePositions = Array.from({ length: edgeBaseCount }, (_, index) =>
+    getLayerPosition("edge", index, edgeBaseCount, metrics, container)
   );
-  const cloudCluster = getLayerPosition("cloud", 0, 1, metrics, container);
+  const cloudClusterIds = window.CLOUD_CLUSTER_NODE_IDS || [CLOUD_CLUSTER_NODE_ID];
+  const cloudCount = cloudClusterIds.length;
+  const cloudPositions = Array.from({ length: cloudCount }, (_, index) =>
+    getLayerPosition("cloud", index, cloudCount, metrics, container)
+  );
   const terminalBase = getLayerPosition("terminal", 0, 1, metrics, container).y;
   
   const bandPaddingY = Math.max(18, rowHeight * 0.18);
@@ -221,29 +224,21 @@ function getInfraNodesLayout(metrics, container = null) {
   const edgeBandMinX = -edgeBandHalf + edgeBandPaddingX;
   const edgeBandMaxX = edgeBandHalf - edgeBandPaddingX;
   
-  const widthHalf = metrics.width / 2 - 24;
-  const edgeOffsetLimit = Math.max(
-    50,
-    Math.min(widthHalf - Math.abs(edgePositions[0].x), widthHalf - Math.abs(edgePositions[2].x))
-  );
-  const edgeOffsetX = Math.min(Math.max(edgeBandHalf * 0.26, metrics.width * 0.08), edgeOffsetLimit);
-  const edgeOffsetY = Math.max(26, rowHeight * 0.24);
-  
-  const gatewayMargin = Math.max(6, metrics.width * 0.008);
-  const gatewayOffsetX = Math.max(
-    0,
-    Math.min(
-      edgeOffsetX * 1.05,
-      edgePositions[1].x - edgeBandMinX - gatewayMargin,
-      edgeBandMaxX - edgePositions[3].x - gatewayMargin
-    )
-  );
-  const gatewayOffsetY = edgeOffsetY * 1.35;
   const edgeXValues = edgePositions.map((pos) => pos.x);
+  const edgeYValues = edgePositions.map((pos) => pos.y);
   const edgeMinX = Math.min(...edgeXValues);
   const edgeMaxX = Math.max(...edgeXValues);
+  const edgeMinY = Math.min(...edgeYValues);
+  const edgeMaxY = Math.max(...edgeYValues);
+  const edgeMidY = (edgeMinY + edgeMaxY) / 2;
+
+  const widthHalf = metrics.width / 2 - 24;
+  const edgeOffsetLimit = Math.max(50, widthHalf - Math.max(Math.abs(edgeMinX), Math.abs(edgeMaxX)));
+  const edgeOffsetX = Math.min(Math.max(edgeBandHalf * 0.26, metrics.width * 0.08), edgeOffsetLimit);
+
+  const gatewayMargin = Math.max(6, metrics.width * 0.008);
+  const gatewayOffsetX = Math.max(0, Math.min(edgeOffsetX * 1.05, edgeMinX - edgeBandMinX - gatewayMargin, edgeBandMaxX - edgeMaxX - gatewayMargin));
   const gatewaySideOffset = Math.max(32, gatewayOffsetX) + 20;
-  const edgeMidY = (edgePositions[0].y + edgePositions[3].y) / 2;
 
   const rowBounds = {
     cloud: { min: rowCenters.cloud - rowHeight / 2 + bandPaddingY, max: rowCenters.cloud + rowHeight / 2 - bandPaddingY },
@@ -271,8 +266,9 @@ function getInfraNodesLayout(metrics, container = null) {
   const terminalMaxRadiusY = Math.max(58, rowHeight * 0.5 - 10);
   const terminalRadiusY = Math.min(Math.max(rowHeight * 0.42, 62), terminalMaxRadiusY);
   const terminalCenterYOffset = Math.max(10, rowHeight * 0.12);
+  const terminalAngleStep = 360 / TERMINAL_DEVICE_IDS.length;
   const terminalHex = TERMINAL_DEVICE_IDS.map((id, index) => {
-    const angle = (-90 + index * 60) * (Math.PI / 180);
+    const angle = (-90 + index * terminalAngleStep) * (Math.PI / 180);
     return {
       id,
       x: terminalRadiusX * Math.cos(angle),
@@ -280,12 +276,14 @@ function getInfraNodesLayout(metrics, container = null) {
     };
   });
 
+  const cloudInfraNodes = cloudClusterIds.map((id, index) => ({
+    id,
+    x: cloudPositions[index].x,
+    y: cloudPositions[index].y - Math.max(12, rowHeight * 0.08),
+  }));
+
   return [
-    {
-      id: CLOUD_CLUSTER_NODE_ID,
-      x: cloudCluster.x,
-      y: cloudCluster.y - Math.max(12, rowHeight * 0.08),
-    },
+    ...cloudInfraNodes,
 
     { id: "infra-edge-gateway-left", x: edgeMinX - gatewaySideOffset, y: edgeMidY },
     { id: "infra-edge-gateway-right", x: edgeMaxX + gatewaySideOffset, y: edgeMidY },
@@ -310,8 +308,8 @@ function createInfraNodes(metrics, container = null) {
       y: layout.y,
       fixed: true,
       physics: false,
-      selectable: layout.id === CLOUD_CLUSTER_NODE_ID,
-      hover: layout.id === CLOUD_CLUSTER_NODE_ID,
+      selectable: layout.id.startsWith("cloud-cluster-"),
+      hover: layout.id.startsWith("cloud-cluster-"),
       hidden: false,
       font: {
         size: labelSize,
